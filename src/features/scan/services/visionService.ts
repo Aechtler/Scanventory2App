@@ -3,7 +3,7 @@
  * Analysiert Bilder und erkennt Produkte
  */
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
@@ -31,7 +31,7 @@ export interface VisionError {
 export async function analyzeImage(imageUri: string): Promise<VisionResult> {
   // Bild zu Base64 konvertieren
   const base64Image = await FileSystem.readAsStringAsync(imageUri, {
-    encoding: FileSystem.EncodingType.Base64,
+    encoding: 'base64',
   });
 
   const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
