@@ -142,11 +142,11 @@ Mit der ScanApp können Nutzer ihre Besitztümer schnell und unkompliziert scann
 - [x] Einfacher Verlauf (lokal gespeichert)
 
 ### Phase 2: Erweiterung
-- [ ] Kamera-Integration
-- [ ] Mehrere Treffer-Auswahl mit Vorschaubildern
-- [ ] Integration weiterer Plattformen (Kleinanzeigen, Amazon)
-- [ ] Detaillierte Preisstatistiken
-- [ ] Verbessertes UI/UX
+- [x] Kamera-Integration (bereits in Phase 1 implementiert)
+- [x] Mehrere Treffer-Auswahl mit Vorschaubildern
+- [x] Integration weiterer Plattformen (Kleinanzeigen, Amazon - Mock)
+- [x] Detaillierte Preisstatistiken
+- [ ] Verbessertes UI/UX (Animationen, Skeleton Loading)
 
 ### Phase 3: Optimierung
 - [ ] Idealo-Integration
