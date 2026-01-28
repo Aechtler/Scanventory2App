@@ -149,10 +149,10 @@ Mit der ScanApp können Nutzer ihre Besitztümer schnell und unkompliziert scann
 - [ ] Verbessertes UI/UX (Animationen, Skeleton Loading)
 
 ### Phase 3: Optimierung
-- [ ] Idealo-Integration
+- [x] Idealo-Integration (Mock)
 - [ ] Preistrend-Analyse
-- [ ] Export-Funktionen
-- [ ] Performance-Optimierung
+- [x] Export-Funktionen (CSV + Gesamtwert)
+- [ ] Performance-Optimierung (FlashList)
 - [ ] Offline-Modus für Verlauf
 
 ### Phase 4: Premium-Features (Optional)
