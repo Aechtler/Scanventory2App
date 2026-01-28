@@ -82,9 +82,9 @@ export default function AnalyzeScreen() {
     );
   };
 
-  const handleSaveToHistory = () => {
+  const handleSaveToHistory = async () => {
     if (selectedMatch && marketResult) {
-      addItem({
+      await addItem({
         imageUri: decodeURIComponent(imageUri!),
         productName: selectedMatch.productName,
         category: selectedMatch.category,

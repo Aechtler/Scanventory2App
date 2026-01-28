@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, FlatList, Image, Pressable, Alert } from 'react-native';
+import { View, Text, Image, Pressable, Alert, RefreshControl } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../features/history/store/historyStore';
@@ -128,9 +129,9 @@ export default function HistoryScreen() {
             </Pressable>
           </View>
         ) : (
-          <FlatList
+          <FlashList
             data={items}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: HistoryItem) => item.id}
             contentContainerStyle={{ padding: 16 }}
             renderItem={renderItem}
             ListHeaderComponent={
