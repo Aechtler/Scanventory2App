@@ -30,6 +30,7 @@ interface HistoryState {
   clearHistory: () => void;
   getItemById: (id: string) => HistoryItem | undefined;
   setOffline: (offline: boolean) => void;
+  updateItemPrices: (id: string, priceStats: PriceStats) => void;
 }
 
 /**
@@ -77,6 +78,14 @@ export const useHistoryStore = create<HistoryState>()(
 
       setOffline: (offline) => {
         set({ isOffline: offline });
+      },
+
+      updateItemPrices: (id, priceStats) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id ? { ...item, priceStats } : item
+          ),
+        }));
       },
     }),
     {

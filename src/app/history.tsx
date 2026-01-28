@@ -55,6 +55,7 @@ export default function HistoryScreen() {
     <StaggeredItem index={index}>
       <Pressable
         className="bg-background-card rounded-xl p-4 mb-3 flex-row border border-gray-800 active:border-primary-500/50"
+        onPress={() => router.push(`/history/${item.id}`)}
         onLongPress={() => {
           Alert.alert(
             'Löschen?',
