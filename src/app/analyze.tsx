@@ -241,6 +241,7 @@ export default function AnalyzeScreen() {
                         {platform.platform === 'ebay' && '🛒'}
                         {platform.platform === 'kleinanzeigen' && '📦'}
                         {platform.platform === 'amazon' && '📱'}
+                        {platform.platform === 'idealo' && '🔍'}
                       </Text>
                       <View>
                         <Text className="text-white font-medium capitalize">

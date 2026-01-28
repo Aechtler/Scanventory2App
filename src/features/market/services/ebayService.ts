@@ -28,7 +28,7 @@ export interface PriceStats {
 
 export interface MarketResult {
   query: string;
-  platform: 'ebay' | 'kleinanzeigen' | 'amazon';
+  platform: 'ebay' | 'kleinanzeigen' | 'amazon' | 'idealo';
   priceStats: PriceStats;
   listings: MarketListing[];
   fetchedAt: Date;

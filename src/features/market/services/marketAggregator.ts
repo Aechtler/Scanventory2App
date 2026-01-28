@@ -6,6 +6,7 @@
 import { searchMarket, formatPrice, MarketResult, PriceStats } from './ebayService';
 import { searchKleinanzeigen } from './kleinanzeigenService';
 import { searchAmazon } from './amazonService';
+import { searchIdealo } from './idealoService';
 
 export { formatPrice };
 
@@ -24,13 +25,14 @@ export async function searchAllMarkets(
   category: string = 'Sonstiges'
 ): Promise<AggregatedMarketResult> {
   // Parallele Suche auf allen Plattformen
-  const [ebay, kleinanzeigen, amazon] = await Promise.all([
+  const [ebay, kleinanzeigen, amazon, idealo] = await Promise.all([
     searchMarket(query, category),
     searchKleinanzeigen(query, category),
     searchAmazon(query, category),
+    searchIdealo(query, category),
   ]);
 
-  const platforms = [ebay, kleinanzeigen, amazon];
+  const platforms = [ebay, kleinanzeigen, amazon, idealo];
 
   // Kombinierte Statistiken berechnen
   const allPrices: number[] = [];
