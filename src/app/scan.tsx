@@ -30,12 +30,11 @@ export default function ScanScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      // TODO: Navigation zu Analyse-Screen mit Bild
-      Alert.alert(
-        'Bild ausgewählt',
-        'Bildanalyse wird in Phase 2 implementiert.',
-        [{ text: 'OK' }]
-      );
+      // Navigation zum Analyse-Screen mit Bild
+      router.push({
+        pathname: '/analyze',
+        params: { imageUri: encodeURIComponent(result.assets[0].uri) },
+      });
     }
   };
 
@@ -58,12 +57,11 @@ export default function ScanScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      // TODO: Navigation zu Analyse-Screen mit Bild
-      Alert.alert(
-        'Foto aufgenommen',
-        'Bildanalyse wird in Phase 2 implementiert.',
-        [{ text: 'OK' }]
-      );
+      // Navigation zum Analyse-Screen mit Bild
+      router.push({
+        pathname: '/analyze',
+        params: { imageUri: encodeURIComponent(result.assets[0].uri) },
+      });
     }
   };
 

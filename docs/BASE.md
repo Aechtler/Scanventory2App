@@ -134,12 +134,12 @@ Mit der ScanApp können Nutzer ihre Besitztümer schnell und unkompliziert scann
 ## Entwicklungsphasen
 
 ### Phase 1: MVP (Minimum Viable Product)
-- [ ] Projektsetup und Grundstruktur
-- [ ] Bildupload-Funktion (ohne Kamera)
-- [ ] Integration einer Vision-API für Bilderkennung
-- [ ] Einfache Produktsuche auf eBay
-- [ ] Basis-Preisanzeige
-- [ ] Einfacher Verlauf (lokal gespeichert)
+- [x] Projektsetup und Grundstruktur
+- [x] Bildupload-Funktion (inkl. Kamera)
+- [x] Integration einer Vision-API für Bilderkennung (Google Gemini)
+- [x] Einfache Produktsuche auf eBay (Mock-Daten, umstellbar)
+- [x] Basis-Preisanzeige
+- [x] Einfacher Verlauf (lokal gespeichert)
 
 ### Phase 2: Erweiterung
 - [ ] Kamera-Integration
