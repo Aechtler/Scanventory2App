@@ -122,13 +122,6 @@ export default function AnalyzeScreen() {
                   resizeMode="cover"
                 />
                 
-                {/* Gradient Overlay für Premium-Look */}
-                <View 
-                  className="absolute bottom-0 left-0 right-0 h-20"
-                  style={{
-                    background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
-                  }}
-                />
               </MotiView>
             ) : (
               <ImageSkeleton />
