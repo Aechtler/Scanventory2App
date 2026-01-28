@@ -8,14 +8,19 @@ import * as FileSystem from 'expo-file-system/legacy';
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-export interface VisionResult {
+export interface VisionMatch {
   productName: string;
   category: string;
   brand: string | null;
   condition: string;
   description: string;
   confidence: number;
-  searchQuery: string; // Optimierter Suchbegriff für Marktsuche
+  searchQuery: string;
+}
+
+export interface VisionResult {
+  matches: VisionMatch[];
+  selectedIndex: number | null;
 }
 
 export interface VisionError {
@@ -26,10 +31,9 @@ export interface VisionError {
 /**
  * Analysiert ein Bild mit Gemini Vision API
  * @param imageUri - Lokaler URI des Bildes
- * @returns VisionResult mit erkanntem Produkt
+ * @returns VisionResult mit bis zu 3 möglichen Treffern
  */
 export async function analyzeImage(imageUri: string): Promise<VisionResult> {
-  // Bild zu Base64 konvertieren
   const base64Image = await FileSystem.readAsStringAsync(imageUri, {
     encoding: 'base64',
   });
@@ -44,19 +48,27 @@ export async function analyzeImage(imageUri: string): Promise<VisionResult> {
         {
           parts: [
             {
-              text: `Analysiere dieses Bild eines Gegenstands und gib mir folgende Informationen im JSON-Format zurück:
+              text: `Analysiere dieses Bild und identifiziere den Gegenstand. Gib mir die 3 wahrscheinlichsten Treffer als JSON-Array zurück.
 
+Für jeden Treffer:
+- productName: Genauer Produktname mit Modell/Variante falls erkennbar
+- category: Elektronik, Kleidung, Möbel, Spielzeug, Sammlerstück, oder Sonstiges
+- brand: Marke falls erkennbar, sonst null
+- condition: Neu, Wie neu, Gut, Akzeptabel, oder Für Ersatzteile
+- description: 1 Satz Beschreibung
+- confidence: Zahl zwischen 0 und 1
+- searchQuery: Optimierter Suchbegriff für Marktplatz-Suche
+
+Beispiel-Antwort:
 {
-  "productName": "Genauer Produktname (z.B. 'Apple iPhone 14 Pro 256GB')",
-  "category": "Kategorie (Elektronik, Kleidung, Möbel, Spielzeug, Sammlerstück, Sonstiges)",
-  "brand": "Marke falls erkennbar, sonst null",
-  "condition": "Geschätzter Zustand (Neu, Wie neu, Gut, Akzeptabel, Für Ersatzteile)",
-  "description": "Kurze Beschreibung des Gegenstands (1-2 Sätze)",
-  "confidence": 0.85,
-  "searchQuery": "Optimierter Suchbegriff für eBay-Suche"
+  "matches": [
+    {"productName": "...", "category": "...", "brand": "...", "condition": "...", "description": "...", "confidence": 0.9, "searchQuery": "..."},
+    {"productName": "...", "category": "...", "brand": null, "condition": "...", "description": "...", "confidence": 0.7, "searchQuery": "..."},
+    {"productName": "...", "category": "...", "brand": null, "condition": "...", "description": "...", "confidence": 0.5, "searchQuery": "..."}
+  ]
 }
 
-Antworte NUR mit dem JSON, ohne zusätzlichen Text.`,
+Sortiere nach Konfidenz (höchste zuerst). Antworte NUR mit dem JSON.`,
             },
             {
               inline_data: {
@@ -68,8 +80,8 @@ Antworte NUR mit dem JSON, ohne zusätzlichen Text.`,
         },
       ],
       generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 500,
+        temperature: 0.3,
+        maxOutputTokens: 1000,
       },
     }),
   });
@@ -92,24 +104,59 @@ Antworte NUR mit dem JSON, ohne zusätzlichen Text.`,
     throw new Error('Ungültiges Antwortformat');
   }
 
-  const result = JSON.parse(jsonMatch[0]) as VisionResult;
-  return result;
+  const parsed = JSON.parse(jsonMatch[0]);
+  
+  // Handle both old (single result) and new (matches array) format
+  if (parsed.matches && Array.isArray(parsed.matches)) {
+    return {
+      matches: parsed.matches,
+      selectedIndex: null,
+    };
+  }
+  
+  // Fallback for single result
+  return {
+    matches: [parsed as VisionMatch],
+    selectedIndex: 0,
+  };
 }
 
 /**
  * Mock-Funktion für Tests ohne API Key
  */
-export async function analyzeImageMock(imageUri: string): Promise<VisionResult> {
-  // Simuliere API-Latenz
+export async function analyzeImageMock(_imageUri: string): Promise<VisionResult> {
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
   return {
-    productName: 'Apple iPhone 14 Pro 128GB Space Black',
-    category: 'Elektronik',
-    brand: 'Apple',
-    condition: 'Gut',
-    description: 'iPhone 14 Pro in gutem Zustand mit leichten Gebrauchsspuren.',
-    confidence: 0.92,
-    searchQuery: 'iPhone 14 Pro 128GB',
+    matches: [
+      {
+        productName: 'Apple iPhone 14 Pro 128GB Space Black',
+        category: 'Elektronik',
+        brand: 'Apple',
+        condition: 'Gut',
+        description: 'iPhone 14 Pro in gutem Zustand mit leichten Gebrauchsspuren.',
+        confidence: 0.92,
+        searchQuery: 'iPhone 14 Pro 128GB',
+      },
+      {
+        productName: 'Apple iPhone 14 128GB',
+        category: 'Elektronik',
+        brand: 'Apple',
+        condition: 'Gut',
+        description: 'iPhone 14 Standard-Modell.',
+        confidence: 0.75,
+        searchQuery: 'iPhone 14 128GB',
+      },
+      {
+        productName: 'Apple iPhone 13 Pro 128GB',
+        category: 'Elektronik',
+        brand: 'Apple',
+        condition: 'Gut',
+        description: 'iPhone 13 Pro Vorgängermodell.',
+        confidence: 0.55,
+        searchQuery: 'iPhone 13 Pro 128GB',
+      },
+    ],
+    selectedIndex: null,
   };
 }

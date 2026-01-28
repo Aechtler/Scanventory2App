@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { analyzeImage, analyzeImageMock, VisionResult } from '@/features/scan/services/visionService';
-import { searchMarket, formatPrice, MarketResult } from '@/features/market/services/ebayService';
-import { useHistoryStore } from '@/features/history/store/historyStore';
+import { analyzeImage, analyzeImageMock, VisionResult, VisionMatch } from '../features/scan/services/visionService';
+import { searchAllMarkets, formatPrice, AggregatedMarketResult } from '../features/market/services/marketAggregator';
+import { useHistoryStore } from '../features/history/store/historyStore';
+import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
 
-type AnalysisState = 'analyzing' | 'searching' | 'complete' | 'error';
+type AnalysisState = 'analyzing' | 'selecting' | 'searching' | 'complete' | 'error';
 
 /**
  * Analyse Screen - Zeigt Bildanalyse und Marktdaten
@@ -17,7 +18,8 @@ export default function AnalyzeScreen() {
   
   const [state, setState] = useState<AnalysisState>('analyzing');
   const [visionResult, setVisionResult] = useState<VisionResult | null>(null);
-  const [marketResult, setMarketResult] = useState<MarketResult | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<VisionMatch | null>(null);
+  const [marketResult, setMarketResult] = useState<AggregatedMarketResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,13 +40,13 @@ export default function AnalyzeScreen() {
         : await analyzeImageMock(decodeURIComponent(imageUri!));
       
       setVisionResult(vision);
-      setState('searching');
 
-      // 2. Marktsuche basierend auf Analyse
-      const market = await searchMarket(vision.searchQuery, vision.category);
-      setMarketResult(market);
-      
-      setState('complete');
+      // Wenn nur ein Treffer mit hoher Konfidenz, automatisch auswählen
+      if (vision.matches.length === 1 || vision.matches[0].confidence >= 0.9) {
+        handleMatchSelect(0, vision);
+      } else {
+        setState('selecting');
+      }
     } catch (err) {
       console.error('Analysis error:', err);
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
@@ -52,16 +54,44 @@ export default function AnalyzeScreen() {
     }
   };
 
+  const handleMatchSelect = async (index: number, result?: VisionResult) => {
+    const vision = result || visionResult;
+    if (!vision) return;
+
+    const match = vision.matches[index];
+    setSelectedMatch(match);
+    setState('searching');
+
+    try {
+      // 2. Marktsuche auf allen Plattformen
+      const market = await searchAllMarkets(match.searchQuery, match.category);
+      setMarketResult(market);
+      setState('complete');
+    } catch (err) {
+      console.error('Market search error:', err);
+      setError(err instanceof Error ? err.message : 'Marktsuche fehlgeschlagen');
+      setState('error');
+    }
+  };
+
+  const handleManualEntry = () => {
+    Alert.alert(
+      'Manuelle Eingabe',
+      'Diese Funktion wird in einer späteren Version verfügbar sein.',
+      [{ text: 'OK' }]
+    );
+  };
+
   const handleSaveToHistory = () => {
-    if (visionResult && marketResult) {
+    if (selectedMatch && marketResult) {
       addItem({
         imageUri: decodeURIComponent(imageUri!),
-        productName: visionResult.productName,
-        category: visionResult.category,
-        brand: visionResult.brand,
-        condition: visionResult.condition,
-        confidence: visionResult.confidence,
-        priceStats: marketResult.priceStats,
+        productName: selectedMatch.productName,
+        category: selectedMatch.category,
+        brand: selectedMatch.brand,
+        condition: selectedMatch.condition,
+        confidence: selectedMatch.confidence,
+        priceStats: marketResult.combined,
       });
     }
     router.replace('/');
@@ -98,7 +128,7 @@ export default function AnalyzeScreen() {
               <Text className="text-gray-400 mt-2 text-center">
                 {state === 'analyzing' 
                   ? 'KI erkennt den Gegenstand' 
-                  : 'Suche aktuelle Preise auf eBay'}
+                  : 'Suche auf eBay, Kleinanzeigen & Amazon'}
               </Text>
             </View>
           )}
@@ -122,82 +152,117 @@ export default function AnalyzeScreen() {
           )}
 
           {/* Vision Result */}
-          {visionResult && state !== 'analyzing' && (
+          {selectedMatch && state !== 'analyzing' && state !== 'selecting' && (
             <View className="bg-background-card rounded-xl p-4 mb-4">
               <View className="flex-row justify-between items-start mb-3">
                 <Text className="text-white text-xl font-bold flex-1">
-                  {visionResult.productName}
+                  {selectedMatch.productName}
                 </Text>
                 <View className="bg-primary-500/20 px-2 py-1 rounded">
                   <Text className="text-primary-400 text-sm">
-                    {Math.round(visionResult.confidence * 100)}%
+                    {Math.round(selectedMatch.confidence * 100)}%
                   </Text>
                 </View>
               </View>
               
               <View className="flex-row flex-wrap gap-2 mb-3">
                 <View className="bg-gray-700 px-3 py-1 rounded-full">
-                  <Text className="text-gray-300 text-sm">{visionResult.category}</Text>
+                  <Text className="text-gray-300 text-sm">{selectedMatch.category}</Text>
                 </View>
-                {visionResult.brand && (
+                {selectedMatch.brand && (
                   <View className="bg-gray-700 px-3 py-1 rounded-full">
-                    <Text className="text-gray-300 text-sm">{visionResult.brand}</Text>
+                    <Text className="text-gray-300 text-sm">{selectedMatch.brand}</Text>
                   </View>
                 )}
                 <View className="bg-gray-700 px-3 py-1 rounded-full">
-                  <Text className="text-gray-300 text-sm">{visionResult.condition}</Text>
+                  <Text className="text-gray-300 text-sm">{selectedMatch.condition}</Text>
                 </View>
               </View>
 
-              <Text className="text-gray-400">{visionResult.description}</Text>
+              <Text className="text-gray-400">{selectedMatch.description}</Text>
             </View>
           )}
 
-          {/* Market Result */}
+          {/* Market Result - Platform Comparison */}
           {marketResult && state === 'complete' && (
-            <View className="bg-background-card rounded-xl p-4 mb-4">
-              <Text className="text-white text-lg font-semibold mb-4">
-                💰 Marktwert (eBay)
-              </Text>
+            <>
+              {/* Gesamt-Übersicht */}
+              <View className="bg-background-card rounded-xl p-4 mb-4">
+                <Text className="text-white text-lg font-semibold mb-4">
+                  💰 Geschätzter Marktwert
+                </Text>
 
-              {/* Preis-Übersicht */}
-              <View className="bg-background rounded-xl p-4 mb-4">
-                <View className="flex-row justify-between mb-2">
-                  <Text className="text-gray-400">Durchschnitt</Text>
-                  <Text className="text-white text-xl font-bold">
-                    {formatPrice(marketResult.priceStats.avgPrice)}
+                <View className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4 mb-4">
+                  <Text className="text-gray-400 text-center text-sm">Durchschnitt</Text>
+                  <Text className="text-white text-3xl font-bold text-center">
+                    {formatPrice(marketResult.combined.avgPrice)}
+                  </Text>
+                  <Text className="text-gray-400 text-center text-sm mt-1">
+                    {formatPrice(marketResult.combined.minPrice)} - {formatPrice(marketResult.combined.maxPrice)}
                   </Text>
                 </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-400">Preisspanne</Text>
-                  <Text className="text-gray-300">
-                    {formatPrice(marketResult.priceStats.minPrice)} - {formatPrice(marketResult.priceStats.maxPrice)}
-                  </Text>
+
+                {/* Statistiken */}
+                <View className="flex-row gap-3">
+                  <View className="flex-1 bg-background rounded-lg p-3 items-center">
+                    <Text className="text-2xl font-bold text-white">
+                      {marketResult.combined.totalListings}
+                    </Text>
+                    <Text className="text-gray-400 text-sm">Angebote</Text>
+                  </View>
+                  <View className="flex-1 bg-background rounded-lg p-3 items-center">
+                    <Text className="text-2xl font-bold text-green-400">
+                      {marketResult.combined.soldListings}
+                    </Text>
+                    <Text className="text-gray-400 text-sm">Verkauft</Text>
+                  </View>
+                  <View className="flex-1 bg-background rounded-lg p-3 items-center">
+                    <Text className="text-2xl font-bold text-primary-400">
+                      {formatPrice(marketResult.combined.medianPrice)}
+                    </Text>
+                    <Text className="text-gray-400 text-sm">Median</Text>
+                  </View>
                 </View>
               </View>
 
-              {/* Statistiken */}
-              <View className="flex-row gap-3">
-                <View className="flex-1 bg-background rounded-lg p-3 items-center">
-                  <Text className="text-2xl font-bold text-white">
-                    {marketResult.priceStats.totalListings}
-                  </Text>
-                  <Text className="text-gray-400 text-sm">Angebote</Text>
-                </View>
-                <View className="flex-1 bg-background rounded-lg p-3 items-center">
-                  <Text className="text-2xl font-bold text-green-400">
-                    {marketResult.priceStats.soldListings}
-                  </Text>
-                  <Text className="text-gray-400 text-sm">Verkauft</Text>
-                </View>
-                <View className="flex-1 bg-background rounded-lg p-3 items-center">
-                  <Text className="text-2xl font-bold text-primary-400">
-                    {formatPrice(marketResult.priceStats.medianPrice)}
-                  </Text>
-                  <Text className="text-gray-400 text-sm">Median</Text>
-                </View>
+              {/* Plattform-Vergleich */}
+              <View className="bg-background-card rounded-xl p-4 mb-4">
+                <Text className="text-white text-lg font-semibold mb-4">
+                  📊 Plattform-Vergleich
+                </Text>
+
+                {marketResult.platforms.map((platform) => (
+                  <View 
+                    key={platform.platform} 
+                    className="flex-row items-center justify-between py-3 border-b border-gray-800 last:border-b-0"
+                  >
+                    <View className="flex-row items-center">
+                      <Text className="text-2xl mr-3">
+                        {platform.platform === 'ebay' && '🛒'}
+                        {platform.platform === 'kleinanzeigen' && '📦'}
+                        {platform.platform === 'amazon' && '📱'}
+                      </Text>
+                      <View>
+                        <Text className="text-white font-medium capitalize">
+                          {platform.platform}
+                        </Text>
+                        <Text className="text-gray-500 text-xs">
+                          {platform.priceStats.totalListings} Angebote
+                        </Text>
+                      </View>
+                    </View>
+                    <View className="items-end">
+                      <Text className="text-white font-bold">
+                        {formatPrice(platform.priceStats.avgPrice)}
+                      </Text>
+                      <Text className="text-gray-500 text-xs">
+                        ⌀ Preis
+                      </Text>
+                    </View>
+                  </View>
+                ))}
               </View>
-            </View>
+            </>
           )}
 
           {/* Action Buttons */}
@@ -223,6 +288,14 @@ export default function AnalyzeScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* Match Selection Sheet */}
+        <MatchSelectionSheet
+          visible={state === 'selecting'}
+          matches={visionResult?.matches || []}
+          onSelect={handleMatchSelect}
+          onManualEntry={handleManualEntry}
+        />
       </SafeAreaView>
     </>
   );
