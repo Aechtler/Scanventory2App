@@ -23,7 +23,7 @@ export default function HistoryDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const fetchMarketData = useCallback(async () => {
+  const fetchMarketData = async () => {
     if (!item) return;
     
     try {
@@ -40,16 +40,20 @@ export default function HistoryDetailScreen() {
       console.error('Market fetch error:', err);
       Alert.alert('Fehler', 'Marktdaten konnten nicht geladen werden');
     }
-  }, [item, updateItemPrices]);
+  };
 
+  // Only fetch once on mount
   useEffect(() => {
+    if (!item) return;
+    
     const loadInitialData = async () => {
       setLoading(true);
       await fetchMarketData();
       setLoading(false);
     };
     loadInitialData();
-  }, [fetchMarketData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // Only re-run when ID changes
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
