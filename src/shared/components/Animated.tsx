@@ -75,13 +75,13 @@ interface FadeInViewProps {
 export function FadeInView({ 
   children, 
   delay = 0, 
-  duration = 400,
+  duration = 150,
   className = '',
   style,
 }: FadeInViewProps) {
   return (
     <MotiView
-      from={{ opacity: 0, translateY: 10 }}
+      from={{ opacity: 0, translateY: 6 }}
       animate={{ opacity: 1, translateY: 0 }}
       transition={{
         type: 'timing',
@@ -110,13 +110,13 @@ export function StaggeredItem({
 }) {
   return (
     <MotiView
-      from={{ opacity: 0, translateX: -20 }}
+      from={{ opacity: 0, translateX: -10 }}
       animate={{ opacity: 1, translateX: 0 }}
       transition={{
         type: 'spring',
-        damping: 18,
-        stiffness: 200,
-        delay: index * 80,
+        damping: 20,
+        stiffness: 400,
+        delay: index * 30,
       }}
       className={className}
     >
@@ -141,7 +141,7 @@ export function PulseView({
       animate={{ scale: 1.02 }}
       transition={{
         type: 'timing',
-        duration: 1500,
+        duration: 800,
         loop: true,
       }}
       className={className}
@@ -165,12 +165,12 @@ export function BounceInView({
 }) {
   return (
     <MotiView
-      from={{ scale: 0.8, opacity: 0 }}
+      from={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{
         type: 'spring',
-        damping: 12,
-        stiffness: 200,
+        damping: 18,
+        stiffness: 400,
         delay,
       }}
       className={className}
@@ -192,13 +192,13 @@ export function SlideUpView({
 }) {
   return (
     <MotiView
-      from={{ translateY: 100, opacity: 0 }}
+      from={{ translateY: 50, opacity: 0 }}
       animate={{ translateY: 0, opacity: 1 }}
-      exit={{ translateY: 100, opacity: 0 }}
+      exit={{ translateY: 50, opacity: 0 }}
       transition={{
         type: 'spring',
-        damping: 20,
-        stiffness: 300,
+        damping: 22,
+        stiffness: 450,
       }}
       className={className}
     >
