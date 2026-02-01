@@ -1,65 +1,63 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, RefreshControl } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
-import { searchAllMarkets, formatPrice, AggregatedMarketResult } from '../../features/market/services/marketAggregator';
-import { MarketResult } from '../../features/market/services/ebayService';
+import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinksService';
+import { searchMarket, PriceStats } from '../../features/market/services/ebayService';
+import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
+import { PriceEstimate } from '../../features/market/components/PriceEstimate';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
-import { PriceStatsSkeleton } from '../../shared/components/Skeleton';
 import { MotiView } from 'moti';
 
 /**
- * History Detail Screen - Zeigt ein Item mit aktualisierbaren Marktdaten
+ * History Detail Screen - Zeigt ein Item mit Preisschätzung und Quicklinks zu Marktplätzen
  */
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const getItemById = useHistoryStore((state: { getItemById: (id: string) => HistoryItem | undefined }) => state.getItemById);
-  const updateItemPrices = useHistoryStore((state: { updateItemPrices: (id: string, priceStats: any) => void }) => state.updateItemPrices);
   
   const item = id ? getItemById(id) : null;
-  const [marketResult, setMarketResult] = useState<AggregatedMarketResult | null>(null);
+  const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
+  const [priceStats, setPriceStats] = useState<PriceStats | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const fetchMarketData = async () => {
-    if (!item) return;
+  useEffect(() => {
+    if (item) {
+      const searchQuery = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
+      setPlatformLinks(generatePlatformLinks(searchQuery));
+      loadPriceData(searchQuery);
+    }
+  }, [item]);
+
+  const loadPriceData = async (searchQuery: string) => {
+    setPriceLoading(true);
+    setPriceStats(null);
     
     try {
-      const searchQuery = `${item.brand || ''} ${item.productName}`.trim();
-      const result = await searchAllMarkets(searchQuery, item.category);
-      setMarketResult(result);
-      setLastUpdated(new Date());
-      
-      // Update price stats in store
-      if (updateItemPrices) {
-        updateItemPrices(item.id, result.combined);
+      const result = await searchMarket(searchQuery);
+      if (result) {
+        setPriceStats(result.priceStats);
       }
     } catch (err) {
-      console.error('Market fetch error:', err);
-      Alert.alert('Fehler', 'Marktdaten konnten nicht geladen werden');
+      console.error('Price loading error:', err);
+      // Graceful degradation - just don't show price
+    } finally {
+      setPriceLoading(false);
     }
   };
 
-  // Only fetch once on mount
-  useEffect(() => {
-    if (!item) return;
-    
-    const loadInitialData = async () => {
-      setLoading(true);
-      await fetchMarketData();
-      setLoading(false);
-    };
-    loadInitialData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]); // Only re-run when ID changes
-
-  const onRefresh = useCallback(async () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
-    await fetchMarketData();
-    setRefreshing(false);
-  }, [fetchMarketData]);
+    if (item) {
+      const searchQuery = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
+      setPlatformLinks(generatePlatformLinks(searchQuery));
+      loadPriceData(searchQuery).finally(() => setRefreshing(false));
+    } else {
+      setRefreshing(false);
+    }
+  }, [item]);
 
   if (!item) {
     return (
@@ -78,6 +76,16 @@ export default function HistoryDetailScreen() {
     );
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
     <>
       <Stack.Screen
@@ -95,8 +103,6 @@ export default function HistoryDetailScreen() {
               refreshing={refreshing}
               onRefresh={onRefresh}
               tintColor="#6366f1"
-              title="Aktualisiere Preise..."
-              titleColor="#9ca3af"
             />
           }
         >
@@ -105,7 +111,7 @@ export default function HistoryDetailScreen() {
             <MotiView
               from={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', damping: 15 }}
+              transition={{ type: 'spring', damping: 15, stiffness: 400 }}
               className="rounded-2xl overflow-hidden mb-6"
             >
               <Image
@@ -117,7 +123,7 @@ export default function HistoryDetailScreen() {
           </FadeInView>
 
           {/* Produkt-Info */}
-          <FadeInView delay={100}>
+          <FadeInView delay={50}>
             <View className="bg-background-card rounded-xl p-4 mb-4 border border-gray-800">
               <View className="flex-row justify-between items-start mb-3">
                 <Text className="text-white text-xl font-bold flex-1">
@@ -130,121 +136,42 @@ export default function HistoryDetailScreen() {
                 </View>
               </View>
               
-              <View className="flex-row flex-wrap gap-2">
+              <View className="flex-row flex-wrap gap-2 mb-3">
                 {[item.category, item.brand, item.condition]
                   .filter(Boolean)
                   .map((tag, i) => (
-                    <View key={i} className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
-                      <Text className="text-gray-200 text-sm">{tag}</Text>
-                    </View>
-                  ))}
-              </View>
-            </View>
-          </FadeInView>
-
-          {/* Letzte Aktualisierung */}
-          {lastUpdated && (
-            <FadeInView delay={150}>
-              <View className="flex-row items-center justify-center mb-4">
-                <Text className="text-gray-500 text-xs">
-                  🔄 Zuletzt aktualisiert: {lastUpdated.toLocaleTimeString('de-DE')}
-                </Text>
-              </View>
-            </FadeInView>
-          )}
-
-          {/* Loading State */}
-          {loading && <PriceStatsSkeleton />}
-
-          {/* Marktdaten */}
-          {marketResult && !loading && (
-            <>
-              {/* Hauptpreis - Hero Section */}
-              <BounceInView delay={200}>
-                <View className="bg-gradient-to-b from-primary-500/20 to-primary-500/5 border border-primary-500/30 rounded-2xl p-6 mb-4">
-                  <Text className="text-gray-400 text-center text-sm mb-1">
-                    Aktueller Marktwert
-                  </Text>
-                  <Text className="text-white text-4xl font-bold text-center">
-                    {formatPrice(marketResult.combined.avgPrice)}
-                  </Text>
-                  <Text className="text-gray-400 text-center text-sm mt-2">
-                    {formatPrice(marketResult.combined.minPrice)} – {formatPrice(marketResult.combined.maxPrice)}
-                  </Text>
-                  
-                  {/* Stats Row */}
-                  <View className="flex-row justify-around mt-6 pt-4 border-t border-gray-700">
-                    <View className="items-center">
-                      <Text className="text-2xl font-bold text-white">
-                        {marketResult.combined.totalListings}
-                      </Text>
-                      <Text className="text-gray-500 text-xs mt-1">Angebote</Text>
-                    </View>
-                    <View className="w-px h-10 bg-gray-700" />
-                    <View className="items-center">
-                      <Text className="text-2xl font-bold text-green-400">
-                        {marketResult.combined.soldListings}
-                      </Text>
-                      <Text className="text-gray-500 text-xs mt-1">Verkauft</Text>
-                    </View>
-                    <View className="w-px h-10 bg-gray-700" />
-                    <View className="items-center">
-                      <Text className="text-2xl font-bold text-primary-400">
-                        {formatPrice(marketResult.combined.medianPrice)}
-                      </Text>
-                      <Text className="text-gray-500 text-xs mt-1">Median</Text>
-                    </View>
-                  </View>
-                </View>
-              </BounceInView>
-
-              {/* Plattform-Vergleich */}
-              <FadeInView delay={400}>
-                <Text className="text-white text-lg font-semibold mb-3">
-                  📊 Plattform-Vergleich
-                </Text>
-                
-                <View className="gap-2">
-                  {marketResult.platforms.map((platform, index) => (
-                    <StaggeredItem key={platform.platform} index={index}>
-                      <View className="bg-background-card rounded-xl p-4 flex-row items-center border border-gray-800">
-                        <View className="w-12 h-12 bg-gray-700/50 rounded-xl items-center justify-center mr-4">
-                          <Text className="text-2xl">
-                            {platform.platform === 'ebay' && '🛒'}
-                            {platform.platform === 'kleinanzeigen' && '📦'}
-                            {platform.platform === 'amazon' && '📱'}
-                            {platform.platform === 'idealo' && '🔍'}
-                          </Text>
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-white font-semibold capitalize">
-                            {platform.platform}
-                          </Text>
-                          <Text className="text-gray-500 text-sm">
-                            {platform.priceStats.totalListings} Angebote
-                          </Text>
-                        </View>
-                        <View className="items-end">
-                          <Text className="text-white text-lg font-bold">
-                            {formatPrice(platform.priceStats.avgPrice)}
-                          </Text>
-                          <Text className="text-gray-500 text-xs">
-                            Ø Preis
-                          </Text>
-                        </View>
+                    <StaggeredItem key={i} index={i}>
+                      <View className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
+                        <Text className="text-gray-200 text-sm">{tag}</Text>
                       </View>
                     </StaggeredItem>
                   ))}
-                </View>
-              </FadeInView>
-            </>
-          )}
+              </View>
+
+              <Text className="text-gray-500 text-sm">
+                Gescannt: {formatDate(item.scannedAt)}
+              </Text>
+            </View>
+          </FadeInView>
+
+          {/* Price Estimate */}
+          <FadeInView delay={75}>
+            <PriceEstimate 
+              priceStats={priceStats} 
+              isLoading={priceLoading}
+            />
+          </FadeInView>
+
+          {/* Platform Quicklinks */}
+          <FadeInView delay={100}>
+            <PlatformQuicklinks links={platformLinks} />
+          </FadeInView>
 
           {/* Hinweis */}
-          <FadeInView delay={500}>
+          <FadeInView delay={150}>
             <View className="mt-6 p-4 bg-gray-800/30 rounded-xl border border-gray-700">
               <Text className="text-gray-400 text-center text-sm">
-                ↓ Ziehe nach unten um Preise zu aktualisieren
+                Ziehe nach unten um die Preise zu aktualisieren
               </Text>
             </View>
           </FadeInView>

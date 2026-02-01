@@ -18,6 +18,7 @@ export interface HistoryItem {
   brand: string | null;
   condition: string;
   confidence: number;
+  searchQuery: string; // Suchbegriff für Quicklinks
   priceStats: PriceStats;
   scannedAt: string; // ISO Date string
 }

@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { analyzeImage, analyzeImageMock, VisionResult, VisionMatch } from '../features/scan/services/visionService';
-import { searchAllMarkets, formatPrice, AggregatedMarketResult } from '../features/market/services/marketAggregator';
+import { generatePlatformLinks, PlatformLink } from '../features/market/services/quicklinksService';
+import { searchMarket, PriceStats } from '../features/market/services/ebayService';
 import { useHistoryStore } from '../features/history/store/historyStore';
 import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
+import { PlatformQuicklinks } from '../features/market/components/PlatformQuicklinks';
+import { PriceEstimate } from '../features/market/components/PriceEstimate';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../shared/components/Animated';
-import { ImageSkeleton, AnalysisResultSkeleton, PriceStatsSkeleton } from '../shared/components/Skeleton';
+import { ImageSkeleton, AnalysisResultSkeleton } from '../shared/components/Skeleton';
 import { MotiView } from 'moti';
 
-type AnalysisState = 'analyzing' | 'selecting' | 'searching' | 'complete' | 'error';
+type AnalysisState = 'analyzing' | 'selecting' | 'complete' | 'error';
 
 /**
- * Analyse Screen - Premium UI mit Animationen
+ * Analyse Screen - Bilderkennung + Preisschätzung + Quicklinks zu Marktplätzen
  */
 export default function AnalyzeScreen() {
   const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
@@ -22,7 +25,9 @@ export default function AnalyzeScreen() {
   const [state, setState] = useState<AnalysisState>('analyzing');
   const [visionResult, setVisionResult] = useState<VisionResult | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<VisionMatch | null>(null);
-  const [marketResult, setMarketResult] = useState<AggregatedMarketResult | null>(null);
+  const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
+  const [priceStats, setPriceStats] = useState<PriceStats | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,16 +66,31 @@ export default function AnalyzeScreen() {
 
     const match = vision.matches[index];
     setSelectedMatch(match);
-    setState('searching');
+    
+    // Generate quicklinks for the search query
+    const links = generatePlatformLinks(match.searchQuery);
+    setPlatformLinks(links);
+    
+    setState('complete');
+    
+    // Load price data from eBay (non-blocking)
+    loadPriceData(match.searchQuery);
+  };
 
+  const loadPriceData = async (searchQuery: string) => {
+    setPriceLoading(true);
+    setPriceStats(null);
+    
     try {
-      const market = await searchAllMarkets(match.searchQuery, match.category);
-      setMarketResult(market);
-      setState('complete');
+      const result = await searchMarket(searchQuery);
+      if (result) {
+        setPriceStats(result.priceStats);
+      }
     } catch (err) {
-      console.error('Market search error:', err);
-      setError(err instanceof Error ? err.message : 'Marktsuche fehlgeschlagen');
-      setState('error');
+      console.error('Price loading error:', err);
+      // Graceful degradation - just don't show price
+    } finally {
+      setPriceLoading(false);
     }
   };
 
@@ -83,7 +103,7 @@ export default function AnalyzeScreen() {
   };
 
   const handleSaveToHistory = async () => {
-    if (selectedMatch && marketResult) {
+    if (selectedMatch) {
       await addItem({
         imageUri: decodeURIComponent(imageUri!),
         productName: selectedMatch.productName,
@@ -91,7 +111,15 @@ export default function AnalyzeScreen() {
         brand: selectedMatch.brand,
         condition: selectedMatch.condition,
         confidence: selectedMatch.confidence,
-        priceStats: marketResult.combined,
+        searchQuery: selectedMatch.searchQuery,
+        priceStats: priceStats || {
+          minPrice: 0,
+          maxPrice: 0,
+          avgPrice: 0,
+          medianPrice: 0,
+          totalListings: 0,
+          soldListings: 0,
+        },
       });
     }
     router.replace('/');
@@ -113,7 +141,7 @@ export default function AnalyzeScreen() {
               <MotiView
                 from={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', damping: 15 }}
+                transition={{ type: 'spring', damping: 15, stiffness: 400 }}
                 className="rounded-2xl overflow-hidden mb-6 shadow-lg"
               >
                 <Image
@@ -121,21 +149,20 @@ export default function AnalyzeScreen() {
                   style={{ width: '100%', aspectRatio: 4 / 3 }}
                   resizeMode="cover"
                 />
-                
               </MotiView>
             ) : (
               <ImageSkeleton />
             )}
           </FadeInView>
 
-          {/* Loading States mit Skeleton */}
+          {/* Loading State */}
           {state === 'analyzing' && (
-            <FadeInView delay={200}>
+            <FadeInView delay={100}>
               <View className="bg-background-card rounded-xl p-6 items-center mb-4">
                 <MotiView
                   from={{ rotate: '0deg' }}
                   animate={{ rotate: '360deg' }}
-                  transition={{ type: 'timing', duration: 2000, loop: true }}
+                  transition={{ type: 'timing', duration: 1500, loop: true }}
                 >
                   <Text className="text-5xl">🔍</Text>
                 </MotiView>
@@ -146,38 +173,17 @@ export default function AnalyzeScreen() {
                   KI erkennt den Gegenstand
                 </Text>
                 
-                {/* Loading Bar Animation */}
+                {/* Loading Bar */}
                 <View className="w-full h-1 bg-gray-700 rounded-full mt-4 overflow-hidden">
                   <MotiView
                     from={{ translateX: -200 }}
                     animate={{ translateX: 200 }}
-                    transition={{ type: 'timing', duration: 1500, loop: true }}
+                    transition={{ type: 'timing', duration: 1000, loop: true }}
                     className="w-20 h-full bg-primary-500 rounded-full"
                   />
                 </View>
               </View>
               <AnalysisResultSkeleton />
-            </FadeInView>
-          )}
-
-          {state === 'searching' && (
-            <FadeInView delay={0}>
-              <View className="bg-background-card rounded-xl p-6 items-center mb-4">
-                <MotiView
-                  from={{ scale: 0.9 }}
-                  animate={{ scale: 1.1 }}
-                  transition={{ type: 'timing', duration: 800, loop: true }}
-                >
-                  <Text className="text-5xl">💰</Text>
-                </MotiView>
-                <Text className="text-white mt-4 text-lg font-semibold">
-                  Suche Marktdaten...
-                </Text>
-                <Text className="text-gray-400 mt-2 text-center">
-                  Durchsuche eBay, Kleinanzeigen, Amazon & Idealo
-                </Text>
-              </View>
-              <PriceStatsSkeleton />
             </FadeInView>
           )}
 
@@ -201,136 +207,69 @@ export default function AnalyzeScreen() {
             </BounceInView>
           )}
 
-          {/* Vision Result - Animiert */}
-          {selectedMatch && state !== 'analyzing' && state !== 'selecting' && (
-            <FadeInView delay={100}>
-              <View className="bg-background-card rounded-xl p-4 mb-4 border border-gray-800">
-                <View className="flex-row justify-between items-start mb-3">
-                  <Text className="text-white text-xl font-bold flex-1">
-                    {selectedMatch.productName}
-                  </Text>
-                  <MotiView
-                    from={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', delay: 300 }}
-                    className="bg-primary-500/20 px-3 py-1 rounded-lg"
-                  >
-                    <Text className="text-primary-400 font-bold">
-                      {Math.round(selectedMatch.confidence * 100)}%
-                    </Text>
-                  </MotiView>
-                </View>
-                
-                <View className="flex-row flex-wrap gap-2 mb-3">
-                  {[selectedMatch.category, selectedMatch.brand, selectedMatch.condition]
-                    .filter(Boolean)
-                    .map((tag, i) => (
-                      <StaggeredItem key={i} index={i}>
-                        <View className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
-                          <Text className="text-gray-200 text-sm">{tag}</Text>
-                        </View>
-                      </StaggeredItem>
-                    ))}
-                </View>
-
-                <Text className="text-gray-400 leading-5">{selectedMatch.description}</Text>
-              </View>
-            </FadeInView>
-          )}
-
-          {/* Market Result - Premium Design */}
-          {marketResult && state === 'complete' && (
+          {/* Vision Result */}
+          {selectedMatch && state === 'complete' && (
             <>
-              {/* Hauptpreis - Hero Section */}
-              <BounceInView delay={200}>
-                <View className="bg-gradient-to-b from-primary-500/20 to-primary-500/5 border border-primary-500/30 rounded-2xl p-6 mb-4">
-                  <Text className="text-gray-400 text-center text-sm mb-1">
-                    Geschätzter Marktwert
-                  </Text>
-                  <Text className="text-white text-4xl font-bold text-center">
-                    {formatPrice(marketResult.combined.avgPrice)}
-                  </Text>
-                  <Text className="text-gray-400 text-center text-sm mt-2">
-                    {formatPrice(marketResult.combined.minPrice)} – {formatPrice(marketResult.combined.maxPrice)}
-                  </Text>
-                  
-                  {/* Stats Row */}
-                  <View className="flex-row justify-around mt-6 pt-4 border-t border-gray-700">
-                    <View className="items-center">
-                      <Text className="text-2xl font-bold text-white">
-                        {marketResult.combined.totalListings}
+              <FadeInView delay={50}>
+                <View className="bg-background-card rounded-xl p-4 mb-4 border border-gray-800">
+                  <View className="flex-row justify-between items-start mb-3">
+                    <Text className="text-white text-xl font-bold flex-1">
+                      {selectedMatch.productName}
+                    </Text>
+                    <MotiView
+                      from={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', delay: 150, stiffness: 400 }}
+                      className="bg-primary-500/20 px-3 py-1 rounded-lg"
+                    >
+                      <Text className="text-primary-400 font-bold">
+                        {Math.round(selectedMatch.confidence * 100)}%
                       </Text>
-                      <Text className="text-gray-500 text-xs mt-1">Angebote</Text>
-                    </View>
-                    <View className="w-px h-10 bg-gray-700" />
-                    <View className="items-center">
-                      <Text className="text-2xl font-bold text-green-400">
-                        {marketResult.combined.soldListings}
-                      </Text>
-                      <Text className="text-gray-500 text-xs mt-1">Verkauft</Text>
-                    </View>
-                    <View className="w-px h-10 bg-gray-700" />
-                    <View className="items-center">
-                      <Text className="text-2xl font-bold text-primary-400">
-                        {formatPrice(marketResult.combined.medianPrice)}
-                      </Text>
-                      <Text className="text-gray-500 text-xs mt-1">Median</Text>
-                    </View>
+                    </MotiView>
                   </View>
-                </View>
-              </BounceInView>
+                  
+                  <View className="flex-row flex-wrap gap-2 mb-3">
+                    {[selectedMatch.category, selectedMatch.brand, selectedMatch.condition]
+                      .filter(Boolean)
+                      .map((tag, i) => (
+                        <StaggeredItem key={i} index={i}>
+                          <View className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
+                            <Text className="text-gray-200 text-sm">{tag}</Text>
+                          </View>
+                        </StaggeredItem>
+                      ))}
+                  </View>
 
-              {/* Plattform-Vergleich - Cards */}
-              <FadeInView delay={400}>
-                <Text className="text-white text-lg font-semibold mb-3">
-                  📊 Plattform-Vergleich
-                </Text>
-                
-                <View className="gap-2">
-                  {marketResult.platforms.map((platform, index) => (
-                    <StaggeredItem key={platform.platform} index={index}>
-                      <View className="bg-background-card rounded-xl p-4 flex-row items-center border border-gray-800">
-                        <View className="w-12 h-12 bg-gray-700/50 rounded-xl items-center justify-center mr-4">
-                          <Text className="text-2xl">
-                            {platform.platform === 'ebay' && '🛒'}
-                            {platform.platform === 'kleinanzeigen' && '📦'}
-                            {platform.platform === 'amazon' && '📱'}
-                            {platform.platform === 'idealo' && '🔍'}
-                          </Text>
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-white font-semibold capitalize">
-                            {platform.platform}
-                          </Text>
-                          <Text className="text-gray-500 text-sm">
-                            {platform.priceStats.totalListings} Angebote
-                          </Text>
-                        </View>
-                        <View className="items-end">
-                          <Text className="text-white text-lg font-bold">
-                            {formatPrice(platform.priceStats.avgPrice)}
-                          </Text>
-                          <Text className="text-gray-500 text-xs">
-                            Ø Preis
-                          </Text>
-                        </View>
-                      </View>
-                    </StaggeredItem>
-                  ))}
+                  <Text className="text-gray-400 leading-5">
+                    {selectedMatch.description}
+                  </Text>
                 </View>
+              </FadeInView>
+
+              {/* Price Estimate */}
+              <FadeInView delay={100}>
+                <PriceEstimate 
+                  priceStats={priceStats} 
+                  isLoading={priceLoading}
+                />
+              </FadeInView>
+
+              {/* Platform Quicklinks */}
+              <FadeInView delay={150}>
+                <PlatformQuicklinks links={platformLinks} />
               </FadeInView>
             </>
           )}
 
-          {/* Action Buttons - Animiert */}
+          {/* Action Buttons */}
           {state === 'complete' && (
-            <FadeInView delay={600} className="gap-3 mt-6">
+            <FadeInView delay={250} className="gap-3 mt-6">
               <AnimatedButton
                 onPress={handleSaveToHistory}
                 className="bg-primary-500 rounded-xl p-4"
               >
                 <Text className="text-white text-center text-lg font-semibold">
-                  ✓ Speichern
+                  ✓ Im Verlauf speichern
                 </Text>
               </AnimatedButton>
               
