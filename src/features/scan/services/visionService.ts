@@ -48,27 +48,37 @@ export async function analyzeImage(imageUri: string): Promise<VisionResult> {
         {
           parts: [
             {
-              text: `Analysiere dieses Bild und identifiziere den Gegenstand. Gib mir die 3 wahrscheinlichsten Treffer als JSON-Array zurück.
+              text: `Du bist ein Experte für Produktidentifikation. Analysiere dieses Bild SEHR GENAU und identifiziere den EXAKTEN Gegenstand.
 
-Für jeden Treffer:
-- productName: Genauer Produktname mit Modell/Variante falls erkennbar
-- category: Elektronik, Kleidung, Möbel, Spielzeug, Sammlerstück, oder Sonstiges
-- brand: Marke falls erkennbar, sonst null
-- condition: Neu, Wie neu, Gut, Akzeptabel, oder Für Ersatzteile
-- description: 1 Satz Beschreibung
-- confidence: Zahl zwischen 0 und 1
-- searchQuery: Optimierter Suchbegriff für Marktplatz-Suche
+WICHTIG:
+- Schau dir ALLE sichtbaren Details an: Text, Logos, Farben, Form, Material
+- Der ERSTE Treffer muss das EXAKT sichtbare Produkt sein
+- Nur Treffer 2 und 3 dürfen Alternativen sein (falls unsicher)
+- Wenn du Text/Logo lesen kannst, nutze diesen für die genaue Identifikation
+- Achte auf Verpackungen, Etiketten, Seriennummern
 
-Beispiel-Antwort:
+Antworte als JSON:
 {
   "matches": [
-    {"productName": "...", "category": "...", "brand": "...", "condition": "...", "description": "...", "confidence": 0.9, "searchQuery": "..."},
-    {"productName": "...", "category": "...", "brand": null, "condition": "...", "description": "...", "confidence": 0.7, "searchQuery": "..."},
-    {"productName": "...", "category": "...", "brand": null, "condition": "...", "description": "...", "confidence": 0.5, "searchQuery": "..."}
+    {
+      "productName": "EXAKTER vollständiger Produktname (mit Modell, Edition, Variante)",
+      "category": "Elektronik | Kleidung | Möbel | Spielzeug | Sammlerstück | Videospiele | Haushalt | Sport | Bücher | Sonstiges",
+      "brand": "Markenname oder null",
+      "condition": "Neu | Wie neu | Gut | Akzeptabel | Für Ersatzteile",
+      "description": "1 Satz mit erkennbaren Details und Zustandsbeschreibung",
+      "confidence": 0.0-1.0,
+      "searchQuery": "Optimiert für eBay/Amazon Suche (Marke + Produktname + Modell)"
+    }
   ]
 }
 
-Sortiere nach Konfidenz (höchste zuerst). Antworte NUR mit dem JSON.`,
+REGELN:
+- Treffer 1: Das EXAKTE Produkt im Bild (höchste Konfidenz)
+- Treffer 2-3: Nur falls du unsicher bist, ähnliche Alternativen
+- Wenn du dir SEHR sicher bist, gib nur 1 Treffer mit confidence >= 0.9
+- searchQuery soll so präzise wie möglich sein für Marktplatz-Suche
+
+Antworte NUR mit dem JSON, kein anderer Text.`,
             },
             {
               inline_data: {
@@ -80,7 +90,7 @@ Sortiere nach Konfidenz (höchste zuerst). Antworte NUR mit dem JSON.`,
         },
       ],
       generationConfig: {
-        temperature: 0.3,
+        temperature: 0.1,  // Niedrigere Temperature für präzisere Antworten
         maxOutputTokens: 1000,
       },
     }),

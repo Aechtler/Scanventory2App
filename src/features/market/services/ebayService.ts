@@ -33,9 +33,10 @@ export interface MarketResult {
   fetchedAt: Date;
 }
 
-// eBay API Configuration
-const EBAY_SANDBOX_AUTH_URL = 'https://api.sandbox.ebay.com/identity/v1/oauth2/token';
-const EBAY_SANDBOX_API_URL = 'https://api.sandbox.ebay.com/buy/browse/v1';
+// eBay API Configuration - Using Production for real data
+// Note: Sandbox has no product data, Production works with Sandbox keys for Browse API (public data)
+const EBAY_AUTH_URL = 'https://api.ebay.com/identity/v1/oauth2/token';
+const EBAY_API_URL = 'https://api.ebay.com/buy/browse/v1';
 
 // Token cache
 let cachedToken: string | null = null;
@@ -66,12 +67,18 @@ function base64Encode(str: string): string {
 
 /**
  * Holt einen OAuth Access Token von eBay (Client Credentials Flow)
+ * HINWEIS: Sandbox-Keys funktionieren nicht mit Production API
  */
 async function getEbayAccessToken(): Promise<string | null> {
   const appId = process.env.EXPO_PUBLIC_EBAY_APP_ID;
   const certId = process.env.EXPO_PUBLIC_EBAY_CERT_ID;
   
-  console.log('[eBay] Checking credentials...', { appId: appId?.substring(0, 10), certId: certId?.substring(0, 10) });
+  // Sandbox-Keys beginnen mit SBX- und funktionieren nur mit Sandbox API (die keine Daten hat)
+  // Für Production API braucht man Production-Keys
+  if (appId?.startsWith('MarkAech-ScanApp-SBX') || certId?.startsWith('SBX-')) {
+    console.log('[eBay] Sandbox credentials detected - eBay disabled (use Perplexity for prices)');
+    return null;
+  }
   
   if (!appId || !certId) {
     console.log('[eBay] Credentials not configured');
@@ -88,14 +95,21 @@ async function getEbayAccessToken(): Promise<string | null> {
     const credentials = base64Encode(`${appId}:${certId}`);
     console.log('[eBay] Requesting OAuth token...');
     
-    const response = await fetch(EBAY_SANDBOX_AUTH_URL, {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const response = await fetch(EBAY_AUTH_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': `Basic ${credentials}`,
       },
       body: 'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
     
     console.log('[eBay] OAuth response status:', response.status);
     
@@ -112,7 +126,11 @@ async function getEbayAccessToken(): Promise<string | null> {
     console.log('[eBay] OAuth token obtained, expires in', data.expires_in, 'seconds');
     return cachedToken;
   } catch (error) {
-    console.error('[eBay] OAuth error:', error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('[eBay] OAuth timeout - request took too long');
+    } else {
+      console.error('[eBay] OAuth error:', error);
+    }
     return null;
   }
 }
@@ -131,7 +149,7 @@ async function searchEbayReal(query: string): Promise<MarketResult | null> {
   
   try {
     const encodedQuery = encodeURIComponent(query);
-    const url = `${EBAY_SANDBOX_API_URL}/item_summary/search?q=${encodedQuery}&limit=50`;
+    const url = `${EBAY_API_URL}/item_summary/search?q=${encodedQuery}&limit=50`;
     
     console.log('[eBay] Search URL:', url);
     

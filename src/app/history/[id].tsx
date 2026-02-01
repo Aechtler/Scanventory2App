@@ -5,13 +5,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
 import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinksService';
 import { searchMarket, PriceStats } from '../../features/market/services/ebayService';
+import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexityService';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
 import { PriceEstimate } from '../../features/market/components/PriceEstimate';
-import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
+import { MarketValueCard } from '../../features/market/components/MarketValueCard';
+import { FadeInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
 import { MotiView } from 'moti';
 
 /**
- * History Detail Screen - Zeigt ein Item mit Preisschätzung und Quicklinks zu Marktplätzen
+ * History Detail Screen - Zeigt ein Item mit KI-Marktwert, Preisschätzung und Quicklinks
  */
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,15 +23,27 @@ export default function HistoryDetailScreen() {
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [priceStats, setPriceStats] = useState<PriceStats | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [marketValue, setMarketValue] = useState<MarketValueResult | null>(null);
+  const [marketValueLoading, setMarketValueLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (item) {
       const searchQuery = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
       setPlatformLinks(generatePlatformLinks(searchQuery));
-      loadPriceData(searchQuery);
+      loadAllData(item);
     }
   }, [item]);
+
+  const loadAllData = async (historyItem: HistoryItem) => {
+    const searchQuery = historyItem.searchQuery || `${historyItem.brand || ''} ${historyItem.productName}`.trim();
+    
+    // Load eBay prices
+    loadPriceData(searchQuery);
+    
+    // Load Perplexity market value
+    loadMarketValue(historyItem.productName, historyItem.category);
+  };
 
   const loadPriceData = async (searchQuery: string) => {
     setPriceLoading(true);
@@ -42,22 +56,38 @@ export default function HistoryDetailScreen() {
       }
     } catch (err) {
       console.error('Price loading error:', err);
-      // Graceful degradation - just don't show price
     } finally {
       setPriceLoading(false);
     }
   };
 
-  const onRefresh = useCallback(() => {
+  const loadMarketValue = async (productName: string, category?: string) => {
+    setMarketValueLoading(true);
+    setMarketValue(null);
+    
+    try {
+      const result = await getMarketValue(productName, category);
+      setMarketValue(result);
+    } catch (err) {
+      console.error('Market value loading error:', err);
+    } finally {
+      setMarketValueLoading(false);
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     if (item) {
-      const searchQuery = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
-      setPlatformLinks(generatePlatformLinks(searchQuery));
-      loadPriceData(searchQuery).finally(() => setRefreshing(false));
-    } else {
-      setRefreshing(false);
+      await loadAllData(item);
     }
+    setRefreshing(false);
   }, [item]);
+
+  const handleRefreshMarketValue = () => {
+    if (item) {
+      loadMarketValue(item.productName, item.category);
+    }
+  };
 
   if (!item) {
     return (
@@ -154,8 +184,17 @@ export default function HistoryDetailScreen() {
             </View>
           </FadeInView>
 
-          {/* Price Estimate */}
+          {/* KI-Marktwertanalyse (Perplexity) */}
           <FadeInView delay={75}>
+            <MarketValueCard 
+              result={marketValue} 
+              isLoading={marketValueLoading}
+              onRefresh={handleRefreshMarketValue}
+            />
+          </FadeInView>
+
+          {/* eBay Price Estimate */}
+          <FadeInView delay={100}>
             <PriceEstimate 
               priceStats={priceStats} 
               isLoading={priceLoading}
@@ -163,7 +202,7 @@ export default function HistoryDetailScreen() {
           </FadeInView>
 
           {/* Platform Quicklinks */}
-          <FadeInView delay={100}>
+          <FadeInView delay={125}>
             <PlatformQuicklinks links={platformLinks} />
           </FadeInView>
 
@@ -171,7 +210,7 @@ export default function HistoryDetailScreen() {
           <FadeInView delay={150}>
             <View className="mt-6 p-4 bg-gray-800/30 rounded-xl border border-gray-700">
               <Text className="text-gray-400 text-center text-sm">
-                Ziehe nach unten um die Preise zu aktualisieren
+                Ziehe nach unten um alle Preise zu aktualisieren
               </Text>
             </View>
           </FadeInView>

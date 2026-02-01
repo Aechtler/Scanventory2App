@@ -5,10 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { analyzeImage, analyzeImageMock, VisionResult, VisionMatch } from '../features/scan/services/visionService';
 import { generatePlatformLinks, PlatformLink } from '../features/market/services/quicklinksService';
 import { searchMarket, PriceStats } from '../features/market/services/ebayService';
+import { getMarketValue, MarketValueResult } from '../features/market/services/perplexityService';
 import { useHistoryStore } from '../features/history/store/historyStore';
 import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
 import { PlatformQuicklinks } from '../features/market/components/PlatformQuicklinks';
 import { PriceEstimate } from '../features/market/components/PriceEstimate';
+import { MarketValueCard } from '../features/market/components/MarketValueCard';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../shared/components/Animated';
 import { ImageSkeleton, AnalysisResultSkeleton } from '../shared/components/Skeleton';
 import { MotiView } from 'moti';
@@ -16,7 +18,7 @@ import { MotiView } from 'moti';
 type AnalysisState = 'analyzing' | 'selecting' | 'complete' | 'error';
 
 /**
- * Analyse Screen - Bilderkennung + Preisschätzung + Quicklinks zu Marktplätzen
+ * Analyse Screen - Bilderkennung + KI-Marktwert + Preisschätzung + Quicklinks
  */
 export default function AnalyzeScreen() {
   const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
@@ -28,6 +30,8 @@ export default function AnalyzeScreen() {
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [priceStats, setPriceStats] = useState<PriceStats | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [marketValue, setMarketValue] = useState<MarketValueResult | null>(null);
+  const [marketValueLoading, setMarketValueLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,8 +77,9 @@ export default function AnalyzeScreen() {
     
     setState('complete');
     
-    // Load price data from eBay (non-blocking)
+    // Load data in parallel (non-blocking)
     loadPriceData(match.searchQuery);
+    loadMarketValue(match.productName, match.category);
   };
 
   const loadPriceData = async (searchQuery: string) => {
@@ -88,9 +93,28 @@ export default function AnalyzeScreen() {
       }
     } catch (err) {
       console.error('Price loading error:', err);
-      // Graceful degradation - just don't show price
     } finally {
       setPriceLoading(false);
+    }
+  };
+
+  const loadMarketValue = async (productName: string, category?: string) => {
+    setMarketValueLoading(true);
+    setMarketValue(null);
+    
+    try {
+      const result = await getMarketValue(productName, category);
+      setMarketValue(result);
+    } catch (err) {
+      console.error('Market value loading error:', err);
+    } finally {
+      setMarketValueLoading(false);
+    }
+  };
+
+  const handleRefreshMarketValue = () => {
+    if (selectedMatch) {
+      loadMarketValue(selectedMatch.productName, selectedMatch.category);
     }
   };
 
@@ -246,7 +270,16 @@ export default function AnalyzeScreen() {
                 </View>
               </FadeInView>
 
-              {/* Price Estimate */}
+              {/* KI-Marktwertanalyse (Perplexity) */}
+              <FadeInView delay={75}>
+                <MarketValueCard 
+                  result={marketValue} 
+                  isLoading={marketValueLoading}
+                  onRefresh={handleRefreshMarketValue}
+                />
+              </FadeInView>
+
+              {/* eBay Price Estimate */}
               <FadeInView delay={100}>
                 <PriceEstimate 
                   priceStats={priceStats} 
