@@ -4,7 +4,7 @@ import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
 import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
-import { searchMarket, PriceStats } from '../../features/market/services/ebay';
+import { searchMarket, PriceStats, MarketListing } from '../../features/market/services/ebay';
 import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexity';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
 import { PriceEstimate } from '../../features/market/components/PriceEstimate';
@@ -18,10 +18,13 @@ import { MotiView } from 'moti';
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const getItemById = useHistoryStore((state: { getItemById: (id: string) => HistoryItem | undefined }) => state.getItemById);
+  const updateMarketValue = useHistoryStore((state) => state.updateMarketValue);
+  const updateItemPrices = useHistoryStore((state) => state.updateItemPrices);
   
   const item = id ? getItemById(id) : null;
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [priceStats, setPriceStats] = useState<PriceStats | null>(null);
+  const [listings, setListings] = useState<MarketListing[]>([]);
   const [priceLoading, setPriceLoading] = useState(false);
   const [marketValue, setMarketValue] = useState<MarketValueResult | null>(null);
   const [marketValueLoading, setMarketValueLoading] = useState(false);
@@ -29,32 +32,54 @@ export default function HistoryDetailScreen() {
 
   useEffect(() => {
     if (item) {
-      // Use eBay-specific query for quicklinks, fallback to generic
+      // Generate quicklinks
       const ebayQuery = item.searchQueries?.ebay || item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
       setPlatformLinks(generatePlatformLinks(ebayQuery));
-      loadAllData(item);
+      
+      // Load cached market value if available (no API call needed)
+      if (item.marketValue) {
+        setMarketValue(item.marketValue);
+        console.log('[History] Using cached market value from', item.marketValueFetchedAt);
+      }
+      
+      // Load cached price stats and listings if available
+      if (item.priceStats) {
+        setPriceStats(item.priceStats);
+      }
+      if (item.ebayListings) {
+        setListings(item.ebayListings);
+        console.log('[History] Using cached listings from', item.ebayListingsFetchedAt);
+      }
     }
   }, [item]);
 
-  const loadAllData = async (historyItem: HistoryItem) => {
+  const loadAllData = async (historyItem: HistoryItem, forceRefresh = false) => {
     // Use generic/shorter query for better search results (too specific = no hits)
     const searchQuery = historyItem.searchQueries?.generic || historyItem.productName;
     
     // Load eBay prices
     loadPriceData(searchQuery);
     
-    // Load Perplexity market value
-    loadMarketValue(historyItem.productName, historyItem.category);
+    // Load Perplexity market value (force refresh to get new data)
+    loadMarketValue(historyItem.productName, historyItem.category, forceRefresh);
   };
 
   const loadPriceData = async (searchQuery: string) => {
     setPriceLoading(true);
     setPriceStats(null);
+    setListings([]);
     
     try {
       const result = await searchMarket(searchQuery);
       if (result) {
         setPriceStats(result.priceStats);
+        setListings(result.listings || []);
+        
+        // Save to storage for next time
+        if (item) {
+          updateItemPrices(item.id, result.priceStats, result.listings);
+          console.log('[History] Saved price data and', result.listings.length, 'listings to storage');
+        }
       }
     } catch (err) {
       console.error('Price loading error:', err);
@@ -63,13 +88,25 @@ export default function HistoryDetailScreen() {
     }
   };
 
-  const loadMarketValue = async (productName: string, category?: string) => {
+  const loadMarketValue = async (productName: string, category?: string, forceRefresh = false) => {
+    // Use cached value if available and not forcing refresh
+    if (!forceRefresh && item?.marketValue) {
+      setMarketValue(item.marketValue);
+      return;
+    }
+    
     setMarketValueLoading(true);
     setMarketValue(null);
     
     try {
       const result = await getMarketValue(productName, category);
       setMarketValue(result);
+      
+      // Save to storage for next time
+      if (result && item) {
+        updateMarketValue(item.id, result);
+        console.log('[History] Saved market value to storage');
+      }
     } catch (err) {
       console.error('Market value loading error:', err);
     } finally {
@@ -80,7 +117,7 @@ export default function HistoryDetailScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     if (item) {
-      await loadAllData(item);
+      await loadAllData(item, true); // Force refresh to get new data
     }
     setRefreshing(false);
   }, [item]);
@@ -198,7 +235,8 @@ export default function HistoryDetailScreen() {
           {/* eBay Price Estimate */}
           <FadeInView delay={100}>
             <PriceEstimate 
-              priceStats={priceStats} 
+              priceStats={priceStats}
+              listings={listings}
               isLoading={priceLoading}
             />
           </FadeInView>

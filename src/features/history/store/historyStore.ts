@@ -6,7 +6,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PriceStats } from '@/features/market/services/ebay';
+import { PriceStats, MarketListing } from '@/features/market/services/ebay';
+import { MarketValueResult } from '@/features/market/services/perplexity';
 import { cacheImage, removeCachedImage } from '../services/imageCacheService';
 
 export interface HistoryItem {
@@ -27,6 +28,10 @@ export interface HistoryItem {
     generic?: string;
   };
   priceStats: PriceStats;
+  ebayListings?: MarketListing[];    // Cached eBay listings for detail view
+  ebayListingsFetchedAt?: string;    // When listings were last fetched
+  marketValue?: MarketValueResult;   // Cached Perplexity AI market analysis
+  marketValueFetchedAt?: string;     // When market value was last fetched
   scannedAt: string; // ISO Date string
 }
 
@@ -38,7 +43,8 @@ interface HistoryState {
   clearHistory: () => void;
   getItemById: (id: string) => HistoryItem | undefined;
   setOffline: (offline: boolean) => void;
-  updateItemPrices: (id: string, priceStats: PriceStats) => void;
+  updateItemPrices: (id: string, priceStats: PriceStats, listings?: MarketListing[]) => void;
+  updateMarketValue: (id: string, marketValue: MarketValueResult) => void;
 }
 
 /**
@@ -88,10 +94,27 @@ export const useHistoryStore = create<HistoryState>()(
         set({ isOffline: offline });
       },
 
-      updateItemPrices: (id, priceStats) => {
+      updateItemPrices: (id, priceStats, listings) => {
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id ? { ...item, priceStats } : item
+            item.id === id 
+              ? { 
+                  ...item, 
+                  priceStats,
+                  ebayListings: listings,
+                  ebayListingsFetchedAt: new Date().toISOString()
+                } 
+              : item
+          ),
+        }));
+      },
+
+      updateMarketValue: (id, marketValue) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id 
+              ? { ...item, marketValue, marketValueFetchedAt: new Date().toISOString() } 
+              : item
           ),
         }));
       },

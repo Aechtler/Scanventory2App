@@ -40,10 +40,13 @@ export interface EbayConfig {
   authUrl: string;
   apiUrl: string;
   marketplaceId: string;
+  fallbackMarketplaces: string[];
 }
 
 export const EBAY_CONFIG: EbayConfig = {
   authUrl: 'https://api.ebay.com/identity/v1/oauth2/token',
   apiUrl: 'https://api.ebay.com/buy/browse/v1',
   marketplaceId: 'EBAY_DE',
+  // Fallback marketplaces if DE has no results (for rare/collectible items)
+  fallbackMarketplaces: ['EBAY_US', 'EBAY_GB', 'EBAY_FR', 'EBAY_AU'],
 };
