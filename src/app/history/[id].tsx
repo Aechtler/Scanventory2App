@@ -3,9 +3,9 @@ import { View, Text, Image, ScrollView, RefreshControl } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
-import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinksService';
-import { searchMarket, PriceStats } from '../../features/market/services/ebayService';
-import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexityService';
+import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
+import { searchMarket, PriceStats } from '../../features/market/services/ebay';
+import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexity';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
 import { PriceEstimate } from '../../features/market/components/PriceEstimate';
 import { MarketValueCard } from '../../features/market/components/MarketValueCard';
@@ -29,14 +29,16 @@ export default function HistoryDetailScreen() {
 
   useEffect(() => {
     if (item) {
-      const searchQuery = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
-      setPlatformLinks(generatePlatformLinks(searchQuery));
+      // Use eBay-specific query for quicklinks, fallback to generic
+      const ebayQuery = item.searchQueries?.ebay || item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
+      setPlatformLinks(generatePlatformLinks(ebayQuery));
       loadAllData(item);
     }
   }, [item]);
 
   const loadAllData = async (historyItem: HistoryItem) => {
-    const searchQuery = historyItem.searchQuery || `${historyItem.brand || ''} ${historyItem.productName}`.trim();
+    // Use generic/shorter query for better search results (too specific = no hits)
+    const searchQuery = historyItem.searchQueries?.generic || historyItem.productName;
     
     // Load eBay prices
     loadPriceData(searchQuery);

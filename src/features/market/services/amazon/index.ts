@@ -1,11 +1,13 @@
 /**
- * Amazon Market Service (Mock)
- * Simuliert Neupreis-Suche auf Amazon
+ * Amazon Market Service
+ * 
+ * Mock service simulating Amazon new price searches.
+ * TODO: Integrate with Amazon Product Advertising API for real data.
  */
 
-import { PriceStats, MarketResult, MarketListing } from './ebayService';
+import { MarketResult, MarketListing } from '../ebay/types';
 
-// Amazon hat höhere Preise (Neuware)
+// Amazon has higher prices (new items)
 const PRICE_MODIFIER = 1.25;
 
 const MOCK_PRICE_RANGES: Record<string, { min: number; max: number }> = {
@@ -17,11 +19,13 @@ const MOCK_PRICE_RANGES: Record<string, { min: number; max: number }> = {
   Sonstiges: { min: 15, max: 400 },
 };
 
+/**
+ * Searches for products on Amazon (mock implementation)
+ */
 export async function searchAmazon(
   query: string,
   category: string = 'Sonstiges'
 ): Promise<MarketResult> {
-  // Simuliere API-Latenz
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const priceRange = MOCK_PRICE_RANGES[category] || MOCK_PRICE_RANGES['Sonstiges'];
@@ -58,7 +62,7 @@ export async function searchAmazon(
       avgPrice: Math.round(avgPrice * 100) / 100,
       medianPrice: prices[Math.floor(prices.length / 2)],
       totalListings: listings.length,
-      soldListings: 0, // Amazon zeigt keine Verkaufszahlen
+      soldListings: 0,
     },
     listings,
     fetchedAt: new Date(),

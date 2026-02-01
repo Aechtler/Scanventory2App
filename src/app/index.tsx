@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import { FadeInView, BounceInView, AnimatedButton } from '../shared/components/Animated';
 import { useHistoryStore } from '../features/history/store/historyStore';
-import { formatPrice } from '../features/market/services/ebayService';
+import { formatPrice } from '../features/market/services/ebay';
 import { calculateTotalValue } from '../features/history/services/exportService';
 
 /**

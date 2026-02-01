@@ -15,7 +15,14 @@ export interface VisionMatch {
   condition: string;
   description: string;
   confidence: number;
-  searchQuery: string;
+  searchQuery: string; // Allgemeiner Suchbegriff
+  searchQueries?: {
+    ebay?: string;        // Optimiert für eBay (präzise mit Modell)
+    kleinanzeigen?: string; // Optimiert für Kleinanzeigen (allgemeiner)
+    amazon?: string;      // Optimiert für Amazon (mit Produktdetails)
+    idealo?: string;      // Optimiert für Idealo (Produktname)
+    generic?: string;     // Fallback für alle Plattformen
+  };
 }
 
 export interface VisionResult {
@@ -67,7 +74,14 @@ Antworte als JSON:
       "condition": "Neu | Wie neu | Gut | Akzeptabel | Für Ersatzteile",
       "description": "1 Satz mit erkennbaren Details und Zustandsbeschreibung",
       "confidence": 0.0-1.0,
-      "searchQuery": "Optimiert für eBay/Amazon Suche (Marke + Produktname + Modell)"
+      "searchQuery": "Allgemeiner Suchbegriff (Marke + Produktname)",
+      "searchQueries": {
+        "ebay": "Präzise für eBay: Marke Produktname Modell Edition (detailliert)",
+        "kleinanzeigen": "Einfach für Kleinanzeigen: Marke Produktname (kurz, allgemein)",
+        "amazon": "Amazon-optimiert: Marke Produktname Modell (wie auf Amazon gelistet)",
+        "idealo": "Produkt-fokussiert: Marke Produktname ohne Zustand",
+        "generic": "Universal: Marke Produkttyp (funktioniert überall)"
+      }
     }
   ]
 }
@@ -76,7 +90,22 @@ REGELN:
 - Treffer 1: Das EXAKTE Produkt im Bild (höchste Konfidenz)
 - Treffer 2-3: Nur falls du unsicher bist, ähnliche Alternativen
 - Wenn du dir SEHR sicher bist, gib nur 1 Treffer mit confidence >= 0.9
-- searchQuery soll so präzise wie möglich sein für Marktplatz-Suche
+
+SUCHBEGRIFF-STRATEGIE:
+- ebay: Sehr spezifisch mit allen Details (Nutzer suchen präzise)
+- kleinanzeigen: Kürzer, allgemeiner (Privatverkäufer nutzen weniger Details)
+- amazon: Wie auf Amazon gelistet (offizielle Produktnamen)
+- idealo: Neutraler Produktname ohne Zustandsangaben
+- generic: Fallback für alle Plattformen
+
+Beispiel searchQueries für "iPhone 14 Pro 256GB Space Black":
+{
+  "ebay": "Apple iPhone 14 Pro 256GB Space Black",
+  "kleinanzeigen": "iPhone 14 Pro 256GB",
+  "amazon": "Apple iPhone 14 Pro 256GB Schwarz",
+  "idealo": "Apple iPhone 14 Pro 256GB",
+  "generic": "iPhone 14 Pro"
+}
 
 Antworte NUR mit dem JSON, kein anderer Text.`,
             },
@@ -147,6 +176,13 @@ export async function analyzeImageMock(_imageUri: string): Promise<VisionResult>
         description: 'iPhone 14 Pro in gutem Zustand mit leichten Gebrauchsspuren.',
         confidence: 0.92,
         searchQuery: 'iPhone 14 Pro 128GB',
+        searchQueries: {
+          ebay: 'Apple iPhone 14 Pro 128GB Space Black',
+          kleinanzeigen: 'iPhone 14 Pro 128GB',
+          amazon: 'Apple iPhone 14 Pro 128GB Schwarz',
+          idealo: 'Apple iPhone 14 Pro 128GB',
+          generic: 'iPhone 14 Pro',
+        },
       },
       {
         productName: 'Apple iPhone 14 128GB',
@@ -156,6 +192,13 @@ export async function analyzeImageMock(_imageUri: string): Promise<VisionResult>
         description: 'iPhone 14 Standard-Modell.',
         confidence: 0.75,
         searchQuery: 'iPhone 14 128GB',
+        searchQueries: {
+          ebay: 'Apple iPhone 14 128GB',
+          kleinanzeigen: 'iPhone 14',
+          amazon: 'Apple iPhone 14 128GB',
+          idealo: 'Apple iPhone 14 128GB',
+          generic: 'iPhone 14',
+        },
       },
       {
         productName: 'Apple iPhone 13 Pro 128GB',
@@ -165,6 +208,13 @@ export async function analyzeImageMock(_imageUri: string): Promise<VisionResult>
         description: 'iPhone 13 Pro Vorgängermodell.',
         confidence: 0.55,
         searchQuery: 'iPhone 13 Pro 128GB',
+        searchQueries: {
+          ebay: 'Apple iPhone 13 Pro 128GB',
+          kleinanzeigen: 'iPhone 13 Pro',
+          amazon: 'Apple iPhone 13 Pro 128GB',
+          idealo: 'Apple iPhone 13 Pro 128GB',
+          generic: 'iPhone 13 Pro',
+        },
       },
     ],
     selectedIndex: null,

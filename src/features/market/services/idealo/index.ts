@@ -1,11 +1,12 @@
 /**
- * Idealo Market Service (Mock)
- * Simuliert Preisvergleich-Ergebnisse von Idealo
+ * Idealo Market Service
+ * 
+ * Mock service simulating Idealo price comparison results.
+ * TODO: Integrate with Idealo Partner API for real data.
  */
 
-import { PriceStats, MarketResult, MarketListing } from './ebayService';
+import { MarketResult, MarketListing } from '../ebay/types';
 
-// Idealo zeigt beste Angebote verschiedener Händler
 const RETAILERS = [
   'MediaMarkt', 'Saturn', 'Amazon', 'Otto', 'Alternate', 
   'Notebooksbilliger', 'Cyberport', 'Expert'
@@ -20,11 +21,13 @@ const MOCK_PRICE_RANGES: Record<string, { min: number; max: number }> = {
   Sonstiges: { min: 12, max: 350 },
 };
 
+/**
+ * Searches for products on Idealo (mock implementation)
+ */
 export async function searchIdealo(
   query: string,
   category: string = 'Sonstiges'
 ): Promise<MarketResult> {
-  // Simuliere API-Latenz
   await new Promise((resolve) => setTimeout(resolve, 700));
 
   const priceRange = MOCK_PRICE_RANGES[category] || MOCK_PRICE_RANGES['Sonstiges'];

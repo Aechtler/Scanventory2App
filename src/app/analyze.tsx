@@ -3,9 +3,9 @@ import { View, Text, Image, ScrollView, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { analyzeImage, analyzeImageMock, VisionResult, VisionMatch } from '../features/scan/services/visionService';
-import { generatePlatformLinks, PlatformLink } from '../features/market/services/quicklinksService';
-import { searchMarket, PriceStats } from '../features/market/services/ebayService';
-import { getMarketValue, MarketValueResult } from '../features/market/services/perplexityService';
+import { generatePlatformLinks, PlatformLink } from '../features/market/services/quicklinks';
+import { searchMarket, PriceStats } from '../features/market/services/ebay';
+import { getMarketValue, MarketValueResult } from '../features/market/services/perplexity';
 import { useHistoryStore } from '../features/history/store/historyStore';
 import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
 import { PlatformQuicklinks } from '../features/market/components/PlatformQuicklinks';
@@ -70,23 +70,27 @@ export default function AnalyzeScreen() {
 
     const match = vision.matches[index];
     setSelectedMatch(match);
-    
-    // Generate quicklinks for the search query
-    const links = generatePlatformLinks(match.searchQuery);
+
+    // Generate quicklinks - use platform-specific queries if available
+    const ebayQuery = match.searchQueries?.ebay || match.searchQuery;
+    const links = generatePlatformLinks(ebayQuery);
     setPlatformLinks(links);
-    
+
     setState('complete');
-    
+
     // Load data in parallel (non-blocking)
-    loadPriceData(match.searchQuery);
+    // Use generic/shorter query for better search results (too specific = no hits)
+    const searchQuery = match.searchQueries?.generic || match.productName;
+    loadPriceData(searchQuery);
     loadMarketValue(match.productName, match.category);
   };
 
   const loadPriceData = async (searchQuery: string) => {
     setPriceLoading(true);
     setPriceStats(null);
-    
+
     try {
+      console.log('[AnalyzeScreen] Loading price data with query:', searchQuery);
       const result = await searchMarket(searchQuery);
       if (result) {
         setPriceStats(result.priceStats);
@@ -136,6 +140,7 @@ export default function AnalyzeScreen() {
         condition: selectedMatch.condition,
         confidence: selectedMatch.confidence,
         searchQuery: selectedMatch.searchQuery,
+        searchQueries: selectedMatch.searchQueries,
         priceStats: priceStats || {
           minPrice: 0,
           maxPrice: 0,

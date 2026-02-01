@@ -5,7 +5,7 @@ import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import { useHistoryStore, HistoryItem } from '../features/history/store/historyStore';
-import { formatPrice } from '../features/market/services/ebayService';
+import { formatPrice } from '../features/market/services/ebay';
 import { exportAndShareCSV, calculateTotalValue } from '../features/history/services/exportService';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../shared/components/Animated';
 import { HistoryItemSkeleton } from '../shared/components/Skeleton';

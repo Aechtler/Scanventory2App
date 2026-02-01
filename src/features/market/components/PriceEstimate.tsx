@@ -6,7 +6,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { MotiView } from 'moti';
-import { PriceStats, formatPrice, formatPriceRange } from '../services/ebayService';
+import { PriceStats, formatPrice, formatPriceRange } from '../services/ebay';
 
 interface PriceEstimateProps {
   priceStats: PriceStats | null;

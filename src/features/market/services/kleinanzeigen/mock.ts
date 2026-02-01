@@ -1,12 +1,9 @@
 /**
- * Kleinanzeigen Market Service (Mock)
- * Simuliert Suchergebnisse von eBay Kleinanzeigen
+ * Kleinanzeigen Mock Data
+ * Used when the real API is not available
  */
 
-import { PriceStats, MarketResult, MarketListing } from './ebayService';
-
-// Kleinanzeigen hat tendenziell niedrigere Preise (Privatverkauf)
-const PRICE_MODIFIER = 0.85;
+import { MarketResult, MarketListing } from '../ebay/types';
 
 const MOCK_PRICE_RANGES: Record<string, { min: number; max: number }> = {
   Elektronik: { min: 40, max: 1000 },
@@ -17,27 +14,31 @@ const MOCK_PRICE_RANGES: Record<string, { min: number; max: number }> = {
   Sonstiges: { min: 5, max: 200 },
 };
 
-export async function searchKleinanzeigen(
+// Kleinanzeigen tends to have lower prices (private sales)
+const PRICE_MODIFIER = 0.85;
+
+export async function searchKleinanzeigenMock(
   query: string,
   category: string = 'Sonstiges'
 ): Promise<MarketResult> {
-  // Simuliere API-Latenz
+  console.log('[Kleinanzeigen] Using mock data');
+
   await new Promise((resolve) => setTimeout(resolve, 600));
 
   const priceRange = MOCK_PRICE_RANGES[category] || MOCK_PRICE_RANGES['Sonstiges'];
-  
+
   const prices: number[] = [];
   const listingCount = 5 + Math.floor(Math.random() * 8);
-  
+
   for (let i = 0; i < listingCount; i++) {
     const price = (priceRange.min + Math.random() * (priceRange.max - priceRange.min)) * PRICE_MODIFIER;
     prices.push(Math.round(price * 100) / 100);
   }
-  
+
   prices.sort((a, b) => a - b);
 
   const listings: MarketListing[] = prices.map((price, index) => ({
-    id: `ka-${index}`,
+    id: `ka-mock-${index}`,
     title: `${query} - Privatverkauf ${index + 1}`,
     price,
     currency: 'EUR',

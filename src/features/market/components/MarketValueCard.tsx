@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { MotiView } from 'moti';
-import { MarketValueResult } from '../services/perplexityService';
+import { MarketValueResult } from '../services/perplexity';
 
 interface MarketValueCardProps {
   result: MarketValueResult | null;

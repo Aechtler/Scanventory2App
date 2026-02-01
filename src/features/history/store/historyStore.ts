@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PriceStats } from '@/features/market/services/ebayService';
+import { PriceStats } from '@/features/market/services/ebay';
 import { cacheImage, removeCachedImage } from '../services/imageCacheService';
 
 export interface HistoryItem {
@@ -18,7 +18,14 @@ export interface HistoryItem {
   brand: string | null;
   condition: string;
   confidence: number;
-  searchQuery: string; // Suchbegriff für Quicklinks
+  searchQuery: string; // Allgemeiner Suchbegriff für Quicklinks
+  searchQueries?: {    // Plattformspezifische Suchbegriffe
+    ebay?: string;
+    kleinanzeigen?: string;
+    amazon?: string;
+    idealo?: string;
+    generic?: string;
+  };
   priceStats: PriceStats;
   scannedAt: string; // ISO Date string
 }
