@@ -11,6 +11,7 @@ import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionS
 import { PlatformQuicklinks } from '../features/market/components/PlatformQuicklinks';
 import { PriceEstimate } from '../features/market/components/PriceEstimate';
 import { MarketValueCard } from '../features/market/components/MarketValueCard';
+import { Icons } from '../shared/components/Icons';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../shared/components/Animated';
 import { ImageSkeleton, AnalysisResultSkeleton } from '../shared/components/Skeleton';
 import { MotiView } from 'moti';
@@ -189,11 +190,11 @@ export default function AnalyzeScreen() {
             <FadeInView delay={100}>
               <View className="bg-background-card rounded-xl p-6 items-center mb-4">
                 <MotiView
-                  from={{ rotate: '0deg' }}
-                  animate={{ rotate: '360deg' }}
-                  transition={{ type: 'timing', duration: 1500, loop: true }}
+                  from={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', delay: 200 }}
                 >
-                  <Text className="text-5xl">🔍</Text>
+                  <Icons.Search size={48} color="#a78bfa" />
                 </MotiView>
                 <Text className="text-white mt-4 text-lg font-semibold">
                   Analysiere Bild...
@@ -220,9 +221,12 @@ export default function AnalyzeScreen() {
           {state === 'error' && (
             <BounceInView>
               <View className="bg-red-900/30 border border-red-500 rounded-xl p-6">
-                <Text className="text-red-400 text-lg font-semibold mb-2">
-                  ❌ Fehler bei der Analyse
-                </Text>
+                <View className="flex-row items-center mb-2">
+                  <Icons.Warning size={24} color="#f87171" />
+                  <Text className="text-red-400 text-lg font-semibold ml-2">
+                    Fehler bei der Analyse
+                  </Text>
+                </View>
                 <Text className="text-red-300">{error}</Text>
                 <AnimatedButton
                   onPress={runAnalysis}
@@ -306,9 +310,12 @@ export default function AnalyzeScreen() {
                 onPress={handleSaveToHistory}
                 className="bg-primary-500 rounded-xl p-4"
               >
-                <Text className="text-white text-center text-lg font-semibold">
-                  ✓ Im Verlauf speichern
-                </Text>
+                <View className="flex-row items-center justify-center">
+                  <Icons.Check size={20} color="#ffffff" />
+                  <Text className="text-white text-center text-lg font-semibold ml-2">
+                    Im Verlauf speichern
+                  </Text>
+                </View>
               </AnimatedButton>
               
               <AnimatedButton

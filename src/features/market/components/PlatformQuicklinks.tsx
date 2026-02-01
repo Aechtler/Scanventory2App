@@ -8,6 +8,7 @@ import { View, Text, Pressable } from 'react-native';
 import { MotiView } from 'moti';
 import { PlatformLink, openPlatformLink } from '../services/quicklinks';
 import { AnimatedButton } from '@/shared/components/Animated';
+import { Icons } from '@/shared/components/Icons';
 
 interface PlatformQuicklinksProps {
   links: PlatformLink[];
@@ -19,9 +20,12 @@ interface PlatformQuicklinksProps {
 export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
   return (
     <View className="gap-3">
-      <Text className="text-white text-lg font-semibold mb-1">
-        🔗 Jetzt vergleichen
-      </Text>
+      <View className="flex-row items-center mb-1">
+        <Icons.Globe size={20} color="#60a5fa" />
+        <Text className="text-white text-lg font-semibold ml-2">
+          Jetzt vergleichen
+        </Text>
+      </View>
       
       <View className="flex-row flex-wrap gap-3">
         {links.map((link, index) => (
@@ -38,12 +42,15 @@ export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
               style={{ backgroundColor: link.color + '20' }}
             >
               <View className="flex-row items-center justify-center">
-                <Text className="text-2xl mr-2">{link.icon}</Text>
-                <Text className="text-white font-semibold">{link.name}</Text>
+                {React.createElement((Icons as any)[link.icon] || Icons.ExternalLink, { size: 24, color: '#ffffff' })}
+                <Text className="text-white font-semibold ml-2">{link.name}</Text>
               </View>
-              <Text className="text-gray-400 text-xs text-center mt-1">
-                Suchergebnisse öffnen →
-              </Text>
+              <View className="flex-row items-center justify-center mt-1 pt-1 border-t border-white/10">
+                <Text className="text-gray-400 text-xs">Ergebnisse öffnen</Text>
+                <View className="ml-1">
+                  <Icons.ChevronRight size={14} color="#9ca3af" />
+                </View>
+              </View>
             </AnimatedButton>
           </MotiView>
         ))}
@@ -62,10 +69,10 @@ export function PlatformQuicklinksCompact({ links }: PlatformQuicklinksProps) {
         <AnimatedButton
           key={link.platform}
           onPress={() => openPlatformLink(link.url)}
-          className="flex-1 rounded-lg p-3 items-center"
+          className="flex-1 rounded-lg p-3 items-center justify-center"
           style={{ backgroundColor: link.color + '15' }}
         >
-          <Text className="text-xl">{link.icon}</Text>
+          {React.createElement((Icons as any)[link.icon] || Icons.ExternalLink, { size: 20, color: '#ffffff' })}
           <Text className="text-white text-xs mt-1 font-medium">{link.name}</Text>
         </AnimatedButton>
       ))}

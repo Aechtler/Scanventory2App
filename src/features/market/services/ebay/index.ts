@@ -12,11 +12,12 @@ export type {
   MarketListing, 
   PriceStats, 
   MarketResult, 
+  MarketplaceResult,
   EbaySearchResult,
   EbayConfig 
 } from './types';
 
-export { EBAY_CONFIG } from './types';
+export { EBAY_CONFIG, MARKETPLACE_NAMES } from './types';
 
 // Re-export auth functions
 export { 
@@ -25,8 +26,8 @@ export {
   clearTokenCache 
 } from './auth';
 
-// Re-export search function
-export { searchEbay } from './search';
+// Re-export search functions
+export { searchEbay, recalculatePriceStats } from './search';
 
 // Re-export utilities
 export { 

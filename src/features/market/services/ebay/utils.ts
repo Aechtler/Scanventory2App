@@ -15,23 +15,47 @@ export function normalizeSearchQuery(query: string): string {
 
 /**
  * Creates search variants for better hit rate
+ * More variants = more chances to find rare items
  */
 export function createSearchVariants(query: string): string[] {
   const normalized = normalizeSearchQuery(query);
-  const variants: string[] = [normalized];
+  const words = normalized.split(' ').filter(w => w.length > 0);
+  const variants: string[] = [];
 
-  // Variant without special characters
+  // 1. Full query
+  variants.push(normalized);
+
+  // 2. Without special characters
   const withoutSpecial = normalized.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (withoutSpecial !== normalized) {
+  if (withoutSpecial !== normalized && withoutSpecial.length > 0) {
     variants.push(withoutSpecial);
   }
 
-  // Variant: Only main words (> 3 chars)
-  const mainWords = normalized.split(' ').filter(word => word.length > 3).join(' ');
+  // 3. Only main words (> 3 chars)
+  const mainWords = words.filter(word => word.length > 3).join(' ');
   if (mainWords && mainWords !== normalized) {
     variants.push(mainWords);
   }
 
+  // 4. First 4 words (for long product names)
+  if (words.length > 4) {
+    variants.push(words.slice(0, 4).join(' '));
+  }
+
+  // 5. First 3 words (even shorter)
+  if (words.length > 3) {
+    variants.push(words.slice(0, 3).join(' '));
+  }
+
+  // 6. First 2 important words (brand + product type)
+  if (words.length >= 2) {
+    const shortQuery = words.slice(0, 2).join(' ');
+    if (!variants.includes(shortQuery)) {
+      variants.push(shortQuery);
+    }
+  }
+
+  console.log('[eBay] Search variants:', variants);
   return variants;
 }
 

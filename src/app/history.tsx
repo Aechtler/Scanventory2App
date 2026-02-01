@@ -9,6 +9,7 @@ import { formatPrice } from '../features/market/services/ebay';
 import { exportAndShareCSV, calculateTotalValue } from '../features/history/services/exportService';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../shared/components/Animated';
 import { HistoryItemSkeleton } from '../shared/components/Skeleton';
+import { Icons } from '../shared/components/Icons';
 
 /**
  * History Screen - Premium Liste mit Animationen
@@ -121,10 +122,11 @@ export default function HistoryScreen() {
               <AnimatedButton 
                 onPress={handleExport} 
                 disabled={isExporting}
-                className="mr-2 px-3 py-1"
+                className="mr-2 px-3 py-1 bg-primary-500/10 rounded-lg border border-primary-500/30 flex-row items-center"
               >
-                <Text className="text-primary-400 text-base font-medium">
-                  {isExporting ? '...' : '📤 Export'}
+                <Icons.Share size={16} color="#c7d2fe" />
+                <Text className="text-primary-400 text-sm font-medium ml-2">
+                  {isExporting ? '...' : 'Export'}
                 </Text>
               </AnimatedButton>
             ) : null,
@@ -138,8 +140,9 @@ export default function HistoryScreen() {
               from={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', damping: 12 }}
+              className="mb-6 bg-gray-800/50 p-6 rounded-full"
             >
-              <Text className="text-7xl mb-6 text-center">📭</Text>
+              <Icons.Inbox size={64} color="#6b7280" />
             </MotiView>
             <Text className="text-white text-2xl font-bold mb-2 text-center">
               Noch keine Scans
@@ -149,10 +152,11 @@ export default function HistoryScreen() {
             </Text>
             <AnimatedButton
               onPress={() => router.push('/scan')}
-              className="bg-primary-500 rounded-xl px-8 py-4"
+              className="bg-primary-500 rounded-xl px-8 py-4 flex-row items-center"
             >
-              <Text className="text-white font-semibold text-lg">
-                📸 Jetzt scannen
+              <Icons.Camera size={20} color="#ffffff" />
+              <Text className="text-white font-semibold text-lg ml-2">
+                Jetzt scannen
               </Text>
             </AnimatedButton>
           </FadeInView>
@@ -182,7 +186,7 @@ export default function HistoryScreen() {
                         </Text>
                       </View>
                       <View className="bg-primary-500/20 w-14 h-14 rounded-xl items-center justify-center">
-                        <Text className="text-2xl">💰</Text>
+                        <Icons.Money size={32} color="#a78bfa" />
                       </View>
                     </View>
                     <View className="flex-row mt-4 pt-4 border-t border-gray-700/50">

@@ -1,26 +1,93 @@
 /**
  * Price Estimate Component
- * Zeigt die Preisschätzung von eBay an
+ * Zeigt die Preisschätzung von eBay an mit Listings nach Marktplatz gruppiert
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, Linking, Image } from 'react-native';
 import { MotiView } from 'moti';
-import { PriceStats, formatPrice, formatPriceRange, MarketListing } from '../services/ebay';
+import { Icons } from '../../../shared/components/Icons';
+import { 
+  PriceStats, 
+  formatPrice, 
+  formatPriceRange, 
+  MarketListing,
+  MarketplaceResult,
+  MARKETPLACE_NAMES,
+  recalculatePriceStats
+} from '../services/ebay';
 
 interface PriceEstimateProps {
   priceStats: PriceStats | null;
   listings?: MarketListing[];
+  marketplaceResults?: MarketplaceResult[];
   isLoading: boolean;
   error?: string | null;
   onRefresh?: () => void;
+  onListingsChange?: (listings: MarketListing[]) => void;
 }
 
 /**
  * Zeigt Preisschätzung mit Loading/Error States
  */
-export function PriceEstimate({ priceStats, listings, isLoading, error, onRefresh }: PriceEstimateProps) {
+export function PriceEstimate({ 
+  priceStats, 
+  listings, 
+  marketplaceResults,
+  isLoading, 
+  error, 
+  onRefresh,
+  onListingsChange 
+}: PriceEstimateProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const [localListings, setLocalListings] = useState<MarketListing[]>(listings || []);
+  
+  // Update local listings when prop changes
+  React.useEffect(() => {
+    if (listings) {
+      setLocalListings(listings);
+    }
+  }, [listings]);
+
+  // Calculate stats from selected listings
+  const calculatedStats = useMemo(() => {
+    if (localListings.length === 0) return priceStats;
+    return recalculatePriceStats(localListings);
+  }, [localListings, priceStats]);
+
+  // Group listings by marketplace
+  const groupedListings = useMemo(() => {
+    const groups: Record<string, MarketListing[]> = {};
+    localListings.forEach(listing => {
+      const mp = listing.marketplace || 'UNKNOWN';
+      if (!groups[mp]) groups[mp] = [];
+      groups[mp].push(listing);
+    });
+    return groups;
+  }, [localListings]);
+
+  const toggleListing = (listingId: string) => {
+    const updated = localListings.map(l => 
+      l.id === listingId ? { ...l, selected: !l.selected } : l
+    );
+    setLocalListings(updated);
+    onListingsChange?.(updated);
+  };
+
+  const toggleMarketplace = (marketplace: string) => {
+    const marketplaceListings = localListings.filter(l => l.marketplace === marketplace);
+    const allSelected = marketplaceListings.every(l => l.selected);
+    
+    const updated = localListings.map(l => 
+      l.marketplace === marketplace ? { ...l, selected: !allSelected } : l
+    );
+    setLocalListings(updated);
+    onListingsChange?.(updated);
+  };
+
+  const selectedCount = localListings.filter(l => l.selected).length;
+  const selectedListing = localListings.find(l => l.selected);
+  const hasSelection = selectedCount > 0;
   
   // Loading State
   if (isLoading) {
@@ -32,10 +99,13 @@ export function PriceEstimate({ priceStats, listings, isLoading, error, onRefres
             animate={{ rotate: '360deg' }}
             transition={{ type: 'timing', duration: 1000, loop: true }}
           >
-            <Text className="text-2xl mr-3">💰</Text>
+            <Icons.Money size={24} color="#a78bfa" />
           </MotiView>
           <View className="flex-1">
             <Text className="text-white font-semibold">Lade Preisdaten...</Text>
+            <Text className="text-gray-400 text-xs mt-1">
+              Durchsuche 5 Marktplätze parallel...
+            </Text>
             <View className="h-1 bg-gray-700 rounded-full mt-2 overflow-hidden">
               <MotiView
                 from={{ translateX: -100 }}
@@ -50,10 +120,12 @@ export function PriceEstimate({ priceStats, listings, isLoading, error, onRefres
     );
   }
 
-  // Error or no data - don't show anything (graceful degradation)
+  // Error or no data
   if (error || !priceStats) {
     return null;
   }
+
+  const displayStats = calculatedStats || priceStats;
 
   return (
     <>
@@ -66,25 +138,43 @@ export function PriceEstimate({ priceStats, listings, isLoading, error, onRefres
         >
           {/* Header */}
           <View className="flex-row items-center mb-3">
-            <Text className="text-2xl mr-2">💰</Text>
+            <Icons.Money size={24} color="#a78bfa" />
             <Text className="text-white font-semibold text-lg">Preisschätzung</Text>
-            <View className="ml-auto bg-primary-500/20 px-2 py-1 rounded">
-              <Text className="text-primary-300 text-xs">eBay</Text>
+            <View className="ml-auto flex-row gap-1">
+              {Object.keys(groupedListings).slice(0, 3).map(mp => (
+                <Text key={mp} className="text-xs">
+                  {MARKETPLACE_NAMES[mp]?.split(' ')[0] || '🌍'}
+                </Text>
+              ))}
+              {Object.keys(groupedListings).length > 3 && (
+                <Text className="text-gray-400 text-xs">+{Object.keys(groupedListings).length - 3}</Text>
+              )}
             </View>
           </View>
 
           {/* Main Price */}
           <View className="items-center py-3">
-            <Text className="text-gray-400 text-sm mb-1">Durchschnittspreis</Text>
-            <MotiView
-              from={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', delay: 100, stiffness: 400 }}
-            >
-              <Text className="text-white text-4xl font-bold">
-                {formatPrice(priceStats.avgPrice)}
-              </Text>
-            </MotiView>
+            {hasSelection ? (
+              <>
+                <Text className="text-gray-400 text-sm mb-1">
+                  Referenzpreis ({selectedCount} gewählt)
+                </Text>
+                <MotiView
+                  from={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', delay: 100, stiffness: 400 }}
+                >
+                  <Text className="text-white text-4xl font-bold">
+                    {formatPrice(displayStats.avgPrice)}
+                  </Text>
+                </MotiView>
+              </>
+            ) : (
+              <>
+                <View className="flex-row items-center mb-1"><Icons.Warning size={16} color="#fbbf24" /><Text className="text-yellow-400 text-sm ml-1">Kein Referenzprodukt</Text></View>
+                <Text className="text-gray-400 text-lg">Tippen zum Auswählen</Text>
+              </>
+            )}
           </View>
 
           {/* Price Range */}
@@ -92,27 +182,29 @@ export function PriceEstimate({ priceStats, listings, isLoading, error, onRefres
             <View className="items-center flex-1">
               <Text className="text-gray-400 text-xs">Von</Text>
               <Text className="text-green-400 font-semibold">
-                {formatPrice(priceStats.minPrice)}
+                {formatPrice(displayStats.minPrice)}
               </Text>
             </View>
             <View className="w-px bg-gray-700" />
             <View className="items-center flex-1">
               <Text className="text-gray-400 text-xs">Bis</Text>
               <Text className="text-red-400 font-semibold">
-                {formatPrice(priceStats.maxPrice)}
+                {formatPrice(displayStats.maxPrice)}
               </Text>
             </View>
             <View className="w-px bg-gray-700" />
             <View className="items-center flex-1">
-              <Text className="text-gray-400 text-xs">Angebote</Text>
-              <Text className="text-white font-semibold">{priceStats.totalListings}</Text>
+              <Text className="text-gray-400 text-xs">Länder</Text>
+              <Text className="text-white font-semibold">{Object.keys(groupedListings).length}</Text>
             </View>
           </View>
 
-          {/* Hint */}
-          <Text className="text-gray-500 text-xs text-center mt-3">
-            Tippen für Details ▼
-          </Text>
+          <View className="flex-row items-center justify-center mt-3">
+            <Text className="text-gray-500 text-xs">Tippen zum Auswählen der Angebote</Text>
+            <View className="ml-1">
+              <Icons.ChevronDown size={14} color="#6b7280" />
+            </View>
+          </View>
         </MotiView>
       </Pressable>
 
@@ -127,140 +219,137 @@ export function PriceEstimate({ priceStats, listings, isLoading, error, onRefres
           {/* Modal Header */}
           <View className="flex-row items-center justify-between p-4 border-b border-gray-700">
             <View className="flex-row items-center">
-              <Text className="text-2xl mr-2">💰</Text>
-              <Text className="text-white font-bold text-lg">Preisanalyse Details</Text>
+              <Icons.Money size={24} color="#a78bfa" />
+              <View>
+                <Text className="text-white font-bold text-lg">Preisanalyse</Text>
+                <Text className="text-gray-400 text-xs">{selectedCount} von {localListings.length} ausgewählt</Text>
+              </View>
             </View>
             <Pressable 
               onPress={() => setShowDetails(false)}
               className="bg-gray-800 px-4 py-2 rounded-lg"
             >
-              <Text className="text-white font-medium">Schließen</Text>
+              <Text className="text-white font-medium">Fertig</Text>
             </Pressable>
           </View>
 
           <ScrollView className="flex-1 p-4">
-            {/* Price Summary */}
+            {/* Calculated Price */}
             <View className="bg-primary-900/30 rounded-xl p-4 mb-4 border border-primary-500/30">
-              <Text className="text-primary-300 text-sm mb-2">Durchschnittspreis</Text>
+              <Text className="text-primary-300 text-sm mb-2">Berechneter Durchschnitt</Text>
               <Text className="text-white text-4xl font-bold text-center">
-                {formatPrice(priceStats.avgPrice)}
+                {formatPrice(displayStats.avgPrice)}
               </Text>
               <Text className="text-gray-400 text-center mt-2">
-                {formatPriceRange(priceStats.minPrice, priceStats.maxPrice)}
+                {formatPriceRange(displayStats.minPrice, displayStats.maxPrice)}
+              </Text>
+              <Text className="text-gray-500 text-xs text-center mt-2">
+                Basierend auf {selectedCount} ausgewählten Angeboten
               </Text>
             </View>
 
-            {/* Statistics */}
-            <View className="bg-gray-800/50 rounded-xl p-4 mb-4">
-              <Text className="text-white font-semibold mb-3">📊 Statistiken</Text>
-              <View className="gap-3">
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-400">Minimum</Text>
-                  <Text className="text-green-400 font-semibold">{formatPrice(priceStats.minPrice)}</Text>
-                </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-400">Maximum</Text>
-                  <Text className="text-red-400 font-semibold">{formatPrice(priceStats.maxPrice)}</Text>
-                </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-400">Durchschnitt</Text>
-                  <Text className="text-white font-semibold">{formatPrice(priceStats.avgPrice)}</Text>
-                </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-400">Median</Text>
-                  <Text className="text-white font-semibold">{formatPrice(priceStats.medianPrice)}</Text>
-                </View>
-                <View className="w-full h-px bg-gray-700 my-1" />
-                <View className="flex-row justify-between">
-                  <Text className="text-gray-400">Angebote gesamt</Text>
-                  <Text className="text-white font-semibold">{priceStats.totalListings}</Text>
-                </View>
-                {priceStats.soldListings > 0 && (
-                  <View className="flex-row justify-between">
-                    <Text className="text-gray-400">Davon verkauft</Text>
-                    <Text className="text-white font-semibold">{priceStats.soldListings}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-
-            {/* Listings */}
-            {listings && listings.length > 0 && (
-              <View className="bg-gray-800/50 rounded-xl p-4 mb-4">
-                <Text className="text-white font-semibold mb-3">
-                  🛒 Gefundene Angebote ({listings.length})
-                </Text>
-                {listings.slice(0, 15).map((listing, i) => (
-                  <Pressable
-                    key={listing.id || i}
-                    onPress={() => {
-                      if (listing.itemUrl) {
-                        Linking.openURL(listing.itemUrl);
-                      }
-                    }}
-                    className="bg-gray-700/50 rounded-lg p-3 mb-2 flex-row"
+            {/* Listings by Marketplace */}
+            {Object.entries(groupedListings).map(([marketplace, mpListings]) => {
+              const selectedInMp = mpListings.filter(l => l.selected).length;
+              const allSelected = mpListings.every(l => l.selected);
+              
+              return (
+                <View key={marketplace} className="bg-gray-800/50 rounded-xl p-4 mb-4">
+                  {/* Marketplace Header */}
+                  <Pressable 
+                    onPress={() => toggleMarketplace(marketplace)}
+                    className="flex-row items-center justify-between mb-3"
                   >
-                    {/* Product Image */}
-                    {listing.imageUrl ? (
-                      <Image 
-                        source={{ uri: listing.imageUrl }}
-                        style={{ width: 64, height: 64, borderRadius: 8 }}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View 
-                        style={{ width: 64, height: 64, borderRadius: 8 }}
-                        className="bg-gray-600 items-center justify-center"
-                      >
-                        <Text className="text-2xl">📦</Text>
-                      </View>
-                    )}
-                    
-                    {/* Listing Info */}
-                    <View className="flex-1 ml-3">
-                      <Text 
-                        className="text-gray-200 text-sm font-medium mb-1"
-                        numberOfLines={2}
-                      >
-                        {listing.title}
+                    <View className="flex-row items-center">
+                      <Text className="text-white font-semibold text-lg">
+                        {MARKETPLACE_NAMES[marketplace] || marketplace}
                       </Text>
-                      <View className="flex-row justify-between items-center">
-                        <Text className="text-primary-400 font-bold text-lg">
-                          {formatPrice(listing.price)}
+                      <Text className="text-gray-400 ml-2">
+                        ({selectedInMp}/{mpListings.length})
+                      </Text>
+                    </View>
+                    <View className={`px-3 py-1 rounded-lg flex-row items-center ${allSelected ? 'bg-primary-500' : 'bg-gray-600'}`}>
+                      {allSelected && <View className="mr-1"><Icons.Check size={14} color="#ffffff" /></View>}
+                      <Text className="text-white text-sm">
+                        {allSelected ? 'Alle' : 'Auswählen'}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  {/* Listings */}
+                  {mpListings.map((listing) => (
+                    <Pressable
+                      key={listing.id}
+                      onPress={() => toggleListing(listing.id)}
+                      className={`rounded-lg p-3 mb-2 flex-row ${
+                        listing.selected ? 'bg-primary-900/30 border border-primary-500/50' : 'bg-gray-700/30 border border-transparent'
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <View className={`w-6 h-6 rounded-md mr-3 items-center justify-center ${
+                        listing.selected ? 'bg-primary-500' : 'bg-gray-600'
+                      }`}>
+                        {listing.selected && <Icons.Check size={16} color="#ffffff" />}
+                      </View>
+
+                      {/* Product Image */}
+                      {listing.imageUrl ? (
+                        <Image 
+                          source={{ uri: listing.imageUrl }}
+                          style={{ width: 56, height: 56, borderRadius: 8 }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View 
+                          style={{ width: 56, height: 56, borderRadius: 8 }}
+                          className="bg-gray-600 items-center justify-center"
+                        >
+                          <Icons.Package size={20} color="#9ca3af" />
+                        </View>
+                      )}
+                      
+                      {/* Listing Info */}
+                      <View className="flex-1 ml-3">
+                        <Text 
+                          className="text-gray-200 text-sm font-medium"
+                          numberOfLines={2}
+                        >
+                          {listing.title}
                         </Text>
-                        <View className="flex-row items-center gap-1">
+                        <View className="flex-row items-center mt-1">
+                          <Text className="text-primary-400 font-bold text-lg">
+                            {formatPrice(listing.price, listing.currency)}
+                          </Text>
                           {listing.condition && (
-                            <View className="bg-gray-600/50 px-2 py-0.5 rounded">
+                            <View className="bg-gray-600/50 px-2 py-0.5 rounded ml-2">
                               <Text className="text-gray-300 text-xs">{listing.condition}</Text>
-                            </View>
-                          )}
-                          {listing.sold && (
-                            <View className="bg-red-500/20 px-2 py-0.5 rounded">
-                              <Text className="text-red-400 text-xs">Verkauft</Text>
                             </View>
                           )}
                         </View>
                       </View>
-                      <Text className="text-primary-500 text-xs mt-1">
-                        Tippen zum Öffnen →
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-                {listings.length > 15 && (
-                  <Text className="text-gray-500 text-center mt-2">
-                    + {listings.length - 15} weitere Angebote
-                  </Text>
-                )}
-              </View>
-            )}
+
+                      {/* Open Link */}
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          if (listing.itemUrl) Linking.openURL(listing.itemUrl);
+                        }}
+                        className="ml-2 p-2"
+                      >
+                        <Icons.ExternalLink size={20} color="#a78bfa" />
+                      </Pressable>
+                    </Pressable>
+                  ))}
+                </View>
+              );
+            })}
 
             {/* No listings fallback */}
-            {(!listings || listings.length === 0) && (
+            {localListings.length === 0 && (
               <View className="bg-gray-800/50 rounded-xl p-4 mb-4">
                 <Text className="text-gray-400 text-center">
-                  Keine detaillierten Angebote verfügbar.
-                  {'\n'}Bitte "Neu laden" drücken um Angebote zu laden.
+                  Keine Angebote gefunden.
+                  {'\n'}Bitte "Neu laden" drücken.
                 </Text>
               </View>
             )}
@@ -274,13 +363,12 @@ export function PriceEstimate({ priceStats, listings, isLoading, error, onRefres
                 }}
                 className="bg-primary-600 py-4 px-6 rounded-xl items-center mb-6"
               >
-                <Text className="text-white font-semibold">🔄 Neu laden</Text>
+                <View className="flex-row items-center"><Icons.Refresh size={18} color="#ffffff" /><Text className="text-white font-semibold ml-2">Neu laden</Text></View>
               </Pressable>
             )}
 
-            {/* Source info */}
             <Text className="text-gray-600 text-xs text-center mb-4">
-              Datenquelle: eBay Browse API • Preise können variieren
+              Wähle Angebote aus um den Durchschnittspreis anzupassen
             </Text>
           </ScrollView>
         </View>

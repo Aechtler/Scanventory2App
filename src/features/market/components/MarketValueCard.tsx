@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
 import { MotiView } from 'moti';
+import { Icons } from '../../../shared/components/Icons';
 import { MarketValueResult } from '../services/perplexity';
 
 interface MarketValueCardProps {
@@ -31,7 +32,7 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
             animate={{ rotate: '360deg' }}
             transition={{ type: 'timing', duration: 1200, loop: true }}
           >
-            <Text className="text-2xl mr-3">🤖</Text>
+            <Icons.AI size={24} color="#a78bfa" />
           </MotiView>
           <View className="flex-1">
             <Text className="text-white font-semibold">KI recherchiert Marktwert...</Text>
@@ -68,12 +69,16 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
         >
           {/* Header */}
           <View className="flex-row items-center mb-3">
-            <Text className="text-2xl mr-2">🤖</Text>
+            <Icons.AI size={24} color="#a78bfa" />
             <Text className="text-white font-semibold text-lg">KI-Marktwertanalyse</Text>
             <View className="ml-auto flex-row items-center gap-2">
-              <View className={`${colors.bg} ${colors.border} border px-2 py-1 rounded`}>
-                <Text className={`${colors.text} text-xs font-medium`}>
-                  {result.confidence === 'hoch' ? '✓ ' : result.confidence === 'niedrig' ? '? ' : ''}
+              <View className="flex-row items-center">
+                {result.confidence === 'hoch' ? (
+                  <Icons.Check size={14} color="#4ade80" />
+                ) : result.confidence === 'niedrig' ? (
+                  <Icons.Help size={14} color="#f87171" />
+                ) : null}
+                <Text className={`${colors.text} text-xs font-bold ml-1 uppercase`}>
                   {result.confidence}
                 </Text>
               </View>
@@ -107,9 +112,12 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
             >
               {result.summary}
             </Text>
-            <Text className="text-purple-400 text-xs mt-2">
-              Tippen für Details ▼
-            </Text>
+            <View className="flex-row items-center mt-2">
+              <Text className="text-purple-400 text-xs">Tippen für Details</Text>
+              <View className="ml-1">
+                <Icons.ChevronDown size={12} color="#a78bfa" />
+              </View>
+            </View>
           </View>
 
           {/* Disclaimer */}
@@ -130,7 +138,7 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
           {/* Modal Header */}
           <View className="flex-row items-center justify-between p-4 border-b border-gray-700">
             <View className="flex-row items-center">
-              <Text className="text-2xl mr-2">🤖</Text>
+              <Icons.AI size={24} color="#a78bfa" />
               <Text className="text-white font-bold text-lg">KI-Analyse Details</Text>
             </View>
             <Pressable 
@@ -162,7 +170,10 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
 
             {/* Summary */}
             <View className="bg-gray-800/50 rounded-xl p-4 mb-4">
-              <Text className="text-white font-semibold mb-2">📋 Zusammenfassung</Text>
+              <View className="flex-row items-center mb-2">
+                <Icons.FileText size={18} color="#ffffff" />
+                <Text className="text-white font-semibold ml-2">Zusammenfassung</Text>
+              </View>
               <Text className="text-gray-300 leading-6">
                 {result.summary}
               </Text>
@@ -171,7 +182,7 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
             {/* Sources */}
             {result.sources.length > 0 && (
               <View className="bg-gray-800/50 rounded-xl p-4 mb-4">
-                <Text className="text-white font-semibold mb-2">🔗 Quellen</Text>
+                <View className="flex-row items-center mb-2"><Icons.ExternalLink size={16} color="#ffffff" /><Text className="text-white font-semibold ml-2">Quellen</Text></View>
                 {result.sources.map((source, i) => (
                   <View key={i} className="bg-gray-700/50 px-3 py-2 rounded-lg mb-2">
                     <Text className="text-gray-300 text-sm">{source}</Text>
@@ -182,7 +193,10 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
 
             {/* Raw Response */}
             <View className="bg-gray-800/50 rounded-xl p-4 mb-4">
-              <Text className="text-white font-semibold mb-2">📝 Komplette KI-Antwort</Text>
+              <View className="flex-row items-center mb-2">
+                <Icons.Terminal size={18} color="#ffffff" />
+                <Text className="text-white font-semibold ml-2">Komplette KI-Antwort</Text>
+              </View>
               <Text className="text-gray-400 text-xs mb-3">
                 Die vollständige Recherche von Perplexity AI:
               </Text>
@@ -202,7 +216,10 @@ export function MarketValueCard({ result, isLoading, onRefresh }: MarketValueCar
                 }}
                 className="bg-purple-600 py-4 px-6 rounded-xl items-center mb-6"
               >
-                <Text className="text-white font-semibold">🔄 Neu recherchieren</Text>
+                <View className="flex-row items-center">
+                  <Icons.Refresh size={18} color="#ffffff" />
+                  <Text className="text-white font-semibold ml-2">Neu recherchieren</Text>
+                </View>
               </Pressable>
             )}
           </ScrollView>

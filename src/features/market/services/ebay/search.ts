@@ -1,10 +1,17 @@
 /**
  * eBay Search API
- * Handles product search with multiple query variants and international fallback
+ * Handles product search across multiple marketplaces in parallel
  */
 
 import { getEbayAccessToken } from './auth';
-import { EBAY_CONFIG, MarketListing, MarketResult, EbaySearchResult } from './types';
+import { 
+  EBAY_CONFIG, 
+  MarketListing, 
+  MarketResult, 
+  EbaySearchResult,
+  MarketplaceResult,
+  MARKETPLACE_NAMES
+} from './types';
 import { createSearchVariants } from './utils';
 
 /**
@@ -13,12 +20,10 @@ import { createSearchVariants } from './utils';
 async function searchWithQuery(
   query: string,
   token: string,
-  marketplaceId: string = EBAY_CONFIG.marketplaceId
+  marketplaceId: string
 ): Promise<EbaySearchResult | null> {
   const encodedQuery = encodeURIComponent(query);
-  const url = `${EBAY_CONFIG.apiUrl}/item_summary/search?q=${encodedQuery}&limit=50&sort=price`;
-
-  console.log(`[eBay Search] ${marketplaceId}: ${query}`);
+  const url = `${EBAY_CONFIG.apiUrl}/item_summary/search?q=${encodedQuery}&limit=20&sort=price`;
 
   try {
     const response = await fetch(url, {
@@ -31,15 +36,11 @@ async function searchWithQuery(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[eBay Search] ${marketplaceId} failed:`, response.status, errorText);
       return null;
     }
 
     const data = await response.json();
     const total = data.total || 0;
-
-    console.log(`[eBay Search] ${marketplaceId}: ${total} items found`);
 
     if (data.itemSummaries && data.itemSummaries.length > 0) {
       return { data, total };
@@ -47,43 +48,52 @@ async function searchWithQuery(
 
     return null;
   } catch (error) {
-    console.error(`[eBay Search] ${marketplaceId} error:`, error);
+    console.error(`[eBay] ${marketplaceId} error:`, error);
     return null;
   }
 }
 
 /**
- * Searches on a marketplace with multiple query variants
+ * Searches a single marketplace with query variants
  */
-async function searchMarketplaceWithVariants(
+async function searchMarketplace(
   query: string,
   token: string,
   marketplaceId: string
-): Promise<EbaySearchResult | null> {
+): Promise<MarketplaceResult | null> {
   const searchVariants = createSearchVariants(query);
+  
+  console.log(`[eBay] Searching ${marketplaceId}...`);
   
   for (const variant of searchVariants) {
     const result = await searchWithQuery(variant, token, marketplaceId);
     
     if (result && result.total > 0) {
-      return result;
+      const listings = parseListingsWithMarketplace(result.data.itemSummaries, marketplaceId);
+      console.log(`[eBay] ✅ ${marketplaceId}: Found ${listings.length} items`);
+      
+      return {
+        marketplace: marketplaceId,
+        marketplaceName: MARKETPLACE_NAMES[marketplaceId] || marketplaceId,
+        listings,
+        total: result.total,
+      };
     }
   }
   
+  console.log(`[eBay] ❌ ${marketplaceId}: No results`);
   return null;
 }
 
 /**
- * Parses eBay item summaries into listings and prices
+ * Parses eBay item summaries into listings with marketplace info
  */
-function parseListings(itemSummaries: any[]): { listings: MarketListing[]; prices: number[] } {
+function parseListingsWithMarketplace(itemSummaries: any[], marketplaceId: string): MarketListing[] {
   const listings: MarketListing[] = [];
-  const prices: number[] = [];
 
   for (const item of itemSummaries) {
     const priceValue = parseFloat(item.price?.value || '0');
     if (priceValue > 0) {
-      prices.push(priceValue);
       listings.push({
         id: item.itemId,
         title: item.title,
@@ -93,40 +103,48 @@ function parseListings(itemSummaries: any[]): { listings: MarketListing[]; price
         imageUrl: item.thumbnailImages?.[0]?.imageUrl || '',
         itemUrl: item.itemWebUrl || '',
         sold: false,
+        marketplace: marketplaceId,
+        selected: false, // Default NOT selected - user picks reference items
       });
     }
   }
 
-  return { listings, prices };
+  return listings;
 }
 
 /**
  * Calculates price statistics from an array of prices
  */
-function calculatePriceStats(prices: number[]): {
+function calculatePriceStats(listings: MarketListing[]): {
   minPrice: number;
   maxPrice: number;
   avgPrice: number;
   medianPrice: number;
 } {
-  const sorted = [...prices].sort((a, b) => a - b);
-  const avgPrice = sorted.reduce((a, b) => a + b, 0) / sorted.length;
-  const medianPrice = sorted[Math.floor(sorted.length / 2)];
+  const prices = listings.map(l => l.price).sort((a, b) => a - b);
+  
+  if (prices.length === 0) {
+    return { minPrice: 0, maxPrice: 0, avgPrice: 0, medianPrice: 0 };
+  }
+
+  const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const medianPrice = prices[Math.floor(prices.length / 2)];
 
   return {
-    minPrice: sorted[0],
-    maxPrice: sorted[sorted.length - 1],
+    minPrice: prices[0],
+    maxPrice: prices[prices.length - 1],
     avgPrice: Math.round(avgPrice * 100) / 100,
     medianPrice,
   };
 }
 
 /**
- * Searches eBay for products - first on DE, then international fallbacks
+ * Searches eBay across ALL marketplaces in parallel
  */
 export async function searchEbay(query: string): Promise<MarketResult | null> {
   console.log('[eBay] ═══════════════════════════════════════');
-  console.log('[eBay] Starting search for:', query);
+  console.log('[eBay] Starting multi-marketplace search for:', query);
+  console.log('[eBay] Searching:', EBAY_CONFIG.allMarketplaces.join(', '));
   console.log('[eBay] ═══════════════════════════════════════');
 
   const token = await getEbayAccessToken();
@@ -136,45 +154,34 @@ export async function searchEbay(query: string): Promise<MarketResult | null> {
   }
 
   try {
-    let bestResult: EbaySearchResult | null = null;
-    let usedMarketplace = EBAY_CONFIG.marketplaceId;
+    // Search ALL marketplaces in parallel
+    const searchPromises = EBAY_CONFIG.allMarketplaces.map(marketplace =>
+      searchMarketplace(query, token, marketplace)
+    );
 
-    // 1. Try German marketplace first
-    bestResult = await searchMarketplaceWithVariants(query, token, EBAY_CONFIG.marketplaceId);
+    const results = await Promise.all(searchPromises);
 
-    // 2. If no results in Germany, try international marketplaces as fallback
-    if (!bestResult) {
-      console.log('[eBay] No DE results, trying international marketplaces...');
-      
-      for (const fallbackMarketplace of EBAY_CONFIG.fallbackMarketplaces) {
-        const result = await searchMarketplaceWithVariants(query, token, fallbackMarketplace);
-        
-        if (result && result.total > 0) {
-          console.log(`[eBay] ✅ Found ${result.total} items on ${fallbackMarketplace}`);
-          bestResult = result;
-          usedMarketplace = fallbackMarketplace;
-          break; // Stop at first marketplace with results
-        }
-      }
-    }
+    // Filter out null results
+    const marketplaceResults: MarketplaceResult[] = results.filter(
+      (r): r is MarketplaceResult => r !== null
+    );
 
-    if (!bestResult?.data?.itemSummaries?.length) {
+    console.log('[eBay] Results from', marketplaceResults.length, 'marketplaces:');
+    marketplaceResults.forEach(r => {
+      console.log(`  ${r.marketplaceName}: ${r.listings.length} items`);
+    });
+
+    if (marketplaceResults.length === 0) {
       console.log('[eBay] ❌ No items found on any marketplace');
       console.log('[eBay] ═══════════════════════════════════════');
       return null;
     }
 
-    const { listings, prices } = parseListings(bestResult.data.itemSummaries);
+    // Combine all listings
+    const allListings = marketplaceResults.flatMap(r => r.listings);
+    const priceStats = calculatePriceStats(allListings);
 
-    if (prices.length === 0) {
-      console.log('[eBay] ❌ No valid prices found in items');
-      console.log('[eBay] ═══════════════════════════════════════');
-      return null;
-    }
-
-    const priceStats = calculatePriceStats(prices);
-
-    console.log(`[eBay] ✅ Parsed ${listings.length} listings from ${usedMarketplace}`);
+    console.log('[eBay] ✅ Total:', allListings.length, 'listings');
     console.log('[eBay] Price range:', priceStats.minPrice, '-', priceStats.maxPrice);
     console.log('[eBay] ═══════════════════════════════════════');
 
@@ -183,10 +190,11 @@ export async function searchEbay(query: string): Promise<MarketResult | null> {
       platform: 'ebay',
       priceStats: {
         ...priceStats,
-        totalListings: listings.length,
+        totalListings: allListings.length,
         soldListings: 0,
       },
-      listings,
+      listings: allListings,
+      marketplaceResults,
       fetchedAt: new Date(),
     };
   } catch (error) {
@@ -194,4 +202,25 @@ export async function searchEbay(query: string): Promise<MarketResult | null> {
     console.log('[eBay] ═══════════════════════════════════════');
     return null;
   }
+}
+
+/**
+ * Recalculates price stats based on selected listings only
+ */
+export function recalculatePriceStats(listings: MarketListing[]): {
+  minPrice: number;
+  maxPrice: number;
+  avgPrice: number;
+  medianPrice: number;
+  totalListings: number;
+  soldListings: number;
+} {
+  const selectedListings = listings.filter(l => l.selected);
+  const stats = calculatePriceStats(selectedListings);
+  
+  return {
+    ...stats,
+    totalListings: selectedListings.length,
+    soldListings: 0,
+  };
 }

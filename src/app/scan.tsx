@@ -2,6 +2,7 @@ import { View, Text, Pressable, Alert } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { Icons } from '../shared/components/Icons';
 
 /**
  * Scan Screen - Ermöglicht Kamera-Scan oder Bild-Upload
@@ -87,7 +88,9 @@ export default function ScanScreen() {
               className="bg-primary-500 rounded-2xl p-6 active:bg-primary-600"
             >
               <View className="items-center">
-                <Text className="text-5xl mb-4">📷</Text>
+                <View className="mb-4">
+                  <Icons.Camera size={48} color="#ffffff" />
+                </View>
                 <Text className="text-white text-xl font-semibold mb-1">
                   Kamera
                 </Text>
@@ -102,7 +105,9 @@ export default function ScanScreen() {
               className="bg-background-card rounded-2xl p-6 border border-gray-700 active:bg-background-elevated"
             >
               <View className="items-center">
-                <Text className="text-5xl mb-4">🖼️</Text>
+                <View className="mb-4">
+                  <Icons.Image size={48} color="#9ca3af" />
+                </View>
                 <Text className="text-white text-xl font-semibold mb-1">
                   Galerie
                 </Text>
@@ -114,8 +119,11 @@ export default function ScanScreen() {
           </View>
 
           {/* Tipps */}
-          <View className="mt-auto mb-8 bg-background-card rounded-xl p-4">
-            <Text className="text-white font-semibold mb-2">💡 Tipps für beste Ergebnisse:</Text>
+          <View className="mt-auto mb-8 bg-background-card rounded-xl p-4 border border-gray-800">
+            <View className="flex-row items-center mb-2">
+              <Icons.Lightbulb size={20} color="#fbbf24" strokeWidth={2.5} />
+              <Text className="text-white font-semibold ml-2">Tipps für beste Ergebnisse:</Text>
+            </View>
             <Text className="text-gray-400">• Gute Beleuchtung verwenden</Text>
             <Text className="text-gray-400">• Gegenstand mittig platzieren</Text>
             <Text className="text-gray-400">• Hintergrund sollte einfarbig sein</Text>

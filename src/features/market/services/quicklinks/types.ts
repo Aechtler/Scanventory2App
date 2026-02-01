@@ -21,25 +21,25 @@ export interface PlatformLink {
 export const PLATFORM_CONFIGS = {
   ebay: {
     name: 'eBay',
-    icon: '🛒',
+    icon: 'Cart',
     color: '#e53238',
     urlTemplate: 'https://www.ebay.de/sch/i.html?_nkw=',
   },
   kleinanzeigen: {
     name: 'Kleinanzeigen',
-    icon: '📦',
+    icon: 'Package',
     color: '#86b817',
     urlTemplate: 'https://www.kleinanzeigen.de/s-suche/',
   },
   amazon: {
     name: 'Amazon',
-    icon: '📱',
+    icon: 'Smartphone',
     color: '#ff9900',
     urlTemplate: 'https://www.amazon.de/s?k=',
   },
   idealo: {
     name: 'Idealo',
-    icon: '🔍',
+    icon: 'Search',
     color: '#ff6600',
     urlTemplate: 'https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q=',
   },

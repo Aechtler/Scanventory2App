@@ -1,3 +1,4 @@
+import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Link, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +7,7 @@ import { FadeInView, BounceInView, AnimatedButton } from '../shared/components/A
 import { useHistoryStore } from '../features/history/store/historyStore';
 import { formatPrice } from '../features/market/services/ebay';
 import { calculateTotalValue } from '../features/history/services/exportService';
+import { Icons } from '../shared/components/Icons';
 
 /**
  * Home Screen - Premium Landing Page
@@ -67,7 +69,7 @@ export default function HomeScreen() {
                 <AnimatedButton className="bg-primary-500 rounded-2xl p-6 overflow-hidden">
                   <View className="flex-row items-center">
                     <View className="w-14 h-14 bg-white/20 rounded-xl items-center justify-center mr-4">
-                      <Text className="text-3xl">📸</Text>
+                      <Icons.Camera size={32} color="#ffffff" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-white text-xl font-bold mb-1">
@@ -77,7 +79,7 @@ export default function HomeScreen() {
                         Ermittle den Marktwert
                       </Text>
                     </View>
-                    <Text className="text-white/50 text-2xl">→</Text>
+                    <Icons.ChevronRight size={24} color="rgba(255,255,255,0.5)" />
                   </View>
                 </AnimatedButton>
               </Link>
@@ -89,7 +91,7 @@ export default function HomeScreen() {
                 <AnimatedButton className="bg-background-card rounded-2xl p-6 border border-gray-800">
                   <View className="flex-row items-center">
                     <View className="w-14 h-14 bg-gray-700/50 rounded-xl items-center justify-center mr-4">
-                      <Text className="text-3xl">📋</Text>
+                      <Icons.History size={32} color="#ffffff" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-white text-xl font-bold mb-1">
@@ -102,7 +104,7 @@ export default function HomeScreen() {
                         }
                       </Text>
                     </View>
-                    <Text className="text-gray-600 text-2xl">→</Text>
+                    <Icons.ChevronRight size={24} color="#4b5563" />
                   </View>
                 </AnimatedButton>
               </Link>
@@ -114,16 +116,21 @@ export default function HomeScreen() {
             <Text className="text-center text-gray-500 text-sm mb-3">
               Preisvergleich auf
             </Text>
-            <View className="flex-row justify-center gap-3">
-              {['🛒 eBay', '📦 Kleinanzeigen', '📱 Amazon', '🔍 Idealo'].map((platform, i) => (
+            <View className="flex-row justify-center gap-4">
+              {[
+                { name: 'eBay', icon: 'Cart' },
+                { name: 'Kleinanzeigen', icon: 'Package' },
+                { name: 'Amazon', icon: 'Smartphone' },
+                { name: 'Idealo', icon: 'Search' }
+              ].map((platform, i) => (
                 <MotiView
-                  key={platform}
+                  key={platform.name}
                   from={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ type: 'spring', delay: 600 + i * 100 }}
-                  className="bg-background-card px-3 py-1.5 rounded-full"
+                  className="bg-background-card p-2 rounded-xl items-center justify-center border border-gray-800"
                 >
-                  <Text className="text-gray-400 text-xs">{platform}</Text>
+                  {React.createElement((Icons as any)[platform.icon], { size: 18, color: '#9ca3af' })}
                 </MotiView>
               ))}
             </View>
