@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { analyzeImage, analyzeImageMock, VisionResult, VisionMatch } from '../features/scan/services/visionService';
+import { analyzeImage, analyzeImageMock, VisionResult, VisionMatch, identifyProductIdentifier } from '../features/scan/services/visionService';
 import { generatePlatformLinks, PlatformLink } from '../features/market/services/quicklinks';
-import { searchMarket, PriceStats } from '../features/market/services/ebay';
+import { searchMarket, PriceStats, MarketListing } from '../features/market/services/ebay';
 import { getMarketValue, MarketValueResult } from '../features/market/services/perplexity';
+import { getProductImage } from '../features/market/services/ebay/images';
 import { useHistoryStore } from '../features/history/store/historyStore';
 import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
 import { PlatformQuicklinks } from '../features/market/components/PlatformQuicklinks';
@@ -30,6 +31,7 @@ export default function AnalyzeScreen() {
   const [selectedMatch, setSelectedMatch] = useState<VisionMatch | null>(null);
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [priceStats, setPriceStats] = useState<PriceStats | null>(null);
+  const [ebayListings, setEbayListings] = useState<MarketListing[]>([]);
   const [priceLoading, setPriceLoading] = useState(false);
   const [marketValue, setMarketValue] = useState<MarketValueResult | null>(null);
   const [marketValueLoading, setMarketValueLoading] = useState(false);
@@ -47,14 +49,25 @@ export default function AnalyzeScreen() {
       setError(null);
 
       const hasApiKey = !!process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-      const vision = hasApiKey 
+      const vision = hasApiKey
         ? await analyzeImage(decodeURIComponent(imageUri!))
         : await analyzeImageMock(decodeURIComponent(imageUri!));
-      
-      setVisionResult(vision);
 
-      if (vision.matches.length === 1 || vision.matches[0].confidence >= 0.9) {
-        handleMatchSelect(0, vision);
+      // Load product images for all matches in parallel
+      console.log('[Analyze] Loading product images for', vision.matches.length, 'matches...');
+      const matchesWithImages = await Promise.all(
+        vision.matches.map(async (match) => {
+          const searchQuery = match.searchQueries?.ebay || match.searchQuery;
+          const imageUrl = await getProductImage(searchQuery);
+          return { ...match, imageUrl };
+        })
+      );
+
+      const visionWithImages = { ...vision, matches: matchesWithImages };
+      setVisionResult(visionWithImages);
+
+      if (visionWithImages.matches.length === 1 && visionWithImages.matches[0].confidence >= 0.95) {
+        handleMatchSelect(0, visionWithImages);
       } else {
         setState('selecting');
       }
@@ -80,21 +93,39 @@ export default function AnalyzeScreen() {
     setState('complete');
 
     // Load data in parallel (non-blocking)
-    // Use generic/shorter query for better search results (too specific = no hits)
     const searchQuery = match.searchQueries?.generic || match.productName;
-    loadPriceData(searchQuery);
+    loadPriceData(searchQuery, match.gtin || undefined);
     loadMarketValue(match.productName, match.category);
+
+    // Try to find a precise product identifier (EAN/GTIN) if not already present
+    if (!match.gtin) {
+      console.log('[AnalyzeScreen] Attempting to identify product identifier...');
+      identifyProductIdentifier(match.productName, decodeURIComponent(imageUri!))
+        .then(gtin => {
+          if (gtin) {
+            console.log('[AnalyzeScreen] Found identifier:', gtin);
+            setSelectedMatch(prev => prev ? { ...prev, gtin } : null);
+            // Re-load price data with GTIN for better accuracy
+            loadPriceData(searchQuery, gtin);
+          }
+        });
+    }
   };
 
-  const loadPriceData = async (searchQuery: string) => {
+  const loadPriceData = async (searchQuery: string, gtin?: string) => {
     setPriceLoading(true);
-    setPriceStats(null);
+    // Only clear stats if we are not doing a refined search
+    if (!gtin) {
+      setPriceStats(null);
+      setEbayListings([]);
+    }
 
     try {
-      console.log('[AnalyzeScreen] Loading price data with query:', searchQuery);
-      const result = await searchMarket(searchQuery);
+      console.log('[AnalyzeScreen] Loading price data for:', searchQuery, gtin ? `(GTIN: ${gtin})` : '');
+      const result = await searchMarket(searchQuery, gtin);
       if (result) {
         setPriceStats(result.priceStats);
+        setEbayListings(result.listings || []);
       }
     } catch (err) {
       console.error('Price loading error:', err);
@@ -123,12 +154,31 @@ export default function AnalyzeScreen() {
     }
   };
 
-  const handleManualEntry = () => {
-    Alert.alert(
-      'Manuelle Eingabe',
-      'Diese Funktion wird in einer späteren Version verfügbar sein.',
-      [{ text: 'OK' }]
-    );
+  const handleManualSearch = (query: string) => {
+    // Create a generic match from the search query
+    const manualMatch: VisionMatch = {
+      productName: query,
+      category: 'Gefunden via Suche',
+      brand: null,
+      condition: 'Gut',
+      description: `Manuelle Suche nach: ${query}`,
+      confidence: 1.0,
+      searchQuery: query,
+      searchQueries: {
+        ebay: query,
+        generic: query
+      }
+    };
+    
+    setVisionResult(prev => ({
+      matches: prev ? [...prev.matches, manualMatch] : [manualMatch],
+      selectedIndex: prev ? prev.matches.length : 0
+    }));
+
+    handleMatchSelect(visionResult?.matches.length || 0, {
+      matches: visionResult ? [...visionResult.matches, manualMatch] : [manualMatch],
+      selectedIndex: null
+    });
   };
 
   const handleSaveToHistory = async () => {
@@ -142,6 +192,9 @@ export default function AnalyzeScreen() {
         confidence: selectedMatch.confidence,
         searchQuery: selectedMatch.searchQuery,
         searchQueries: selectedMatch.searchQueries,
+        gtin: selectedMatch.gtin,
+        ebayListings: ebayListings,
+        ebayListingsFetchedAt: new Date().toISOString(),
         priceStats: priceStats || {
           minPrice: 0,
           maxPrice: 0,
@@ -260,6 +313,15 @@ export default function AnalyzeScreen() {
                       </Text>
                     </MotiView>
                   </View>
+
+                  {selectedMatch.gtin && (
+                    <View className="flex-row items-center mb-3 bg-gray-800/40 self-start px-2 py-1 rounded border border-gray-700">
+                      <Icons.Tag size={12} color="#9ca3af" />
+                      <Text className="text-gray-400 text-xs ml-1 font-mono">
+                        ID: {selectedMatch.gtin}
+                      </Text>
+                    </View>
+                  )}
                   
                   <View className="flex-row flex-wrap gap-2 mb-3">
                     {[selectedMatch.category, selectedMatch.brand, selectedMatch.condition]
@@ -292,7 +354,12 @@ export default function AnalyzeScreen() {
               <FadeInView delay={100}>
                 <PriceEstimate 
                   priceStats={priceStats} 
+                  listings={ebayListings}
                   isLoading={priceLoading}
+                  onRefresh={() => {
+                    const searchQuery = selectedMatch.searchQueries?.generic || selectedMatch.productName;
+                    loadPriceData(searchQuery, selectedMatch.gtin || undefined);
+                  }}
                 />
               </FadeInView>
 
@@ -335,7 +402,7 @@ export default function AnalyzeScreen() {
           visible={state === 'selecting'}
           matches={visionResult?.matches || []}
           onSelect={handleMatchSelect}
-          onManualEntry={handleManualEntry}
+          onManualSearch={handleManualSearch}
         />
       </SafeAreaView>
     </>

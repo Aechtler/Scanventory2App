@@ -1,14 +1,16 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView, Modal, Image } from 'react-native';
 import { MotiView } from 'moti';
 import { VisionMatch } from '@/features/scan/services/visionService';
+import { Icons } from '@/shared/components/Icons';
+import { TextInput } from 'react-native';
 import { AnimatedButton } from '@/shared/components/Animated';
 
 interface MatchSelectionSheetProps {
   visible: boolean;
   matches: VisionMatch[];
   onSelect: (index: number) => void;
-  onManualEntry: () => void;
+  onManualSearch: (query: string) => void;
 }
 
 /**
@@ -18,8 +20,10 @@ export function MatchSelectionSheet({
   visible,
   matches,
   onSelect,
-  onManualEntry,
+  onManualSearch,
 }: MatchSelectionSheetProps) {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const hasMatches = matches.length > 0;
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return 'text-green-400';
     if (confidence >= 0.6) return 'text-yellow-400';
@@ -69,12 +73,46 @@ export function MatchSelectionSheet({
             className="items-center mb-5"
           >
             <Text className="text-white text-2xl font-bold">
-              🔍 Was ist das?
+              {hasMatches ? '🔍 Was ist das?' : '🔎 Produkt suchen'}
             </Text>
             <Text className="text-gray-400 mt-2 text-center">
-              Wähle die beste Übereinstimmung aus
+              {hasMatches 
+                ? 'Wähle die beste Übereinstimmung aus oder suche manuell' 
+                : 'Wir konnten das Produkt nicht eindeutig erkennen. Suche manuell:'}
             </Text>
           </MotiView>
+
+          {/* Search Input */}
+          <View className="mb-6 px-1">
+            <View className="flex-row items-center bg-background rounded-xl border border-gray-700 px-4 py-2">
+              <Icons.Search size={20} color="#9ca3af" />
+              <TextInput
+                className="flex-1 ml-3 text-white text-base py-2"
+                placeholder="Marke, Modell, Details..."
+                placeholderTextColor="#6b7280"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={() => searchQuery.trim() && onManualSearch(searchQuery)}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <Pressable onPress={() => setSearchQuery('')}>
+                  <Icons.Close size={20} color="#9ca3af" />
+                </Pressable>
+              )}
+            </View>
+            <AnimatedButton
+              onPress={() => searchQuery.trim() && onManualSearch(searchQuery)}
+              className="mt-3 bg-primary-500 rounded-xl py-3 items-center"
+            >
+              <Text className="text-white font-semibold">Suchen</Text>
+            </AnimatedButton>
+          </View>
+
+          {/* Matches Liste mit Stagger */}
+          <Text className="text-gray-500 text-xs font-bold uppercase mb-3 px-1">
+            {hasMatches ? 'KI-Vorschläge' : ''}
+          </Text>
 
           {/* Matches Liste mit Stagger */}
           <ScrollView className="max-h-80" showsVerticalScrollIndicator={false}>
@@ -94,21 +132,34 @@ export function MatchSelectionSheet({
                   onPress={() => onSelect(index)}
                   className="bg-background rounded-xl p-4 mb-3 border-2 border-gray-800"
                 >
-                  <View className="flex-row justify-between items-start">
-                    <View className="flex-1 mr-3">
-                      <Text className="text-white font-semibold text-lg" numberOfLines={2}>
-                        {match.productName}
-                      </Text>
-                      <Text className="text-gray-400 text-sm mt-1" numberOfLines={2}>
+                  <View className="flex-row items-start gap-3">
+                    {/* Product Image */}
+                    {match.imageUrl ? (
+                      <Image
+                        source={{ uri: match.imageUrl }}
+                        className="w-20 h-20 rounded-lg bg-gray-800"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="w-20 h-20 rounded-lg bg-gray-800 items-center justify-center">
+                        <Icons.Package size={32} color="#6b7280" />
+                      </View>
+                    )}
+
+                    {/* Product Info */}
+                    <View className="flex-1">
+                      <View className="flex-row justify-between items-start mb-2">
+                        <Text className="text-white font-semibold text-base flex-1" numberOfLines={2}>
+                          {match.productName}
+                        </Text>
+                        <View className={`items-center px-2 py-1 rounded-lg ml-2 ${getConfidenceBg(match.confidence)}`}>
+                          <Text className={`font-bold text-sm ${getConfidenceColor(match.confidence)}`}>
+                            {Math.round(match.confidence * 100)}%
+                          </Text>
+                        </View>
+                      </View>
+                      <Text className="text-gray-400 text-xs" numberOfLines={2}>
                         {match.description}
-                      </Text>
-                    </View>
-                    <View className={`items-center px-3 py-2 rounded-lg ${getConfidenceBg(match.confidence)}`}>
-                      <Text className={`font-bold text-lg ${getConfidenceColor(match.confidence)}`}>
-                        {Math.round(match.confidence * 100)}%
-                      </Text>
-                      <Text className={`text-xs ${getConfidenceColor(match.confidence)}`}>
-                        {getConfidenceLabel(match.confidence)}
                       </Text>
                     </View>
                   </View>
@@ -132,21 +183,6 @@ export function MatchSelectionSheet({
             ))}
           </ScrollView>
 
-          {/* Manual Entry Button */}
-          <MotiView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ type: 'timing', delay: 500 }}
-          >
-            <AnimatedButton
-              onPress={onManualEntry}
-              className="mt-4 border border-gray-600 rounded-xl p-4"
-            >
-              <Text className="text-gray-400 text-center font-medium">
-                ✏️ Keiner passt – manuell eingeben
-              </Text>
-            </AnimatedButton>
-          </MotiView>
         </MotiView>
       </View>
     </Modal>

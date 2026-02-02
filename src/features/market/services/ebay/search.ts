@@ -20,10 +20,14 @@ import { createSearchVariants } from './utils';
 async function searchWithQuery(
   query: string,
   token: string,
-  marketplaceId: string
+  marketplaceId: string,
+  gtin?: string
 ): Promise<EbaySearchResult | null> {
   const encodedQuery = encodeURIComponent(query);
-  const url = `${EBAY_CONFIG.apiUrl}/item_summary/search?q=${encodedQuery}&limit=20&sort=price`;
+  let url = `${EBAY_CONFIG.apiUrl}/item_summary/search?q=${encodedQuery}&limit=20&sort=price`;
+
+  // Note: GTIN filtering is too restrictive and leads to 0 results
+  // Many listings don't have GTIN data, so we search by keyword only
 
   try {
     const response = await fetch(url, {
@@ -59,14 +63,15 @@ async function searchWithQuery(
 async function searchMarketplace(
   query: string,
   token: string,
-  marketplaceId: string
+  marketplaceId: string,
+  gtin?: string
 ): Promise<MarketplaceResult | null> {
   const searchVariants = createSearchVariants(query);
   
   console.log(`[eBay] Searching ${marketplaceId}...`);
   
   for (const variant of searchVariants) {
-    const result = await searchWithQuery(variant, token, marketplaceId);
+    const result = await searchWithQuery(variant, token, marketplaceId, gtin);
     
     if (result && result.total > 0) {
       const listings = parseListingsWithMarketplace(result.data.itemSummaries, marketplaceId);
@@ -141,9 +146,10 @@ function calculatePriceStats(listings: MarketListing[]): {
 /**
  * Searches eBay across ALL marketplaces in parallel
  */
-export async function searchEbay(query: string): Promise<MarketResult | null> {
+export async function searchEbay(query: string, gtin?: string): Promise<MarketResult | null> {
   console.log('[eBay] ═══════════════════════════════════════');
   console.log('[eBay] Starting multi-marketplace search for:', query);
+  if (gtin) console.log('[eBay] Using GTIN/EAN filter:', gtin);
   console.log('[eBay] Searching:', EBAY_CONFIG.allMarketplaces.join(', '));
   console.log('[eBay] ═══════════════════════════════════════');
 
@@ -156,7 +162,7 @@ export async function searchEbay(query: string): Promise<MarketResult | null> {
   try {
     // Search ALL marketplaces in parallel
     const searchPromises = EBAY_CONFIG.allMarketplaces.map(marketplace =>
-      searchMarketplace(query, token, marketplace)
+      searchMarketplace(query, token, marketplace, gtin)
     );
 
     const results = await Promise.all(searchPromises);

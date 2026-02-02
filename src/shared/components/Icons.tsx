@@ -106,6 +106,7 @@ export const Icons = {
   Share: (props: IconProps) => <Share {...defaultProps} {...props} />,
   FileText: (props: IconProps) => <FileText {...defaultProps} {...props} />,
   Terminal: (props: IconProps) => <Terminal {...defaultProps} {...props} />,
+  Tag: (props: IconProps) => <Tag {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper

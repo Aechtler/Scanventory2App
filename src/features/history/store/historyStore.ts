@@ -27,6 +27,7 @@ export interface HistoryItem {
     idealo?: string;
     generic?: string;
   };
+  gtin?: string | null;  // EAN, GTIN oder ISBN
   priceStats: PriceStats;
   ebayListings?: MarketListing[];    // Cached eBay listings for detail view
   ebayListingsFetchedAt?: string;    // When listings were last fetched

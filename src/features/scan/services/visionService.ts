@@ -23,6 +23,8 @@ export interface VisionMatch {
     idealo?: string;      // Optimiert für Idealo (Produktname)
     generic?: string;     // Fallback für alle Plattformen
   };
+  gtin?: string | null;   // EAN, GTIN oder ISBN
+  imageUrl?: string | null; // Produkt-Bild aus eBay-Suche
 }
 
 export interface VisionResult {
@@ -219,4 +221,78 @@ export async function analyzeImageMock(_imageUri: string): Promise<VisionResult>
     ],
     selectedIndex: null,
   };
+}
+
+/**
+ * Identifiziert eine Produktnummer (EAN/GTIN/ISBN) für einen Artikel
+ * @param productName - Der Name des Artikels
+ * @param imageUri - Optionaler Bild-URI für visuelle Identifikation
+ */
+export async function identifyProductIdentifier(
+  productName: string,
+  imageUri?: string
+): Promise<string | null> {
+  try {
+    const parts: any[] = [
+      {
+        text: `Du bist ein Experte für Produktkataloge. Deine Aufgabe ist es, die EAN (GTIN) oder ISBN für ein bestimmtes Produkt zu finden.
+        
+Produkt: ${productName}
+
+REGELN:
+- Antworte NUR mit der 13-stelligen Nummer (oder 10 bei ISBN).
+- Wenn du die Nummer nicht exakt kennst, antworte mit "null".
+- Keinen zusätzlichen Text, keine Erklärungen.`,
+      },
+    ];
+
+    if (imageUri && GEMINI_API_KEY) {
+      const base64Image = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: 'base64',
+      });
+      parts.push({
+        inline_data: {
+          mime_type: 'image/jpeg',
+          data: base64Image,
+        },
+      });
+      
+      // Update text to include image context
+      parts[0].text += "\n\nSchau dir auch das Bild an, um Barcodes oder aufgedruckte Nummern zu finden.";
+    }
+
+    if (!GEMINI_API_KEY) return null;
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          temperature: 0.0,
+          maxOutputTokens: 20,
+        },
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+    if (!result || result.toLowerCase() === 'null') return null;
+
+    // Nur Ziffern extrahieren
+    const digits = result.replace(/\D/g, '');
+    if (digits.length >= 8 && digits.length <= 14) {
+      return digits;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('[Vision] Error identifying identifier:', error);
+    return null;
+  }
 }

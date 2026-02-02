@@ -204,7 +204,15 @@ export default function HistoryDetailScreen() {
                   </Text>
                 </View>
               </View>
-              
+
+              {item.gtin && (
+                <View className="flex-row items-center mb-3 bg-gray-800/40 self-start px-2 py-1 rounded border border-gray-700">
+                  <Text className="text-gray-400 text-xs font-mono">
+                    Artikelnummer: {item.gtin}
+                  </Text>
+                </View>
+              )}
+
               <View className="flex-row flex-wrap gap-2 mb-3">
                 {[item.category, item.brand, item.condition]
                   .filter(Boolean)
