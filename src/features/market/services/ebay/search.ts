@@ -24,7 +24,7 @@ async function searchWithQuery(
   gtin?: string
 ): Promise<EbaySearchResult | null> {
   const encodedQuery = encodeURIComponent(query);
-  let url = `${EBAY_CONFIG.apiUrl}/item_summary/search?q=${encodedQuery}&limit=20&sort=price`;
+  let url = `${EBAY_CONFIG.apiUrl}/item_summary/search?q=${encodedQuery}&limit=20`;
 
   // Note: GTIN filtering is too restrictive and leads to 0 results
   // Many listings don't have GTIN data, so we search by keyword only

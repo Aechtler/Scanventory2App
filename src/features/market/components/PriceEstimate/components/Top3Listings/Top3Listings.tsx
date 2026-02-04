@@ -32,7 +32,7 @@ export function Top3Listings({ listings }: Top3ListingsProps) {
   return (
     <View className="mt-4">
       <Text className="text-gray-400 text-xs font-semibold mb-2">
-        🏆 Günstigste Angebote
+        🏆 Beste Treffer
       </Text>
       <View className="gap-2">
         {listings.slice(0, 3).map((listing, index) => (

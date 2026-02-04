@@ -50,9 +50,16 @@ export function PriceEstimate({
     return groups;
   }, [localListings]);
 
-  // Get top 3 cheapest listings
+  // Get top 3 listings - prioritize German results and relevance
   const top3Listings = useMemo(() => {
-    return [...localListings].sort((a, b) => a.price - b.price).slice(0, 3);
+    // Sort localListings to put EBAY_DE first, otherwise keep original order (relevance)
+    return [...localListings]
+      .sort((a, b) => {
+        if (a.marketplace === 'EBAY_DE' && b.marketplace !== 'EBAY_DE') return -1;
+        if (a.marketplace !== 'EBAY_DE' && b.marketplace === 'EBAY_DE') return 1;
+        return 0; // Keep original relative order for items from the same marketplace
+      })
+      .slice(0, 3);
   }, [localListings]);
 
   const toggleListing = (listingId: string) => {
