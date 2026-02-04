@@ -224,7 +224,7 @@ export default function AnalyzeScreen() {
               <MotiView
                 from={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', damping: 15, stiffness: 400 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                 className="rounded-2xl overflow-hidden mb-6 shadow-lg"
               >
                 <Image
@@ -305,7 +305,7 @@ export default function AnalyzeScreen() {
                     <MotiView
                       from={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ type: 'spring', delay: 150, stiffness: 400 }}
+                      transition={{ type: 'spring', delay: 150, damping: 20, stiffness: 300 }}
                       className="bg-primary-500/20 px-3 py-1 rounded-lg"
                     >
                       <Text className="text-primary-400 font-bold">

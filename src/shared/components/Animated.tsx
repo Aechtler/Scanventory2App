@@ -47,11 +47,11 @@ export function AnimatedButton({
       {...props}
       style={animatedStyle}
       onPressIn={(e) => {
-        pressed.value = withSpring(1, { damping: 15, stiffness: 400 });
+        pressed.value = withSpring(1, { damping: 20, stiffness: 300 });
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        pressed.value = withSpring(0, { damping: 15, stiffness: 400 });
+        pressed.value = withSpring(0, { damping: 20, stiffness: 300 });
         onPressOut?.(e);
       }}
       className={className}
@@ -113,9 +113,8 @@ export function StaggeredItem({
       from={{ opacity: 0, translateX: -10 }}
       animate={{ opacity: 1, translateX: 0 }}
       transition={{
-        type: 'spring',
-        damping: 20,
-        stiffness: 400,
+        type: 'timing',
+        duration: 300,
         delay: index * 30,
       }}
       className={className}
@@ -169,8 +168,8 @@ export function BounceInView({
       animate={{ scale: 1, opacity: 1 }}
       transition={{
         type: 'spring',
-        damping: 18,
-        stiffness: 400,
+        damping: 25,
+        stiffness: 300,
         delay,
       }}
       className={className}
@@ -197,8 +196,8 @@ export function SlideUpView({
       exit={{ translateY: 50, opacity: 0 }}
       transition={{
         type: 'spring',
-        damping: 22,
-        stiffness: 450,
+        damping: 25,
+        stiffness: 300,
       }}
       className={className}
     >

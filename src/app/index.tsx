@@ -26,7 +26,7 @@ export default function HomeScreen() {
             <MotiView
               from={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', damping: 12 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
             >
               <Text className="text-5xl font-bold text-white mb-2">
                 Scan<Text className="text-primary-400">App</Text>
@@ -127,7 +127,7 @@ export default function HomeScreen() {
                   key={platform.name}
                   from={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', delay: 600 + i * 100 }}
+                  transition={{ type: 'timing', duration: 300, delay: 600 + i * 50 }}
                   className="bg-background-card p-2 rounded-xl items-center justify-center border border-gray-800"
                 >
                   {React.createElement((Icons as any)[platform.icon], { size: 18, color: '#9ca3af' })}

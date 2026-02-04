@@ -26,7 +26,7 @@ export function MarketValueCardMain({
       <MotiView
         from={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'spring', damping: 15, stiffness: 400 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         className="bg-purple-900/20 rounded-xl p-4 mb-4 border border-purple-500/30"
       >
         {/* Header */}
@@ -57,7 +57,7 @@ export function MarketValueCardMain({
           <MotiView
             from={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', delay: 100, stiffness: 400 }}
+            transition={{ type: 'spring', delay: 100, damping: 20, stiffness: 300 }}
           >
             <Text className="text-white text-3xl font-bold">
               {result.estimatedPrice}

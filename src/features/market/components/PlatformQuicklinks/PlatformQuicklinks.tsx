@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { MotiView } from 'moti';
 import { PlatformLink, openPlatformLink } from '@/features/market/services/quicklinks';
 import { AnimatedButton } from '@/shared/components/Animated';
@@ -29,11 +29,8 @@ export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
       
       <View className="flex-row flex-wrap gap-3">
         {links.map((link, index) => (
-          <MotiView
+          <View
             key={link.platform}
-            from={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', delay: index * 50, stiffness: 400 }}
             className="flex-1 min-w-[45%]"
           >
             <AnimatedButton
@@ -52,7 +49,7 @@ export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
                 </View>
               </View>
             </AnimatedButton>
-          </MotiView>
+          </View>
         ))}
       </View>
     </View>

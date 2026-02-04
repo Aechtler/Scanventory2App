@@ -33,7 +33,7 @@ export function PriceEstimateCard({
       <MotiView
         from={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'spring', damping: 15, stiffness: 400 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         className="bg-gradient-to-r from-primary-600/20 to-primary-500/10 rounded-xl p-4 mb-4 border border-primary-500/30"
       >
         {/* Header */}
@@ -68,7 +68,7 @@ export function PriceEstimateCard({
               <MotiView
                 from={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', delay: 100, stiffness: 400 }}
+                transition={{ type: 'spring', delay: 100, damping: 20, stiffness: 300 }}
               >
                 <Text className="text-white text-4xl font-bold">
                   {formatPrice(priceStats.avgPrice)}

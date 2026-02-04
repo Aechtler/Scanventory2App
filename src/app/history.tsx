@@ -72,7 +72,7 @@ export default function HistoryScreen() {
         <MotiView
           from={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', delay: index * 50 }}
+          transition={{ type: 'spring', delay: index * 50, damping: 25, stiffness: 300 }}
         >
           <Image
             source={{ uri: item.cachedImageUri || item.imageUri }}
@@ -139,7 +139,7 @@ export default function HistoryScreen() {
             <MotiView
               from={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', damping: 12 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
               className="mb-6 bg-gray-800/50 p-6 rounded-full"
             >
               <Icons.Inbox size={64} color="#6b7280" />

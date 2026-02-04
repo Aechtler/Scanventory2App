@@ -121,12 +121,12 @@ export function MatchSelectionSheet({
                 key={index}
                 from={{ opacity: 0, translateX: -30 }}
                 animate={{ opacity: 1, translateX: 0 }}
-                transition={{
-                  type: 'spring',
-                  damping: 18,
-                  stiffness: 200,
-                  delay: 200 + index * 100,
-                }}
+                  transition={{
+                    type: 'spring',
+                    damping: 25,
+                    stiffness: 200,
+                    delay: 200 + index * 50,
+                  }}
               >
                 <AnimatedButton
                   onPress={() => onSelect(index)}
