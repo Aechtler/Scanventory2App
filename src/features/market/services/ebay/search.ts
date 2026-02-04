@@ -68,14 +68,12 @@ async function searchMarketplace(
 ): Promise<MarketplaceResult | null> {
   const searchVariants = createSearchVariants(query);
   
-  console.log(`[eBay] Searching ${marketplaceId}...`);
   
   for (const variant of searchVariants) {
     const result = await searchWithQuery(variant, token, marketplaceId, gtin);
     
     if (result && result.total > 0) {
       const listings = parseListingsWithMarketplace(result.data.itemSummaries, marketplaceId);
-      console.log(`[eBay] ✅ ${marketplaceId}: Found ${listings.length} items`);
       
       return {
         marketplace: marketplaceId,
@@ -86,7 +84,6 @@ async function searchMarketplace(
     }
   }
   
-  console.log(`[eBay] ❌ ${marketplaceId}: No results`);
   return null;
 }
 
@@ -147,15 +144,10 @@ function calculatePriceStats(listings: MarketListing[]): {
  * Searches eBay across ALL marketplaces in parallel
  */
 export async function searchEbay(query: string, gtin?: string): Promise<MarketResult | null> {
-  console.log('[eBay] ═══════════════════════════════════════');
-  console.log('[eBay] Starting multi-marketplace search for:', query);
   if (gtin) console.log('[eBay] Using GTIN/EAN filter:', gtin);
-  console.log('[eBay] Searching:', EBAY_CONFIG.allMarketplaces.join(', '));
-  console.log('[eBay] ═══════════════════════════════════════');
 
   const token = await getEbayAccessToken();
   if (!token) {
-    console.log('[eBay] No token available, skipping search');
     return null;
   }
 
@@ -172,24 +164,13 @@ export async function searchEbay(query: string, gtin?: string): Promise<MarketRe
       (r): r is MarketplaceResult => r !== null
     );
 
-    console.log('[eBay] Results from', marketplaceResults.length, 'marketplaces:');
-    marketplaceResults.forEach(r => {
-      console.log(`  ${r.marketplaceName}: ${r.listings.length} items`);
-    });
-
     if (marketplaceResults.length === 0) {
-      console.log('[eBay] ❌ No items found on any marketplace');
-      console.log('[eBay] ═══════════════════════════════════════');
       return null;
     }
 
     // Combine all listings
     const allListings = marketplaceResults.flatMap(r => r.listings);
     const priceStats = calculatePriceStats(allListings);
-
-    console.log('[eBay] ✅ Total:', allListings.length, 'listings');
-    console.log('[eBay] Price range:', priceStats.minPrice, '-', priceStats.maxPrice);
-    console.log('[eBay] ═══════════════════════════════════════');
 
     return {
       query,
@@ -205,7 +186,6 @@ export async function searchEbay(query: string, gtin?: string): Promise<MarketRe
     };
   } catch (error) {
     console.error('[eBay] ❌ Search error:', error);
-    console.log('[eBay] ═══════════════════════════════════════');
     return null;
   }
 }
