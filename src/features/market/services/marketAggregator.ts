@@ -3,10 +3,10 @@
  * Fasst Ergebnisse von allen Plattformen zusammen
  */
 
-import { searchMarket, formatPrice, MarketResult, PriceStats } from './ebay';
-import { searchKleinanzeigen } from './kleinanzeigen';
-import { searchAmazon } from './amazon';
-import { searchIdealo } from './idealo';
+import { searchMarket, formatPrice, MarketResult, PriceStats } from '@/features/market/services/ebay';
+import { searchKleinanzeigen } from '@/features/market/services/kleinanzeigen';
+import { searchAmazon } from '@/features/market/services/amazon';
+import { searchIdealo } from '@/features/market/services/idealo';
 
 export { formatPrice };
 

@@ -3,8 +3,8 @@
  * Quickly fetches the first product image for a given query
  */
 
-import { getEbayAccessToken } from './auth';
-import { EBAY_CONFIG } from './types';
+import { getEbayAccessToken } from '@/features/market/services/ebay/auth';
+import { EBAY_CONFIG } from '@/features/market/services/ebay/types';
 
 /**
  * Fetches the first product image from eBay for a given search query

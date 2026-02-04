@@ -37,7 +37,9 @@
       "Bash(ipconfig getifaddr:*)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(tree:*)",
+      "Bash(grep:*)"
     ]
   }
 }

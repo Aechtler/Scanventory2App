@@ -5,7 +5,7 @@
  * TODO: Integrate with Idealo Partner API for real data.
  */
 
-import { MarketResult, MarketListing } from '../ebay/types';
+import { MarketResult, MarketListing } from '@/features/market/services/ebay/types';
 
 const RETAILERS = [
   'MediaMarkt', 'Saturn', 'Amazon', 'Otto', 'Alternate', 

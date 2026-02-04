@@ -5,7 +5,7 @@
  * TODO: Integrate with Amazon Product Advertising API for real data.
  */
 
-import { MarketResult, MarketListing } from '../ebay/types';
+import { MarketResult, MarketListing } from '@/features/market/services/ebay/types';
 
 // Amazon has higher prices (new items)
 const PRICE_MODIFIER = 1.25;

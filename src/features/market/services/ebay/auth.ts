@@ -3,7 +3,7 @@
  * Handles Client Credentials Flow for Browse API access
  */
 
-import { EBAY_CONFIG } from './types';
+import { EBAY_CONFIG } from '@/features/market/services/ebay/types';
 
 // Token cache
 let cachedToken: string | null = null;

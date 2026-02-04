@@ -11,7 +11,7 @@ import { useHistoryStore } from '../features/history/store/historyStore';
 import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
 import { PlatformQuicklinks } from '../features/market/components/PlatformQuicklinks';
 import { PriceEstimate } from '../features/market/components/PriceEstimate';
-import { MarketValueCard } from '../features/market/components/MarketValueCard';
+import { MarketValueCard } from '../features/market/components/MarketValue';
 import { Icons } from '../shared/components/Icons';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../shared/components/Animated';
 import { ImageSkeleton, AnalysisResultSkeleton } from '../shared/components/Skeleton';

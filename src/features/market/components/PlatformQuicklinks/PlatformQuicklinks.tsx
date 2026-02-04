@@ -6,7 +6,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { MotiView } from 'moti';
-import { PlatformLink, openPlatformLink } from '../services/quicklinks';
+import { PlatformLink, openPlatformLink } from '@/features/market/services/quicklinks';
 import { AnimatedButton } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
 

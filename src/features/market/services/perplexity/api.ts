@@ -3,8 +3,8 @@
  * Handles communication with Perplexity AI for market value research
  */
 
-import { PERPLEXITY_CONFIG, MarketValueResult } from './types';
-import { SYSTEM_PROMPT, createUserPrompt } from './prompts';
+import { PERPLEXITY_CONFIG, MarketValueResult } from '@/features/market/services/perplexity/types';
+import { SYSTEM_PROMPT, createUserPrompt } from '@/features/market/services/perplexity/prompts';
 
 /**
  * Maps confidence string to typed values

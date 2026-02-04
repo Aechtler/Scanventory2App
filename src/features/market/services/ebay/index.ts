@@ -15,19 +15,19 @@ export type {
   MarketplaceResult,
   EbaySearchResult,
   EbayConfig 
-} from './types';
+} from '@/features/market/services/ebay/types';
 
-export { EBAY_CONFIG, MARKETPLACE_NAMES } from './types';
+export { EBAY_CONFIG, MARKETPLACE_NAMES } from '@/features/market/services/ebay/types';
 
 // Re-export auth functions
 export { 
   getEbayAccessToken, 
   isSandboxMode, 
   clearTokenCache 
-} from './auth';
+} from '@/features/market/services/ebay/auth';
 
 // Re-export search functions
-export { searchEbay, recalculatePriceStats } from './search';
+export { searchEbay, recalculatePriceStats } from '@/features/market/services/ebay/search';
 
 // Re-export utilities
 export { 
@@ -35,10 +35,10 @@ export {
   formatPriceRange, 
   normalizeSearchQuery, 
   createSearchVariants 
-} from './utils';
+} from '@/features/market/services/ebay/utils';
 
 /**
  * Main search function - searches for products on the market
  * Alias for searchEbay for backward compatibility
  */
-export { searchEbay as searchMarket } from './search';
+export { searchEbay as searchMarket } from '@/features/market/services/ebay/search';

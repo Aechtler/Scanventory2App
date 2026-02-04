@@ -2,8 +2,8 @@
  * Kleinanzeigen API Search
  */
 
-import { PriceStats, MarketResult, MarketListing } from '../ebay/types';
-import { KLEINANZEIGEN_CONFIG } from './types';
+import { PriceStats, MarketResult, MarketListing } from '@/features/market/services/ebay/types';
+import { KLEINANZEIGEN_CONFIG } from '@/features/market/services/kleinanzeigen/types';
 
 /**
  * Searches Kleinanzeigen using the real API

@@ -16,7 +16,8 @@
       "@/app/*": [
         "src/app/*"
       ]
-    }
+    },
+    "types": ["nativewind/types"]
   },
   "include": [
     "**/*.ts",

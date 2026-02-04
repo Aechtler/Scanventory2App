@@ -8,7 +8,7 @@ import { searchMarket, PriceStats, MarketListing } from '../../features/market/s
 import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexity';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
 import { PriceEstimate } from '../../features/market/components/PriceEstimate';
-import { MarketValueCard } from '../../features/market/components/MarketValueCard';
+import { MarketValueCard } from '../../features/market/components/MarketValue';
 import { FadeInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
 import { MotiView } from 'moti';
 
