@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PriceStats, MarketListing } from '@/features/market/services/ebay';
 import { MarketValueResult } from '@/features/market/services/perplexity';
 import { cacheImage, removeCachedImage } from '../services/imageCacheService';
+import { syncNewItem, syncPrices, syncMarketValue, syncDeleteItem } from '../services/syncService';
 
 export interface HistoryItem {
   id: string;
@@ -34,12 +35,14 @@ export interface HistoryItem {
   marketValue?: MarketValueResult;   // Cached Perplexity AI market analysis
   marketValueFetchedAt?: string;     // When market value was last fetched
   scannedAt: string; // ISO Date string
+  serverId?: string;                 // Backend DB ID (nach erfolgreichem Sync)
+  syncStatus?: 'synced' | 'pending' | 'failed'; // Sync-Status
 }
 
 interface HistoryState {
   items: HistoryItem[];
   isOffline: boolean;
-  addItem: (item: Omit<HistoryItem, 'id' | 'scannedAt' | 'cachedImageUri'>) => Promise<void>;
+  addItem: (item: Omit<HistoryItem, 'id' | 'scannedAt' | 'cachedImageUri' | 'serverId' | 'syncStatus'>) => Promise<void>;
   removeItem: (id: string) => void;
   clearHistory: () => void;
   getItemById: (id: string) => HistoryItem | undefined;
@@ -60,22 +63,59 @@ export const useHistoryStore = create<HistoryState>()(
       addItem: async (item) => {
         // Cache das Bild für Offline-Zugriff
         const cachedImageUri = await cacheImage(item.imageUri);
-        
+
         const newItem: HistoryItem = {
           ...item,
           id: `scan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           cachedImageUri,
+          syncStatus: 'pending',
           scannedAt: new Date().toISOString(),
         };
         set((state) => ({
           items: [newItem, ...state.items],
         }));
+
+        // Fire-and-forget: Sync zum Backend
+        syncNewItem(item.imageUri, {
+          productName: item.productName,
+          category: item.category,
+          brand: item.brand,
+          condition: item.condition,
+          confidence: item.confidence,
+          gtin: item.gtin,
+          searchQuery: item.searchQuery,
+          searchQueries: item.searchQueries,
+          priceStats: item.priceStats as unknown as Record<string, unknown>,
+          ebayListings: item.ebayListings,
+          ebayListingsFetchedAt: item.ebayListingsFetchedAt,
+          marketValue: item.marketValue as unknown as Record<string, unknown>,
+          marketValueFetchedAt: item.marketValueFetchedAt,
+          scannedAt: newItem.scannedAt,
+        }).then((serverId) => {
+          if (serverId) {
+            set((state) => ({
+              items: state.items.map((i) =>
+                i.id === newItem.id ? { ...i, serverId, syncStatus: 'synced' as const } : i
+              ),
+            }));
+          } else {
+            set((state) => ({
+              items: state.items.map((i) =>
+                i.id === newItem.id ? { ...i, syncStatus: 'failed' as const } : i
+              ),
+            }));
+          }
+        });
       },
 
       removeItem: (id) => {
         const item = get().items.find(i => i.id === id);
         if (item?.cachedImageUri) {
           removeCachedImage(item.imageUri);
+        }
+        // Fire-and-forget: Backend sync
+        if (item?.serverId) {
+          syncDeleteItem(item.serverId);
         }
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
@@ -98,26 +138,43 @@ export const useHistoryStore = create<HistoryState>()(
       updateItemPrices: (id, priceStats, listings) => {
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id 
-              ? { 
-                  ...item, 
+            item.id === id
+              ? {
+                  ...item,
                   priceStats,
                   ebayListings: listings,
                   ebayListingsFetchedAt: new Date().toISOString()
-                } 
+                }
               : item
           ),
         }));
+        // Fire-and-forget: Backend sync
+        const item = get().items.find(i => i.id === id);
+        if (item?.serverId) {
+          syncPrices(
+            item.serverId,
+            priceStats as unknown as Record<string, unknown>,
+            listings
+          );
+        }
       },
 
       updateMarketValue: (id, marketValue) => {
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id 
-              ? { ...item, marketValue, marketValueFetchedAt: new Date().toISOString() } 
+            item.id === id
+              ? { ...item, marketValue, marketValueFetchedAt: new Date().toISOString() }
               : item
           ),
         }));
+        // Fire-and-forget: Backend sync
+        const item = get().items.find(i => i.id === id);
+        if (item?.serverId) {
+          syncMarketValue(
+            item.serverId,
+            marketValue as unknown as Record<string, unknown>
+          );
+        }
       },
     }),
     {

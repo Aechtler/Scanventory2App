@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  apiKey    String   @unique
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scannedItems ScannedItem[]
+}
+
+model ScannedItem {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Produktdaten (von Gemini Vision)
+  productName String
+  category    String
+  brand       String?
+  condition   String
+  confidence  Float
+  gtin        String?
+
+  // Suchkonfiguration
+  searchQuery   String
+  searchQueries Json? // { ebay?, kleinanzeigen?, amazon?, idealo?, generic? }
+
+  // Bild
+  imageFilename String  // Relativer Pfad in uploads/
+  originalUri   String? // Original-URI vom Geraet
+
+  // Preisdaten (eBay, als JSONB)
+  priceStats            Json?     // { minPrice, maxPrice, avgPrice, medianPrice, totalListings, soldListings }
+  ebayListings          Json?     // MarketListing[]
+  ebayListingsFetchedAt DateTime?
+
+  // KI-Marktwert (Perplexity, als JSONB)
+  marketValue          Json?     // { estimatedPrice, priceRange, confidence, sources, summary, rawResponse }
+  marketValueFetchedAt DateTime?
+
+  scannedAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([scannedAt])
+  @@index([productName])
+  @@index([category])
+}

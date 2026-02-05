@@ -40,7 +40,8 @@
       "Bash(pkill:*)",
       "Bash(tree:*)",
       "Bash(grep:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npx prisma generate:*)"
     ]
   }
 }
