@@ -1,0 +1,168 @@
+# ScanApp
+
+Mobile Inventar-App mit Barcode-Scanner und Marktpreisanalyse.
+
+## 🏗️ Struktur
+
+```
+ScanApp/
+├── packages/
+│   ├── mobile/      # React Native App (Expo)
+│   └── backend/     # Express API + PostgreSQL
+└── package.json     # Monorepo Workspace
+```
+
+## 🚀 Schnellstart
+
+```bash
+# Dependencies installieren
+npm install
+
+# Prisma Client generieren
+cd packages/backend && npx prisma generate && cd ../..
+
+# Backend + Datenbank starten
+npm run docker:up
+
+# Mobile App starten (anderes Terminal)
+npm run dev:mobile
+```
+
+## 📦 Installation
+
+### Voraussetzungen
+
+- Node.js >= 18
+- npm >= 9
+- Docker & Docker Compose
+
+### Setup
+
+```bash
+# Repository klonen
+git clone <repository-url>
+cd ScanApp
+
+# Alle Dependencies installieren
+npm install
+
+# Prisma Client generieren
+cd packages/backend
+npx prisma generate
+cd ../..
+
+# Environment Variablen (optional)
+cp .env.docker.example .env
+```
+
+## � Entwicklung
+
+### Backend + Datenbank
+
+```bash
+# Starten
+npm run docker:up
+
+# Logs ansehen
+npm run docker:logs
+
+# Stoppen
+npm run docker:down
+```
+
+**URLs:**
+- API: http://localhost:3000
+- PostgreSQL: localhost:5432
+
+### Mobile App
+
+```bash
+# Dev Server starten
+npm run dev:mobile
+
+# Auf Android
+npm run android --workspace=@scanapp/mobile
+
+# Auf iOS
+npm run ios --workspace=@scanapp/mobile
+```
+
+## 🗄️ Datenbank
+
+```bash
+# Migrationen ausführen
+npm run db:migrate
+
+# Prisma Studio öffnen
+npm run db:studio
+
+# DB seeden
+npm run db:seed
+```
+
+## 📝 Wichtige Befehle
+
+| Befehl | Beschreibung |
+|--------|-------------|
+| `npm run docker:up` | Backend + DB starten |
+| `npm run docker:down` | Backend + DB stoppen |
+| `npm run docker:logs` | Logs ansehen |
+| `npm run dev:mobile` | Mobile App starten |
+| `npm run build:all` | Alles bauen |
+| `npm run typecheck:all` | TypeScript prüfen |
+
+## 🛠️ Tech Stack
+
+**Mobile App:**
+- React Native + Expo
+- NativeWind (Tailwind)
+- Zustand
+- Expo Router
+
+**Backend:**
+- Express.js
+- Prisma ORM
+- PostgreSQL
+- Docker
+
+## � Environment Variablen
+
+### Mobile (`packages/mobile/.env`)
+```env
+API_URL=http://localhost:3000
+```
+
+### Backend (`packages/backend/.env`)
+```env
+DATABASE_URL=postgresql://scanapp:scanapp_dev@localhost:5432/scanapp
+PORT=3000
+API_KEY=your-secret-key
+UPLOAD_DIR=/app/uploads
+```
+
+## 🔧 Troubleshooting
+
+**Prisma Client Fehler:**
+```bash
+cd packages/backend
+npx prisma generate
+```
+
+**Port bereits belegt:**
+```bash
+# Container stoppen
+npm run docker:down
+
+# Oder alle Container anzeigen
+docker ps
+```
+
+**Node Modules Probleme:**
+```bash
+npm run clean
+npm install
+```
+
+---
+
+Weitere Details in [QUICKSTART.md](QUICKSTART.md)

@@ -57,7 +57,11 @@ coverage/
 *.log
 
 # Backend
-backend/node_modules/
-backend/dist/
-backend/uploads/
-backend/.env
+packages/backend/node_modules/
+packages/backend/dist/
+packages/backend/uploads/
+packages/backend/.env
+
+# Workspaces
+packages/*/node_modules/
+packages/*/dist/

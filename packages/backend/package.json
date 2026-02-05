@@ -1,5 +1,5 @@
 {
-  "name": "scanapp-backend",
+  "name": "@scanapp/backend",
   "version": "1.0.0",
   "description": "ScanApp Backend API",
   "main": "dist/index.js",
