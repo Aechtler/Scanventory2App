@@ -39,7 +39,8 @@
       "Bash(xargs kill:*)",
       "Bash(pkill:*)",
       "Bash(tree:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(wc:*)"
     ]
   }
 }
