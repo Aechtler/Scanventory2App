@@ -38,6 +38,7 @@ import {
   Share,
   FileText,
   Terminal,
+  Pencil,
 } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -107,6 +108,7 @@ export const Icons = {
   FileText: (props: IconProps) => <FileText {...defaultProps} {...props} />,
   Terminal: (props: IconProps) => <Terminal {...defaultProps} {...props} />,
   Tag: (props: IconProps) => <Tag {...defaultProps} {...props} />,
+  Pencil: (props: IconProps) => <Pencil {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper

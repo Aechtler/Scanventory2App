@@ -39,13 +39,12 @@ export function CardSlider({
       <ScrollView
         ref={scrollViewRef}
         horizontal
-        pagingEnabled
         snapToInterval={slideWidth}
+        snapToAlignment="start"
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={{ gap: 0 }}
       >
         {childArray.map((child, index) => (
           <View key={index} style={{ width: slideWidth }}>

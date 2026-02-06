@@ -52,6 +52,10 @@ model ScannedItem {
   marketValue          Json?     // { estimatedPrice, priceRange, confidence, sources, summary, rawResponse }
   marketValueFetchedAt DateTime?
 
+  // Finaler Verkaufspreis (vom Nutzer manuell gesetzt)
+  finalPrice     Float?
+  finalPriceNote String?
+
   scannedAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -3,7 +3,7 @@
  * Fehler werden still gefangen, Items bleiben lokal erhalten
  */
 
-import { apiUploadItem, apiPatch, apiDelete } from '@/shared/services';
+import { apiUploadItem, apiPatch, apiPut, apiDelete } from '@/shared/services';
 
 interface SyncItemData {
   productName: string;
@@ -88,6 +88,20 @@ export async function syncKleinanzeigenPrices(
     return result.success;
   } catch (error) {
     console.warn('[Sync] Kleinanzeigen prices update error:', error);
+    return false;
+  }
+}
+
+/** Generisches Item-Update zum Backend pushen (PUT) */
+export async function syncItemUpdate(
+  serverId: string,
+  fields: Record<string, unknown>
+): Promise<boolean> {
+  try {
+    const result = await apiPut(`/api/items/${serverId}`, fields);
+    return result.success;
+  } catch (error) {
+    console.warn('[Sync] Item update error:', error);
     return false;
   }
 }

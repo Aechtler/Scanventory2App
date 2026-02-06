@@ -39,6 +39,8 @@ export interface CreateItemBody {
   kleinanzeigenListingsFetchedAt?: string;
   marketValue?: Record<string, unknown>;
   marketValueFetchedAt?: string;
+  finalPrice?: number | null;
+  finalPriceNote?: string | null;
   scannedAt: string;
 }
 

@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PriceStats, MarketListing } from '@/features/market/services/ebay';
 import { MarketValueResult } from '@/features/market/services/perplexity';
 import { cacheImage, removeCachedImage } from '../services/imageCacheService';
-import { syncNewItem, syncPrices, syncKleinanzeigenPrices, syncMarketValue, syncDeleteItem } from '../services/syncService';
+import { syncNewItem, syncPrices, syncKleinanzeigenPrices, syncMarketValue, syncDeleteItem, syncItemUpdate } from '../services/syncService';
 
 export interface HistoryItem {
   id: string;
@@ -36,6 +36,8 @@ export interface HistoryItem {
   kleinanzeigenListingsFetchedAt?: string;  // When KA listings were last fetched
   marketValue?: MarketValueResult;   // Cached Perplexity AI market analysis
   marketValueFetchedAt?: string;     // When market value was last fetched
+  finalPrice?: number;               // Manuell gesetzter Verkaufspreis
+  finalPriceNote?: string;           // Notiz zum finalen Preis
   scannedAt: string; // ISO Date string
   serverId?: string;                 // Backend DB ID (nach erfolgreichem Sync)
   syncStatus?: 'synced' | 'pending' | 'failed'; // Sync-Status
@@ -52,6 +54,10 @@ interface HistoryState {
   updateItemPrices: (id: string, priceStats: PriceStats, listings?: MarketListing[]) => void;
   updateItemKleinanzeigenPrices: (id: string, listings: MarketListing[]) => void;
   updateMarketValue: (id: string, marketValue: MarketValueResult) => void;
+  updateItem: (id: string, fields: Partial<Pick<HistoryItem,
+    'productName' | 'category' | 'brand' | 'condition' | 'gtin' |
+    'searchQuery' | 'searchQueries' | 'finalPrice' | 'finalPriceNote'
+  >>) => void;
 }
 
 /**
@@ -198,6 +204,19 @@ export const useHistoryStore = create<HistoryState>()(
             item.serverId,
             marketValue as unknown as Record<string, unknown>
           );
+        }
+      },
+
+      updateItem: (id, fields) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id ? { ...item, ...fields } : item
+          ),
+        }));
+        // Fire-and-forget: Backend sync
+        const item = get().items.find(i => i.id === id);
+        if (item?.serverId) {
+          syncItemUpdate(item.serverId, { ...fields });
         }
       },
     }),

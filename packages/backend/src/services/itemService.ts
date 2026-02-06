@@ -80,6 +80,8 @@ export async function createItem(
       marketValueFetchedAt: data.marketValueFetchedAt
         ? new Date(data.marketValueFetchedAt)
         : null,
+      finalPrice: data.finalPrice ?? null,
+      finalPriceNote: data.finalPriceNote ?? null,
       scannedAt: new Date(data.scannedAt),
     },
   });

@@ -78,6 +78,7 @@ export async function searchKleinanzeigenReal(query: string): Promise<MarketResu
           imageUrl: item.images?.[0]?.url || item.pictures?.[0]?.url || '',
           itemUrl: item.url || item.link || `https://www.kleinanzeigen.de/s-anzeige/${item.id}`,
           sold: item.status === 'SOLD' || item.sold === true,
+          marketplace: 'KLEINANZEIGEN',
         });
       }
     }

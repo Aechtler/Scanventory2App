@@ -5,13 +5,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { analyzeImage, analyzeImageMock, VisionResult, VisionMatch, identifyProductIdentifier } from '../features/scan/services/visionService';
 import { generatePlatformLinks, PlatformLink } from '../features/market/services/quicklinks';
 import { searchMarket, PriceStats, MarketListing } from '../features/market/services/ebay';
+import { searchKleinanzeigen } from '../features/market/services/kleinanzeigen';
 import { getMarketValue, MarketValueResult } from '../features/market/services/perplexity';
 import { getProductImage } from '../features/market/services/ebay/images';
 import { useHistoryStore } from '../features/history/store/historyStore';
 import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
 import { PlatformQuicklinks } from '../features/market/components/PlatformQuicklinks';
-import { PriceEstimate } from '../features/market/components/PriceEstimate';
-import { MarketValueCard } from '../features/market/components/MarketValue';
+import { MarketSlider } from '../features/market/components/MarketSlider';
 import { Icons } from '../shared/components/Icons';
 import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../shared/components/Animated';
 import { ImageSkeleton, AnalysisResultSkeleton } from '../shared/components/Skeleton';
@@ -35,6 +35,9 @@ export default function AnalyzeScreen() {
   const [priceLoading, setPriceLoading] = useState(false);
   const [marketValue, setMarketValue] = useState<MarketValueResult | null>(null);
   const [marketValueLoading, setMarketValueLoading] = useState(false);
+  const [kleinanzeigenStats, setKleinanzeigenStats] = useState<PriceStats | null>(null);
+  const [kleinanzeigenListings, setKleinanzeigenListings] = useState<MarketListing[]>([]);
+  const [kleinanzeigenLoading, setKleinanzeigenLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,6 +99,7 @@ export default function AnalyzeScreen() {
     const searchQuery = match.searchQueries?.generic || match.productName;
     loadPriceData(searchQuery, match.gtin || undefined);
     loadMarketValue(match.productName, match.category);
+    loadKleinanzeigenData(match.searchQueries?.kleinanzeigen || searchQuery, match.category);
 
     // Try to find a precise product identifier (EAN/GTIN) if not already present
     if (!match.gtin) {
@@ -148,6 +152,24 @@ export default function AnalyzeScreen() {
     }
   };
 
+  const loadKleinanzeigenData = async (searchQuery: string, category?: string) => {
+    setKleinanzeigenLoading(true);
+    setKleinanzeigenStats(null);
+    setKleinanzeigenListings([]);
+
+    try {
+      const result = await searchKleinanzeigen(searchQuery, category);
+      if (result) {
+        setKleinanzeigenStats(result.priceStats);
+        setKleinanzeigenListings(result.listings || []);
+      }
+    } catch (err) {
+      console.error('Kleinanzeigen loading error:', err);
+    } finally {
+      setKleinanzeigenLoading(false);
+    }
+  };
+
   const handleRefreshMarketValue = () => {
     if (selectedMatch) {
       loadMarketValue(selectedMatch.productName, selectedMatch.category);
@@ -195,6 +217,10 @@ export default function AnalyzeScreen() {
         gtin: selectedMatch.gtin,
         ebayListings: ebayListings,
         ebayListingsFetchedAt: new Date().toISOString(),
+        kleinanzeigenListings: kleinanzeigenListings,
+        kleinanzeigenListingsFetchedAt: kleinanzeigenListings.length > 0 ? new Date().toISOString() : undefined,
+        marketValue: marketValue ?? undefined,
+        marketValueFetchedAt: marketValue ? new Date().toISOString() : undefined,
         priceStats: priceStats || {
           minPrice: 0,
           maxPrice: 0,
@@ -341,24 +367,25 @@ export default function AnalyzeScreen() {
                 </View>
               </FadeInView>
 
-              {/* KI-Marktwertanalyse (Perplexity) */}
-              <FadeInView delay={75}>
-                <MarketValueCard 
-                  result={marketValue} 
-                  isLoading={marketValueLoading}
-                  onRefresh={handleRefreshMarketValue}
-                />
-              </FadeInView>
-
-              {/* eBay Price Estimate */}
-              <FadeInView delay={100}>
-                <PriceEstimate 
-                  priceStats={priceStats} 
-                  listings={ebayListings}
-                  isLoading={priceLoading}
-                  onRefresh={() => {
+              {/* Market Slider: Summary + eBay + Kleinanzeigen */}
+              <FadeInView delay={75} className="mb-4">
+                <MarketSlider
+                  marketValue={marketValue}
+                  marketValueLoading={marketValueLoading}
+                  onRefreshMarketValue={handleRefreshMarketValue}
+                  ebayPriceStats={priceStats}
+                  ebayListings={ebayListings}
+                  ebayLoading={priceLoading}
+                  onRefreshEbay={() => {
                     const searchQuery = selectedMatch.searchQueries?.generic || selectedMatch.productName;
                     loadPriceData(searchQuery, selectedMatch.gtin || undefined);
+                  }}
+                  kleinanzeigenPriceStats={kleinanzeigenStats}
+                  kleinanzeigenListings={kleinanzeigenListings}
+                  kleinanzeigenLoading={kleinanzeigenLoading}
+                  onRefreshKleinanzeigen={() => {
+                    const searchQuery = selectedMatch.searchQueries?.kleinanzeigen || selectedMatch.searchQueries?.generic || selectedMatch.productName;
+                    loadKleinanzeigenData(searchQuery, selectedMatch.category);
                   }}
                 />
               </FadeInView>

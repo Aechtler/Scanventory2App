@@ -46,6 +46,7 @@ export async function searchKleinanzeigenMock(
     imageUrl: '',
     itemUrl: `https://www.kleinanzeigen.de/s-${encodeURIComponent(query)}`,
     sold: Math.random() > 0.6,
+    marketplace: 'KLEINANZEIGEN',
   }));
 
   const soldPrices = listings.filter((l) => l.sold).map((l) => l.price);

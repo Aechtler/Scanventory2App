@@ -6,11 +6,13 @@ import { useHistoryStore, HistoryItem } from '../../features/history/store/histo
 import { Button } from '../../shared/components';
 import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
 import { searchMarket, PriceStats, MarketListing } from '../../features/market/services/ebay';
+import { searchKleinanzeigen } from '../../features/market/services/kleinanzeigen';
 import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexity';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
-import { PriceEstimate } from '../../features/market/components/PriceEstimate';
-import { MarketValueCard } from '../../features/market/components/MarketValue';
-import { FadeInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
+import { MarketSlider } from '../../features/market/components/MarketSlider';
+import { EditableProductCard } from '../../features/history/components/EditableProductCard';
+import { FinalPriceCard } from '../../features/history/components/FinalPriceCard';
+import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
 import { MotiView } from 'moti';
 
 /**
@@ -22,7 +24,9 @@ export default function HistoryDetailScreen() {
   const removeItem = useHistoryStore((state) => state.removeItem);
   const updateMarketValue = useHistoryStore((state) => state.updateMarketValue);
   const updateItemPrices = useHistoryStore((state) => state.updateItemPrices);
-  
+  const updateItemKleinanzeigenPrices = useHistoryStore((state) => state.updateItemKleinanzeigenPrices);
+  const updateItem = useHistoryStore((state) => state.updateItem);
+
   const item = id ? getItemById(id) : null;
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [priceStats, setPriceStats] = useState<PriceStats | null>(null);
@@ -30,6 +34,9 @@ export default function HistoryDetailScreen() {
   const [priceLoading, setPriceLoading] = useState(false);
   const [marketValue, setMarketValue] = useState<MarketValueResult | null>(null);
   const [marketValueLoading, setMarketValueLoading] = useState(false);
+  const [kleinanzeigenStats, setKleinanzeigenStats] = useState<PriceStats | null>(null);
+  const [kleinanzeigenListings, setKleinanzeigenListings] = useState<MarketListing[]>([]);
+  const [kleinanzeigenLoading, setKleinanzeigenLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -52,18 +59,42 @@ export default function HistoryDetailScreen() {
         setListings(item.ebayListings);
         console.log('[History] Using cached listings from', item.ebayListingsFetchedAt);
       }
+
+      // Load cached Kleinanzeigen data if available
+      if (item.kleinanzeigenListings && item.kleinanzeigenListings.length > 0) {
+        setKleinanzeigenListings(item.kleinanzeigenListings);
+        // Compute stats from cached listings
+        const prices = item.kleinanzeigenListings.map(l => l.price).filter(p => p > 0);
+        if (prices.length > 0) {
+          prices.sort((a, b) => a - b);
+          const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+          setKleinanzeigenStats({
+            minPrice: prices[0],
+            maxPrice: prices[prices.length - 1],
+            avgPrice: Math.round(avg * 100) / 100,
+            medianPrice: prices[Math.floor(prices.length / 2)],
+            totalListings: item.kleinanzeigenListings.length,
+            soldListings: item.kleinanzeigenListings.filter(l => l.sold).length,
+          });
+        }
+        console.log('[History] Using cached KA listings from', item.kleinanzeigenListingsFetchedAt);
+      }
     }
   }, [item]);
 
   const loadAllData = async (historyItem: HistoryItem, forceRefresh = false) => {
     // Use generic/shorter query for better search results (too specific = no hits)
     const searchQuery = historyItem.searchQueries?.generic || historyItem.productName;
-    
+
     // Load eBay prices
     loadPriceData(searchQuery);
-    
+
     // Load Perplexity market value (force refresh to get new data)
     loadMarketValue(historyItem.productName, historyItem.category, forceRefresh);
+
+    // Load Kleinanzeigen prices
+    const kaQuery = historyItem.searchQueries?.kleinanzeigen || searchQuery;
+    loadKleinanzeigenData(kaQuery, historyItem.category);
   };
 
   const loadPriceData = async (searchQuery: string) => {
@@ -113,6 +144,30 @@ export default function HistoryDetailScreen() {
       console.error('Market value loading error:', err);
     } finally {
       setMarketValueLoading(false);
+    }
+  };
+
+  const loadKleinanzeigenData = async (searchQuery: string, category?: string) => {
+    setKleinanzeigenLoading(true);
+    setKleinanzeigenStats(null);
+    setKleinanzeigenListings([]);
+
+    try {
+      const result = await searchKleinanzeigen(searchQuery, category);
+      if (result) {
+        setKleinanzeigenStats(result.priceStats);
+        setKleinanzeigenListings(result.listings || []);
+
+        // Save to storage for next time
+        if (item) {
+          updateItemKleinanzeigenPrices(item.id, result.listings || []);
+          console.log('[History] Saved KA data:', result.listings?.length, 'listings');
+        }
+      }
+    } catch (err) {
+      console.error('Kleinanzeigen loading error:', err);
+    } finally {
+      setKleinanzeigenLoading(false);
     }
   };
 
@@ -193,61 +248,69 @@ export default function HistoryDetailScreen() {
             </MotiView>
           </FadeInView>
 
-          {/* Produkt-Info */}
+          {/* Produkt-Info (editierbar) */}
           <FadeInView delay={50}>
-            <View className="bg-background-card rounded-xl p-4 mb-4 border border-gray-800">
-              <View className="flex-row justify-between items-start mb-3">
-                <Text className="text-white text-xl font-bold flex-1">
-                  {item.productName}
-                </Text>
-                <View className="bg-primary-500/20 px-3 py-1 rounded-lg">
-                  <Text className="text-primary-400 font-bold">
-                    {Math.round(item.confidence * 100)}%
-                  </Text>
-                </View>
-              </View>
-
-              {item.gtin && (
-                <View className="flex-row items-center mb-3 bg-gray-800/40 self-start px-2 py-1 rounded border border-gray-700">
-                  <Text className="text-gray-400 text-xs font-mono">
-                    Artikelnummer: {item.gtin}
-                  </Text>
-                </View>
-              )}
-
-              <View className="flex-row flex-wrap gap-2 mb-3">
-                {[item.category, item.brand, item.condition]
-                  .filter(Boolean)
-                  .map((tag, i) => (
-                    <StaggeredItem key={i} index={i}>
-                      <View className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
-                        <Text className="text-gray-200 text-sm">{tag}</Text>
-                      </View>
-                    </StaggeredItem>
-                  ))}
-              </View>
-
-              <Text className="text-gray-500 text-sm">
-                Gescannt: {formatDate(item.scannedAt)}
-              </Text>
-            </View>
-          </FadeInView>
-
-          {/* KI-Marktwertanalyse (Perplexity) */}
-          <FadeInView delay={75}>
-            <MarketValueCard 
-              result={marketValue} 
-              isLoading={marketValueLoading}
-              onRefresh={handleRefreshMarketValue}
+            <EditableProductCard
+              productName={item.productName}
+              category={item.category}
+              brand={item.brand}
+              condition={item.condition}
+              confidence={item.confidence}
+              gtin={item.gtin}
+              searchQueries={item.searchQueries}
+              scannedAt={item.scannedAt}
+              onUpdate={(fields) => {
+                if (!id) return;
+                updateItem(id, fields);
+                // Regenerate quicklinks when search queries change
+                if (fields.searchQueries) {
+                  const queries = fields.searchQueries as NonNullable<HistoryItem['searchQueries']>;
+                  const ebayQuery = queries.ebay || item.searchQueries?.ebay || item.searchQuery || item.productName;
+                  setPlatformLinks(generatePlatformLinks(ebayQuery));
+                }
+              }}
             />
           </FadeInView>
 
-          {/* eBay Price Estimate */}
-          <FadeInView delay={100}>
-            <PriceEstimate 
-              priceStats={priceStats}
-              listings={listings}
-              isLoading={priceLoading}
+          {/* Finaler Verkaufspreis */}
+          <FadeInView delay={60}>
+            <FinalPriceCard
+              finalPrice={item.finalPrice}
+              finalPriceNote={item.finalPriceNote}
+              comparison={{
+                aiPrice: marketValue?.estimatedPrice,
+                ebayAvg: priceStats?.avgPrice,
+                kleinanzeigenAvg: kleinanzeigenStats?.avgPrice,
+              }}
+              onSavePrice={(price) => {
+                if (id) updateItem(id, { finalPrice: price });
+              }}
+              onSaveNote={(note) => {
+                if (id) updateItem(id, { finalPriceNote: note });
+              }}
+            />
+          </FadeInView>
+
+          {/* Market Slider: Summary + eBay + Kleinanzeigen */}
+          <FadeInView delay={75} className="mb-4">
+            <MarketSlider
+              marketValue={marketValue}
+              marketValueLoading={marketValueLoading}
+              onRefreshMarketValue={handleRefreshMarketValue}
+              ebayPriceStats={priceStats}
+              ebayListings={listings}
+              ebayLoading={priceLoading}
+              onRefreshEbay={() => {
+                const searchQuery = item.searchQueries?.generic || item.productName;
+                loadPriceData(searchQuery);
+              }}
+              kleinanzeigenPriceStats={kleinanzeigenStats}
+              kleinanzeigenListings={kleinanzeigenListings}
+              kleinanzeigenLoading={kleinanzeigenLoading}
+              onRefreshKleinanzeigen={() => {
+                const searchQuery = item.searchQueries?.kleinanzeigen || item.searchQueries?.generic || item.productName;
+                loadKleinanzeigenData(searchQuery, item.category);
+              }}
             />
           </FadeInView>
 
