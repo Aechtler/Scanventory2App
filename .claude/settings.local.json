@@ -41,7 +41,17 @@
       "Bash(tree:*)",
       "Bash(grep:*)",
       "Bash(wc:*)",
-      "Bash(npx prisma generate:*)"
+      "Bash(npx prisma generate:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(DATABASE_URL=\"postgresql://scanapp:scanapp_dev@localhost:5432/scanapp\" npx prisma migrate:*)",
+      "Bash(DATABASE_URL=\"postgresql://scanapp:scanapp_dev@localhost:5432/scanapp\" npx prisma migrate deploy:*)",
+      "Bash(DATABASE_URL=\"postgresql://scanapp:scanapp_dev@localhost:5432/scanapp\" npx tsx:*)",
+      "Bash(DATABASE_URL=\"postgresql://scanapp:scanapp_dev@localhost:5432/scanapp\" API_KEY=\"sa_Dd5OE71x1N73B7VA2VrlePCCQlnjbFY0\" npx tsx:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker compose up:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma migrate diff:*)"
     ]
   }
 }

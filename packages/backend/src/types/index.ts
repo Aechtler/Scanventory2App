@@ -35,6 +35,8 @@ export interface CreateItemBody {
   priceStats?: Record<string, unknown>;
   ebayListings?: unknown[];
   ebayListingsFetchedAt?: string;
+  kleinanzeigenListings?: unknown[];
+  kleinanzeigenListingsFetchedAt?: string;
   marketValue?: Record<string, unknown>;
   marketValueFetchedAt?: string;
   scannedAt: string;
@@ -44,6 +46,11 @@ export interface CreateItemBody {
 export interface UpdatePricesBody {
   priceStats: Record<string, unknown>;
   ebayListings?: unknown[];
+}
+
+/** Body beim Aktualisieren der Kleinanzeigen-Preisdaten */
+export interface UpdateKleinanzeigenPricesBody {
+  kleinanzeigenListings: unknown[];
 }
 
 /** Body beim Aktualisieren des Marktwerts */

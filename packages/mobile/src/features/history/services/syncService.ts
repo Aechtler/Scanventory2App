@@ -17,6 +17,8 @@ interface SyncItemData {
   priceStats: Record<string, unknown>;
   ebayListings?: unknown[];
   ebayListingsFetchedAt?: string;
+  kleinanzeigenListings?: unknown[];
+  kleinanzeigenListingsFetchedAt?: string;
   marketValue?: Record<string, unknown>;
   marketValueFetchedAt?: string;
   scannedAt: string;
@@ -70,6 +72,22 @@ export async function syncMarketValue(
     return result.success;
   } catch (error) {
     console.warn('[Sync] Market value update error:', error);
+    return false;
+  }
+}
+
+/** Kleinanzeigen-Preisdaten zum Backend pushen */
+export async function syncKleinanzeigenPrices(
+  serverId: string,
+  kleinanzeigenListings: unknown[]
+): Promise<boolean> {
+  try {
+    const result = await apiPatch(`/api/items/${serverId}/kleinanzeigen-prices`, {
+      kleinanzeigenListings,
+    });
+    return result.success;
+  } catch (error) {
+    console.warn('[Sync] Kleinanzeigen prices update error:', error);
     return false;
   }
 }

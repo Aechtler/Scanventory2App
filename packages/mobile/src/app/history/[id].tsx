@@ -3,6 +3,7 @@ import { View, Text, Image, ScrollView, RefreshControl } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
+import { Button } from '../../shared/components';
 import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
 import { searchMarket, PriceStats, MarketListing } from '../../features/market/services/ebay';
 import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexity';
@@ -18,6 +19,7 @@ import { MotiView } from 'moti';
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const getItemById = useHistoryStore((state: { getItemById: (id: string) => HistoryItem | undefined }) => state.getItemById);
+  const removeItem = useHistoryStore((state) => state.removeItem);
   const updateMarketValue = useHistoryStore((state) => state.updateMarketValue);
   const updateItemPrices = useHistoryStore((state) => state.updateItemPrices);
   
@@ -254,12 +256,20 @@ export default function HistoryDetailScreen() {
             <PlatformQuicklinks links={platformLinks} />
           </FadeInView>
 
-          {/* Hinweis */}
+          {/* Eintrag löschen */}
           <FadeInView delay={150}>
-            <View className="mt-6 p-4 bg-gray-800/30 rounded-xl border border-gray-700">
-              <Text className="text-gray-400 text-center text-sm">
-                Ziehe nach unten um alle Preise zu aktualisieren
-              </Text>
+            <View className="mt-8 mb-4">
+              <Button
+                title="Eintrag löschen"
+                variant="danger"
+                size="lg"
+                onPress={() => {
+                  if (id) {
+                    removeItem(id);
+                    router.back();
+                  }
+                }}
+              />
             </View>
           </FadeInView>
         </ScrollView>

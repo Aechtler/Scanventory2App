@@ -5,7 +5,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import os from 'os';
-import { ApiResponse, CreateItemBody, UpdatePricesBody, UpdateMarketValueBody } from '../types';
+import { ApiResponse, CreateItemBody, UpdatePricesBody, UpdateKleinanzeigenPricesBody, UpdateMarketValueBody } from '../types';
 import * as itemService from '../services/itemService';
 import { saveImage, deleteImage } from '../services/imageService';
 
@@ -129,6 +129,36 @@ router.patch('/:id/prices', async (req: Request<IdParams>, res: Response) => {
     userId,
     body.priceStats,
     body.ebayListings
+  );
+
+  if (result.count === 0) {
+    res.status(404).json({
+      success: false,
+      error: { code: 'NOT_FOUND', message: 'Item not found' },
+    });
+    return;
+  }
+
+  res.json({ success: true, data: { updated: result.count } });
+});
+
+/** PATCH /api/items/:id/kleinanzeigen-prices - Kleinanzeigen-Preisdaten aktualisieren */
+router.patch('/:id/kleinanzeigen-prices', async (req: Request<IdParams>, res: Response) => {
+  const userId = await getUserId();
+  const body: UpdateKleinanzeigenPricesBody = req.body;
+
+  if (!body.kleinanzeigenListings) {
+    res.status(400).json({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: 'kleinanzeigenListings is required' },
+    });
+    return;
+  }
+
+  const result = await itemService.updateKleinanzeigenPrices(
+    req.params.id,
+    userId,
+    body.kleinanzeigenListings
   );
 
   if (result.count === 0) {

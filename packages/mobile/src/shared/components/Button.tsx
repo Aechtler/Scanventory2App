@@ -2,7 +2,7 @@ import { Pressable, Text, ActivityIndicator, PressableProps } from 'react-native
 
 interface ButtonProps extends Omit<PressableProps, 'children'> {
   title: string;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
@@ -31,6 +31,7 @@ export function Button({
     primary: 'bg-primary-500 active:bg-primary-600',
     secondary: 'bg-background-card active:bg-background-elevated',
     outline: 'bg-transparent border border-gray-600 active:bg-gray-800',
+    danger: 'bg-red-500/15 border border-red-500/30 active:bg-red-500/25',
   };
 
   const disabledStyles = 'opacity-50';
@@ -51,6 +52,7 @@ export function Button({
     primary: 'text-white',
     secondary: 'text-white',
     outline: 'text-gray-300',
+    danger: 'text-red-400',
   };
 
   return (

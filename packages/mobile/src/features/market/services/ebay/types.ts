@@ -63,6 +63,7 @@ export const MARKETPLACE_NAMES: Record<string, string> = {
   'EBAY_CA': '🇨🇦 Kanada',
   'EBAY_IT': '🇮🇹 Italien',
   'EBAY_ES': '🇪🇸 Spanien',
+  'KLEINANZEIGEN': '📦 Kleinanzeigen',
 };
 
 export const EBAY_CONFIG: EbayConfig = {

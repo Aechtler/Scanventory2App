@@ -72,6 +72,10 @@ export async function createItem(
       ebayListingsFetchedAt: data.ebayListingsFetchedAt
         ? new Date(data.ebayListingsFetchedAt)
         : null,
+      kleinanzeigenListings: toJsonOrNull(data.kleinanzeigenListings),
+      kleinanzeigenListingsFetchedAt: data.kleinanzeigenListingsFetchedAt
+        ? new Date(data.kleinanzeigenListingsFetchedAt)
+        : null,
       marketValue: toJsonOrNull(data.marketValue),
       marketValueFetchedAt: data.marketValueFetchedAt
         ? new Date(data.marketValueFetchedAt)
@@ -106,6 +110,21 @@ export async function updatePrices(
       priceStats: toJsonOrNull(priceStats),
       ebayListings: ebayListings ? toJsonOrNull(ebayListings) : undefined,
       ebayListingsFetchedAt: new Date(),
+    },
+  });
+}
+
+/** Kleinanzeigen-Preisdaten aktualisieren */
+export async function updateKleinanzeigenPrices(
+  id: string,
+  userId: string,
+  kleinanzeigenListings: unknown[]
+) {
+  return prisma.scannedItem.updateMany({
+    where: { id, userId },
+    data: {
+      kleinanzeigenListings: toJsonOrNull(kleinanzeigenListings),
+      kleinanzeigenListingsFetchedAt: new Date(),
     },
   });
 }
