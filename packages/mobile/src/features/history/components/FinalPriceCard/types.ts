@@ -3,7 +3,7 @@
  */
 
 export interface PriceComparison {
-  aiPrice?: number;
+  aiPrice?: number | string;
   ebayAvg?: number;
   kleinanzeigenAvg?: number;
 }

@@ -12,7 +12,7 @@ import { PlatformQuicklinks } from '../../features/market/components/PlatformQui
 import { MarketSlider } from '../../features/market/components/MarketSlider';
 import { EditableProductCard } from '../../features/history/components/EditableProductCard';
 import { FinalPriceCard } from '../../features/history/components/FinalPriceCard';
-import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
+import { FadeInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
 import { MotiView } from 'moti';
 
 /**

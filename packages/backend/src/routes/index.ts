@@ -4,17 +4,20 @@
 
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { jwtAuthMiddleware } from '../middleware/jwtAuth';
 import healthRouter from './health';
 import itemsRouter from './items';
 import imagesRouter from './images';
+import authRouter from './auth';
 
 const router = Router();
 
 // Oeffentliche Routen (kein Auth)
 router.use('/health', healthRouter);
 router.use('/images', imagesRouter);
+router.use('/auth', authRouter);
 
-// Geschuetzte Routen (Auth erforderlich)
-router.use('/items', authMiddleware, itemsRouter);
+// Geschuetzte Routen (JWT Auth erforderlich)
+router.use('/items', jwtAuthMiddleware, itemsRouter);
 
 export default router;

@@ -9,8 +9,10 @@ datasource db {
 
 model User {
   id        String   @id @default(uuid())
-  name      String
-  apiKey    String   @unique
+  email     String   @unique
+  password  String   // bcrypt hashed
+  name      String?
+  apiKey    String?  @unique // Legacy support
   isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -19,9 +21,9 @@ model User {
 }
 
 model ScannedItem {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String  @id @default(uuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Produktdaten (von Gemini Vision)
   productName String

@@ -106,7 +106,7 @@ export function FinalPriceCard({
         <View className="flex-row flex-wrap gap-x-3 mt-2">
           {comparison?.aiPrice !== undefined && (
             <Text className="text-gray-500 text-xs">
-              KI: {formatPrice(comparison.aiPrice)}€
+              KI: {typeof comparison.aiPrice === 'number' ? formatPrice(comparison.aiPrice) + '€' : comparison.aiPrice}
             </Text>
           )}
           {comparison?.ebayAvg !== undefined && (
