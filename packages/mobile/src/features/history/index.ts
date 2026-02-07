@@ -6,8 +6,8 @@ export type {
   HistoryFilters,
 } from './types';
 
-// Components werden hier exportiert wenn erstellt
-// export { HistoryList } from './components/HistoryList';
+// Components
+export { EditableProductCard } from './components/EditableProductCard';
+export { FinalPriceCard } from './components/FinalPriceCard';
+export { ProductEditModal, type ProductEditData } from './components/ProductEditModal';
 
-// Hooks werden hier exportiert wenn erstellt
-// export { useHistory } from './hooks/useHistory';

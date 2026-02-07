@@ -1,22 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, Image, ScrollView, RefreshControl, Pressable, Dimensions } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
 import { Button } from '../../shared/components';
+import { Icons } from '../../shared/components/Icons';
 import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
 import { searchMarket, PriceStats, MarketListing } from '../../features/market/services/ebay';
 import { searchKleinanzeigen } from '../../features/market/services/kleinanzeigen';
 import { getMarketValue, MarketValueResult } from '../../features/market/services/perplexity';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
 import { MarketSlider } from '../../features/market/components/MarketSlider';
-import { EditableProductCard } from '../../features/history/components/EditableProductCard';
 import { FinalPriceCard } from '../../features/history/components/FinalPriceCard';
-import { FadeInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
+import { ProductEditModal, ProductEditData } from '../../features/history/components/ProductEditModal';
+import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
 import { MotiView } from 'moti';
 
 /**
- * History Detail Screen - Zeigt ein Item mit KI-Marktwert, Preisschätzung und Quicklinks
+ * History Detail Screen - Clean View mit Edit-Modal bei Tap auf Bild
+ * Zeigt nur essenzielle Infos: Bild, Titel, Tags, Preis, Marktdaten
  */
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,6 +41,7 @@ export default function HistoryDetailScreen() {
   const [kleinanzeigenListings, setKleinanzeigenListings] = useState<MarketListing[]>([]);
   const [kleinanzeigenLoading, setKleinanzeigenLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -185,6 +189,19 @@ export default function HistoryDetailScreen() {
     }
   };
 
+  const handleEditSave = (changes: Partial<ProductEditData>) => {
+    if (!id || Object.keys(changes).length === 0) return;
+    
+    updateItem(id, changes);
+    
+    // Regenerate quicklinks when search queries change
+    if (changes.searchQueries && item) {
+      const queries = changes.searchQueries;
+      const ebayQuery = queries.ebay || item.searchQueries?.ebay || item.searchQuery || item.productName;
+      setPlatformLinks(generatePlatformLinks(ebayQuery));
+    }
+  };
+
   if (!item) {
     return (
       <>
@@ -201,16 +218,6 @@ export default function HistoryDetailScreen() {
       </>
     );
   }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <>
@@ -232,44 +239,76 @@ export default function HistoryDetailScreen() {
             />
           }
         >
-          {/* Bild */}
+          {/* Hero Header mit Bild und Gradient */}
           <FadeInView delay={0}>
-            <MotiView
-              from={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="rounded-2xl overflow-hidden mb-6"
-            >
-              <Image
-                source={{ uri: item.cachedImageUri || item.imageUri }}
-                style={{ width: '100%', aspectRatio: 4 / 3 }}
-                resizeMode="cover"
-              />
-            </MotiView>
-          </FadeInView>
+            <Pressable onPress={() => setEditModalVisible(true)}>
+              <MotiView
+                from={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="rounded-2xl overflow-hidden mb-6 relative"
+              >
+                <Image
+                  source={{ uri: item.cachedImageUri || item.imageUri }}
+                  style={{ width: '100%', aspectRatio: 4 / 3 }}
+                  resizeMode="cover"
+                />
+                {/* Gradient Overlay von unten */}
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(17,24,39,0.95)', '#111827']}
+                  locations={[0, 0.4, 0.75, 1]}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: '70%',
+                  }}
+                />
+                
+                {/* Produktinfos über dem Gradient */}
+                <View className="absolute bottom-0 left-0 right-0 p-4">
+                  {/* Produktname */}
+                  <Text className="text-white text-2xl font-bold mb-2" numberOfLines={2}>
+                    {item.productName}
+                  </Text>
+                  
+                  {/* Tags: Category, Brand, Condition */}
+                  <View className="flex-row flex-wrap gap-2 mb-2">
+                    <View className="bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Text className="text-white/90 text-sm">{item.category}</Text>
+                    </View>
+                    {item.brand && (
+                      <View className="bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                        <Text className="text-white/90 text-sm">{item.brand}</Text>
+                      </View>
+                    )}
+                    <View className="bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Text className="text-white/90 text-sm">{item.condition}</Text>
+                    </View>
+                    {/* Confidence Badge */}
+                    <View className="bg-primary-500/30 px-3 py-1.5 rounded-full">
+                      <Text className="text-primary-300 text-sm font-semibold">
+                        {Math.round(item.confidence * 100)}%
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  {/* GTIN wenn vorhanden */}
+                  {item.gtin && (
+                    <Text className="text-white/50 text-xs font-mono">
+                      {item.gtin}
+                    </Text>
+                  )}
+                </View>
 
-          {/* Produkt-Info (editierbar) */}
-          <FadeInView delay={50}>
-            <EditableProductCard
-              productName={item.productName}
-              category={item.category}
-              brand={item.brand}
-              condition={item.condition}
-              confidence={item.confidence}
-              gtin={item.gtin}
-              searchQueries={item.searchQueries}
-              scannedAt={item.scannedAt}
-              onUpdate={(fields) => {
-                if (!id) return;
-                updateItem(id, fields);
-                // Regenerate quicklinks when search queries change
-                if (fields.searchQueries) {
-                  const queries = fields.searchQueries as NonNullable<HistoryItem['searchQueries']>;
-                  const ebayQuery = queries.ebay || item.searchQueries?.ebay || item.searchQuery || item.productName;
-                  setPlatformLinks(generatePlatformLinks(ebayQuery));
-                }
-              }}
-            />
+                {/* Edit-Hint Overlay oben rechts */}
+                <View className="absolute top-3 right-3 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-full flex-row items-center gap-2">
+                  <Icons.Pencil size={14} color="#ffffff" />
+                  <Text className="text-white text-xs font-medium">Bearbeiten</Text>
+                </View>
+              </MotiView>
+            </Pressable>
           </FadeInView>
 
           {/* Finaler Verkaufspreis */}
@@ -336,6 +375,22 @@ export default function HistoryDetailScreen() {
             </View>
           </FadeInView>
         </ScrollView>
+
+        {/* Edit Modal */}
+        <ProductEditModal
+          visible={editModalVisible}
+          imageUri={item.cachedImageUri || item.imageUri}
+          initialData={{
+            productName: item.productName,
+            category: item.category,
+            brand: item.brand,
+            condition: item.condition,
+            gtin: item.gtin,
+            searchQueries: item.searchQueries,
+          }}
+          onSave={handleEditSave}
+          onClose={() => setEditModalVisible(false)}
+        />
       </SafeAreaView>
     </>
   );
