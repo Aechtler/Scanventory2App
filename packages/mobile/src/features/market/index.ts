@@ -9,5 +9,6 @@ export type {
 // Components werden hier exportiert wenn erstellt
 // export { PriceCard } from './components/PriceCard';
 
-// Hooks werden hier exportiert wenn erstellt
-// export { useMarketPrice } from './hooks/useMarketPrice';
+// Hooks
+export { useMarketData } from './hooks';
+export type { MarketDataState, MarketDataActions, UseMarketDataReturn } from './hooks';

@@ -1,0 +1,1 @@
+export { HistoryDetailHeader } from './HistoryDetailHeader';
