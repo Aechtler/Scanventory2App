@@ -29,7 +29,7 @@ export const PLATFORM_CONFIGS = {
     name: 'Kleinanzeigen',
     icon: 'Package',
     color: '#86b817',
-    urlTemplate: 'https://www.kleinanzeigen.de/s-suche/',
+    urlTemplate: 'https://www.kleinanzeigen.de/s-{query}/k0',
   },
   amazon: {
     name: 'Amazon',

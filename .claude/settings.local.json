@@ -51,7 +51,11 @@
       "Bash(docker exec:*)",
       "Bash(docker compose up:*)",
       "Bash(npx prisma migrate dev:*)",
-      "Bash(npx prisma migrate diff:*)"
+      "Bash(npx prisma migrate diff:*)",
+      "WebSearch",
+      "WebFetch(domain:www.kleinanzeigen.de)",
+      "WebFetch(domain:www.amazon.de)",
+      "WebFetch(domain:www.idealo.de)"
     ]
   }
 }

@@ -102,9 +102,15 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
     const match = result.matches[index];
     setSelectedMatch(match);
 
-    // Generate quicklinks
-    const ebayQuery = match.searchQueries?.ebay || match.searchQuery;
-    const links = generatePlatformLinks(ebayQuery);
+    // Generate quicklinks mit plattformspezifischen Queries
+    const fallback = match.searchQuery;
+    const links = generatePlatformLinks({
+      ebay: match.searchQueries?.ebay || fallback,
+      kleinanzeigen: match.searchQueries?.kleinanzeigen || fallback,
+      amazon: match.searchQueries?.amazon || fallback,
+      idealo: match.searchQueries?.idealo || fallback,
+      generic: match.searchQueries?.generic || fallback,
+    });
     setPlatformLinks(links);
 
     setState('complete');

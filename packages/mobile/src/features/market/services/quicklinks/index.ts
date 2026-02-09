@@ -1,6 +1,6 @@
 /**
  * Platform Quicklinks Service
- * 
+ *
  * Generates search URLs for various marketplaces.
  */
 
@@ -9,6 +9,32 @@ import { PlatformQueries, PlatformLink, PLATFORM_CONFIGS } from './types';
 
 export type { PlatformQueries, PlatformLink } from './types';
 export { PLATFORM_CONFIGS } from './types';
+
+/** Kleinanzeigen nutzt Pfad-basierte URLs: Leerzeichen → Bindestriche, Sonderzeichen weg */
+function toKleinanzeigenSlug(query: string): string {
+  return query
+    .toLowerCase()
+    .replace(/[äÄ]/g, 'ae')
+    .replace(/[öÖ]/g, 'oe')
+    .replace(/[üÜ]/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/** Baut die Such-URL fuer eine Plattform */
+function buildPlatformUrl(platform: keyof typeof PLATFORM_CONFIGS, query: string): string {
+  const template = PLATFORM_CONFIGS[platform].urlTemplate;
+
+  if (platform === 'kleinanzeigen') {
+    return template.replace('{query}', toKleinanzeigenSlug(query));
+  }
+
+  // eBay, Amazon, Idealo nutzen Query-Parameter
+  return `${template}${encodeURIComponent(query)}`;
+}
 
 /**
  * Generates search URLs for all platforms
@@ -31,36 +57,15 @@ export function generatePlatformLinks(
     queries = searchQuery;
   }
 
-  return [
-    {
-      platform: 'ebay',
-      name: PLATFORM_CONFIGS.ebay.name,
-      icon: PLATFORM_CONFIGS.ebay.icon,
-      color: PLATFORM_CONFIGS.ebay.color,
-      url: `${PLATFORM_CONFIGS.ebay.urlTemplate}${encodeURIComponent(queries.ebay || queries.generic || '')}`,
-    },
-    {
-      platform: 'kleinanzeigen',
-      name: PLATFORM_CONFIGS.kleinanzeigen.name,
-      icon: PLATFORM_CONFIGS.kleinanzeigen.icon,
-      color: PLATFORM_CONFIGS.kleinanzeigen.color,
-      url: `${PLATFORM_CONFIGS.kleinanzeigen.urlTemplate}${encodeURIComponent(queries.kleinanzeigen || queries.generic || '')}`,
-    },
-    {
-      platform: 'amazon',
-      name: PLATFORM_CONFIGS.amazon.name,
-      icon: PLATFORM_CONFIGS.amazon.icon,
-      color: PLATFORM_CONFIGS.amazon.color,
-      url: `${PLATFORM_CONFIGS.amazon.urlTemplate}${encodeURIComponent(queries.amazon || queries.generic || '')}`,
-    },
-    {
-      platform: 'idealo',
-      name: PLATFORM_CONFIGS.idealo.name,
-      icon: PLATFORM_CONFIGS.idealo.icon,
-      color: PLATFORM_CONFIGS.idealo.color,
-      url: `${PLATFORM_CONFIGS.idealo.urlTemplate}${encodeURIComponent(queries.idealo || queries.generic || '')}`,
-    },
-  ];
+  const platforms: (keyof typeof PLATFORM_CONFIGS)[] = ['ebay', 'kleinanzeigen', 'amazon', 'idealo'];
+
+  return platforms.map((platform) => ({
+    platform,
+    name: PLATFORM_CONFIGS[platform].name,
+    icon: PLATFORM_CONFIGS[platform].icon,
+    color: PLATFORM_CONFIGS[platform].color,
+    url: buildPlatformUrl(platform, queries[platform] || queries.generic || ''),
+  }));
 }
 
 /**

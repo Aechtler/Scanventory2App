@@ -38,11 +38,13 @@ export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHe
       >
         {/* Bild — Tap öffnet Edit-Seite */}
         <Pressable onPress={() => router.push(`/history/edit/${item.id}`)}>
-          <Image
-            source={{ uri: item.cachedImageUri || item.imageUri }}
-            style={{ width: '100%', aspectRatio: 4 / 3 }}
-            resizeMode="cover"
-          />
+          <View style={{ width: '100%', aspectRatio: 4 / 3, overflow: 'hidden' }}>
+            <Image
+              source={{ uri: item.cachedImageUri || item.imageUri }}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '200%' }}
+              resizeMode="cover"
+            />
+          </View>
 
           {/* Gradient Overlay von unten */}
           <LinearGradient

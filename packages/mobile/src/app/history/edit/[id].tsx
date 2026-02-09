@@ -136,11 +136,13 @@ export default function ProductEditScreen() {
               transition={{ type: 'timing', duration: 300 }}
               className="rounded-xl overflow-hidden mb-6"
             >
-              <Image
-                source={{ uri: item.cachedImageUri || item.imageUri }}
-                style={{ width: '100%', aspectRatio: 16 / 9 }}
-                resizeMode="cover"
-              />
+              <View style={{ width: '100%', aspectRatio: 16 / 9, overflow: 'hidden' }}>
+                <Image
+                  source={{ uri: item.cachedImageUri || item.imageUri }}
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '200%' }}
+                  resizeMode="cover"
+                />
+              </View>
             </MotiView>
 
             {/* Produktname */}

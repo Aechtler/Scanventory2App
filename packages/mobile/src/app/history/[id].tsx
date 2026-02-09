@@ -67,9 +67,15 @@ export default function HistoryDetailScreen() {
   // Load cached data on mount
   useEffect(() => {
     if (item) {
-      // Generate quicklinks
-      const ebayQuery = item.searchQueries?.ebay || item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
-      setPlatformLinks(generatePlatformLinks(ebayQuery));
+      // Generate quicklinks mit plattformspezifischen Queries
+      const fallback = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
+      setPlatformLinks(generatePlatformLinks({
+        ebay: item.searchQueries?.ebay || fallback,
+        kleinanzeigen: item.searchQueries?.kleinanzeigen || fallback,
+        amazon: item.searchQueries?.amazon || fallback,
+        idealo: item.searchQueries?.idealo || fallback,
+        generic: item.searchQueries?.generic || fallback,
+      }));
       
       // Load cached data
       if (item.marketValue) setMarketValue(item.marketValue);
