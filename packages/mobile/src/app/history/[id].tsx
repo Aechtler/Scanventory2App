@@ -8,8 +8,8 @@ import { generatePlatformLinks, PlatformLink } from '../../features/market/servi
 import { useMarketData } from '../../features/market/hooks';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
 import { MarketSlider } from '../../features/market/components/MarketSlider';
-import { FinalPriceCard } from '../../features/history/components/FinalPriceCard';
 import { HistoryDetailHeader } from '../../features/history/components/HistoryDetailHeader';
+import { PriceEditSheet } from '../../features/history/components/PriceEditSheet';
 import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
 
 /**
@@ -27,6 +27,7 @@ export default function HistoryDetailScreen() {
   const item = id ? getItemById(id) : null;
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [priceSheetVisible, setPriceSheetVisible] = useState(false);
 
   // Use shared market data hook with persistence callbacks
   const {
@@ -130,23 +131,11 @@ export default function HistoryDetailScreen() {
           contentContainerStyle={{ padding: 16 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
         >
-          {/* Hero Header — Tap öffnet Edit-Seite */}
-          <HistoryDetailHeader item={item} />
-
-          {/* Final Price Card */}
-          <FadeInView delay={60}>
-            <FinalPriceCard
-              finalPrice={item.finalPrice}
-              finalPriceNote={item.finalPriceNote}
-              comparison={{
-                aiPrice: marketValue?.estimatedPrice,
-                ebayAvg: ebayPriceStats?.avgPrice,
-                kleinanzeigenAvg: kleinanzeigenPriceStats?.avgPrice,
-              }}
-              onSavePrice={(price) => id && updateItem(id, { finalPrice: price })}
-              onSaveNote={(note) => id && updateItem(id, { finalPriceNote: note })}
-            />
-          </FadeInView>
+          {/* Hero Header — Preis-Badge oben rechts, Tap auf Bild → Edit */}
+          <HistoryDetailHeader
+            item={item}
+            onPriceBadgePress={() => setPriceSheetVisible(true)}
+          />
 
           {/* Market Slider */}
           <FadeInView delay={75} className="mb-4">
@@ -185,6 +174,19 @@ export default function HistoryDetailScreen() {
             </View>
           </FadeInView>
         </ScrollView>
+
+        {/* Preis-Sheet */}
+        <PriceEditSheet
+          visible={priceSheetVisible}
+          currentPrice={item.finalPrice}
+          currentNote={item.finalPriceNote}
+          onSave={(price, note) => {
+            if (id) {
+              updateItem(id, { finalPrice: price, finalPriceNote: note || undefined });
+            }
+          }}
+          onClose={() => setPriceSheetVisible(false)}
+        />
       </SafeAreaView>
     </>
   );
