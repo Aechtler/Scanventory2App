@@ -6,6 +6,7 @@
 
 import { View, Text, Image, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { MotiView } from 'moti';
 import { FadeInView } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
@@ -13,13 +14,12 @@ import { HistoryItem } from '@/features/history/store/historyStore';
 
 interface HistoryDetailHeaderProps {
   item: HistoryItem;
-  onEditPress: () => void;
 }
 
-export function HistoryDetailHeader({ item, onEditPress }: HistoryDetailHeaderProps) {
+export function HistoryDetailHeader({ item }: HistoryDetailHeaderProps) {
   return (
     <FadeInView delay={0}>
-      <Pressable onPress={onEditPress}>
+      <Pressable onPress={() => router.push(`/history/edit/${item.id}`)}>
         <MotiView
           from={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

@@ -10,11 +10,10 @@ import { PlatformQuicklinks } from '../../features/market/components/PlatformQui
 import { MarketSlider } from '../../features/market/components/MarketSlider';
 import { FinalPriceCard } from '../../features/history/components/FinalPriceCard';
 import { HistoryDetailHeader } from '../../features/history/components/HistoryDetailHeader';
-import { ProductEditModal, ProductEditData } from '../../features/history/components/ProductEditModal';
 import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
 
 /**
- * History Detail Screen - Clean View mit Edit-Modal bei Tap auf Bild
+ * History Detail Screen - Zeigt Item mit Preisen, Quicklinks und Edit-Navigation
  */
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,7 +27,6 @@ export default function HistoryDetailScreen() {
   const item = id ? getItemById(id) : null;
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
 
   // Use shared market data hook with persistence callbacks
   const {
@@ -109,17 +107,6 @@ export default function HistoryDetailScreen() {
     setRefreshing(false);
   }, [item, loadAllData]);
 
-  const handleEditSave = (changes: Partial<ProductEditData>) => {
-    if (!id || Object.keys(changes).length === 0) return;
-    updateItem(id, changes);
-    
-    if (changes.searchQueries && item) {
-      const queries = changes.searchQueries;
-      const ebayQuery = queries.ebay || item.searchQueries?.ebay || item.searchQuery || item.productName;
-      setPlatformLinks(generatePlatformLinks(ebayQuery));
-    }
-  };
-
   if (!item) {
     return (
       <>
@@ -143,8 +130,8 @@ export default function HistoryDetailScreen() {
           contentContainerStyle={{ padding: 16 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
         >
-          {/* Hero Header */}
-          <HistoryDetailHeader item={item} onEditPress={() => setEditModalVisible(true)} />
+          {/* Hero Header — Tap öffnet Edit-Seite */}
+          <HistoryDetailHeader item={item} />
 
           {/* Final Price Card */}
           <FadeInView delay={60}>
@@ -198,22 +185,6 @@ export default function HistoryDetailScreen() {
             </View>
           </FadeInView>
         </ScrollView>
-
-        {/* Edit Modal */}
-        <ProductEditModal
-          visible={editModalVisible}
-          imageUri={item.cachedImageUri || item.imageUri}
-          initialData={{
-            productName: item.productName,
-            category: item.category,
-            brand: item.brand,
-            condition: item.condition,
-            gtin: item.gtin,
-            searchQueries: item.searchQueries,
-          }}
-          onSave={handleEditSave}
-          onClose={() => setEditModalVisible(false)}
-        />
       </SafeAreaView>
     </>
   );
