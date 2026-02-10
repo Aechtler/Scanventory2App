@@ -1,13 +1,12 @@
 import { Tabs } from 'expo-router';
-import { CustomTabBar } from '../../shared/components/CustomTabBar';
 
 /**
- * Tabs Layout - Bottom Navigation mit Custom Tab Bar
+ * Tabs Layout - Tab Bar wird global via GlobalTabBar gerendert
  */
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={() => null}
       screenOptions={{
         headerStyle: { backgroundColor: '#1a1a2e' },
         headerTintColor: '#fff',

@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Pressable, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore } from '../../features/history/store/historyStore';
-import { Button } from '../../shared/components';
 import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
 import { useMarketData } from '../../features/market/hooks';
 import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
@@ -11,6 +10,7 @@ import { MarketSlider } from '../../features/market/components/MarketSlider';
 import { HistoryDetailHeader } from '../../features/history/components/HistoryDetailHeader';
 import { PriceEditSheet } from '../../features/history/components/PriceEditSheet';
 import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
+import { Icons } from '../../shared/components/Icons';
 
 /**
  * History Detail Screen - Zeigt Item mit Preisen, Quicklinks und Edit-Navigation
@@ -92,6 +92,22 @@ export default function HistoryDetailScreen() {
     setRefreshing(false);
   }, [item, loadAllData]);
 
+  const handleDelete = () => {
+    if (!id) return;
+    Alert.alert(
+      'Löschen?',
+      `${item?.productName ?? 'Eintrag'} wirklich löschen?`,
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Löschen',
+          style: 'destructive',
+          onPress: () => { removeItem(id); router.back(); },
+        },
+      ],
+    );
+  };
+
   if (!item) {
     return (
       <>
@@ -108,7 +124,21 @@ export default function HistoryDetailScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Details', headerBackTitle: 'Verlauf' }} />
+      <Stack.Screen
+        options={{
+          title: 'Details',
+          headerBackTitle: 'Verlauf',
+          headerRight: () => (
+            <Pressable
+              onPress={handleDelete}
+              className="p-2 rounded-full active:bg-red-500/20"
+              hitSlop={8}
+            >
+              <Icons.Close size={20} color="#ef4444" />
+            </Pressable>
+          ),
+        }}
+      />
       <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
         <ScrollView
           className="flex-1"
@@ -139,17 +169,6 @@ export default function HistoryDetailScreen() {
             <PlatformQuicklinks links={platformLinks} />
           </FadeInView>
 
-          {/* Delete Button */}
-          <FadeInView delay={150}>
-            <View className="mt-8 mb-4">
-              <Button
-                title="Eintrag löschen"
-                variant="danger"
-                size="lg"
-                onPress={() => { if (id) { removeItem(id); router.back(); } }}
-              />
-            </View>
-          </FadeInView>
         </ScrollView>
 
         {/* Preis-Sheet */}

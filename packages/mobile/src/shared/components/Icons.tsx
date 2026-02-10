@@ -47,6 +47,8 @@ import {
   LogOut,
   Settings,
   Info,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -125,6 +127,8 @@ export const Icons = {
   LogOut: (props: IconProps) => <LogOut {...defaultProps} {...props} />,
   Settings: (props: IconProps) => <Settings {...defaultProps} {...props} />,
   Info: (props: IconProps) => <Info {...defaultProps} {...props} />,
+  Maximize: (props: IconProps) => <Maximize2 {...defaultProps} {...props} />,
+  Minimize: (props: IconProps) => <Minimize2 {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper

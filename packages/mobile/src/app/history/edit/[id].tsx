@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
 import { useHistoryStore } from '@/features/history/store/historyStore';
+import { useUIStore } from '@/shared/store/uiStore';
 
 const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 
@@ -48,6 +49,18 @@ export default function ProductEditScreen() {
   const [gtin, setGtin] = useState('');
   const [searchQueries, setSearchQueries] = useState<SearchQueries>({});
   const [showSearchQueries, setShowSearchQueries] = useState(false);
+  const [imageExpanded, setImageExpanded] = useState(false);
+  const setTabBarHidden = useUIStore((s) => s.setTabBarHidden);
+
+  const toggleImageExpanded = (expanded: boolean) => {
+    setImageExpanded(expanded);
+    setTabBarHidden(expanded);
+  };
+
+  // Tab Bar zurücksetzen beim Verlassen des Screens
+  useEffect(() => {
+    return () => setTabBarHidden(false);
+  }, []);
 
   // Init state from item
   useEffect(() => {
@@ -122,23 +135,64 @@ export default function ProductEditScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
         >
-          <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-            {/* Bild-Preview */}
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+            scrollEnabled={!imageExpanded}
+          >
+            {/* Bild-Preview mit Expand-Toggle */}
             <MotiView
               from={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'timing', duration: 300 }}
               className="rounded-xl overflow-hidden mb-6"
+              style={imageExpanded ? { flex: 1 } : undefined}
             >
-              <View style={{ width: '100%', aspectRatio: 16 / 9, overflow: 'hidden' }}>
+              <View
+                style={
+                  imageExpanded
+                    ? { flex: 1, overflow: 'hidden' }
+                    : { width: '100%', aspectRatio: 16 / 9, overflow: 'hidden' }
+                }
+              >
                 <Image
                   source={{ uri: item.cachedImageUri || item.imageUri }}
-                  style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '200%' }}
-                  resizeMode="cover"
+                  style={
+                    imageExpanded
+                      ? { width: '100%', height: '100%' }
+                      : { position: 'absolute', top: 0, left: 0, right: 0, height: '200%' }
+                  }
+                  resizeMode={imageExpanded ? 'contain' : 'cover'}
                 />
               </View>
+
+              {/* Toggle-Bar */}
+              <Pressable
+                onPress={() => toggleImageExpanded(!imageExpanded)}
+                className="flex-row items-center justify-center py-2 bg-gray-800/90"
+                style={{ gap: 6 }}
+              >
+                {imageExpanded ? (
+                  <>
+                    <Icons.Minimize size={14} color="#a78bfa" />
+                    <Text className="text-primary-400 text-xs font-medium">
+                      Details einblenden
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Icons.Maximize size={14} color="#a78bfa" />
+                    <Text className="text-primary-400 text-xs font-medium">
+                      Bild vergrößern
+                    </Text>
+                  </>
+                )}
+              </Pressable>
             </MotiView>
 
+            {/* Formular - ausgeblendet im Fullscreen-Modus */}
+            {!imageExpanded && (
+            <>
             {/* Produktname */}
             <View className="mb-5">
               <Text className="text-gray-400 text-sm mb-2 font-medium">Produktname</Text>
@@ -266,6 +320,8 @@ export default function ProductEditScreen() {
                 </MotiView>
               )}
             </View>
+            </>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
