@@ -8,30 +8,26 @@ import { useEffect } from 'react';
 import { useAuthStore } from '../features/auth/store/authStore';
 
 /**
- * Root Layout - Konfiguriert die App-weite Navigation und Provider
+ * Root Layout - App-weite Navigation und Provider
  */
 export default function RootLayout() {
   const { isAuthenticated, isLoading, loadUser } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
-  // Auto-login on app start
   useEffect(() => {
     loadUser();
   }, []);
 
-  // Redirect logic
   useEffect(() => {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
 
     if (!isAuthenticated && !inAuthGroup) {
-      // Not authenticated, redirect to login
       router.replace('/login');
     } else if (isAuthenticated && inAuthGroup) {
-      // Authenticated but on auth screen, redirect to home
-      router.replace('/');
+      router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments]);
 
@@ -41,20 +37,36 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <Stack
           screenOptions={{
-            headerStyle: {
-              backgroundColor: '#1a1a2e',
-            },
+            headerStyle: { backgroundColor: '#1a1a2e' },
             headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: '600',
-            },
-            contentStyle: {
-              backgroundColor: '#1a1a2e',
-            },
+            headerTitleStyle: { fontWeight: '600' },
+            contentStyle: { backgroundColor: '#1a1a2e' },
           }}
         >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="register" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="analyze"
+            options={{
+              title: 'Analyse',
+              presentation: 'modal',
+            }}
+          />
+          <Stack.Screen
+            name="history/[id]"
+            options={{
+              title: 'Details',
+              headerBackTitle: 'Zurück',
+            }}
+          />
+          <Stack.Screen
+            name="history/edit/[id]"
+            options={{
+              title: 'Bearbeiten',
+              headerBackTitle: 'Zurück',
+            }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

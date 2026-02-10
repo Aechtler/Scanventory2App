@@ -9,5 +9,5 @@ export interface KleinanzeigenConfig {
 
 export const KLEINANZEIGEN_CONFIG: KleinanzeigenConfig = {
   apiUrl: 'https://api.kleinanzeigen.de',
-  timeout: 15000,
+  timeout: 8000,
 };

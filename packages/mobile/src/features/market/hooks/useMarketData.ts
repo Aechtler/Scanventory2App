@@ -20,6 +20,7 @@ export interface MarketDataState {
   kleinanzeigenPriceStats: PriceStats | null;
   kleinanzeigenListings: MarketListing[];
   kleinanzeigenLoading: boolean;
+  kleinanzeigenError: string | null;
   
   // AI Market Value
   marketValue: MarketValueResult | null;
@@ -67,6 +68,7 @@ export function useMarketData(options?: {
   const [kleinanzeigenPriceStats, setKleinanzeigenPriceStats] = useState<PriceStats | null>(null);
   const [kleinanzeigenListings, setKleinanzeigenListings] = useState<MarketListing[]>([]);
   const [kleinanzeigenLoading, setKleinanzeigenLoading] = useState(false);
+  const [kleinanzeigenError, setKleinanzeigenError] = useState<string | null>(null);
   
   // AI Market Value state
   const [marketValue, setMarketValueState] = useState<MarketValueResult | null>(null);
@@ -103,6 +105,7 @@ export function useMarketData(options?: {
    */
   const loadKleinanzeigenData = useCallback(async (searchQuery: string, category?: string) => {
     setKleinanzeigenLoading(true);
+    setKleinanzeigenError(null);
     setKleinanzeigenPriceStats(null);
     setKleinanzeigenListings([]);
 
@@ -114,8 +117,10 @@ export function useMarketData(options?: {
         setKleinanzeigenListings(result.listings || []);
         options?.onKleinanzeigenDataLoaded?.(result.listings || []);
       }
+      // result === null means no results found (not an error)
     } catch (err) {
       console.error('[useMarketData] Kleinanzeigen loading error:', err);
+      setKleinanzeigenError(err instanceof Error ? err.message : 'Suche fehlgeschlagen');
     } finally {
       setKleinanzeigenLoading(false);
     }
@@ -221,6 +226,7 @@ export function useMarketData(options?: {
     kleinanzeigenPriceStats,
     kleinanzeigenListings,
     kleinanzeigenLoading,
+    kleinanzeigenError,
     marketValue,
     marketValueLoading,
     // Actions

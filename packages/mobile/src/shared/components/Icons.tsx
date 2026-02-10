@@ -43,6 +43,10 @@ import {
   User,
   Mail,
   ArrowLeft,
+  BookOpen,
+  LogOut,
+  Settings,
+  Info,
 } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -117,6 +121,10 @@ export const Icons = {
   User: (props: IconProps) => <User {...defaultProps} {...props} />,
   Mail: (props: IconProps) => <Mail {...defaultProps} {...props} />,
   ArrowLeft: (props: IconProps) => <ArrowLeft {...defaultProps} {...props} />,
+  BookOpen: (props: IconProps) => <BookOpen {...defaultProps} {...props} />,
+  LogOut: (props: IconProps) => <LogOut {...defaultProps} {...props} />,
+  Settings: (props: IconProps) => <Settings {...defaultProps} {...props} />,
+  Info: (props: IconProps) => <Info {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper

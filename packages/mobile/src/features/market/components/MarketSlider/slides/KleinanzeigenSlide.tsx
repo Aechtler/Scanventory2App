@@ -15,6 +15,7 @@ export function KleinanzeigenSlide({
   priceStats,
   listings,
   isLoading,
+  error,
   onPress,
 }: PlatformSlideProps) {
   const top3 = useMemo(() => listings.slice(0, 3), [listings]);
@@ -110,10 +111,16 @@ export function KleinanzeigenSlide({
               <Icons.ChevronDown size={12} color="#6b7280" />
             </View>
           </View>
+        ) : error ? (
+          <View className="flex-1 items-center justify-center">
+            <Icons.Warning size={32} color="#ef4444" />
+            <Text className="text-red-400/70 text-sm mt-2">Suche fehlgeschlagen</Text>
+            <Text className="text-gray-600 text-xs mt-1">Tippen zum Wiederholen</Text>
+          </View>
         ) : (
           <View className="flex-1 items-center justify-center">
             <Icons.Package size={32} color="#4b5563" />
-            <Text className="text-gray-500 text-sm mt-2">Keine Kleinanzeigen-Daten</Text>
+            <Text className="text-gray-500 text-sm mt-2">Keine Treffer</Text>
             <Text className="text-gray-600 text-xs mt-1">Tippen zum Neu laden</Text>
           </View>
         )}

@@ -26,6 +26,7 @@ export function MarketSlider({
   kleinanzeigenPriceStats,
   kleinanzeigenListings,
   kleinanzeigenLoading,
+  kleinanzeigenError,
   onRefreshKleinanzeigen,
   onEbayListingsChange,
 }: MarketSliderProps) {
@@ -182,7 +183,7 @@ export function MarketSlider({
                 label="Kleinanzeigen"
                 color="green"
                 count={localKAListings.length}
-                onPress={() => setShowKleinanzeigenModal(true)}
+                onPress={() => kleinanzeigenError ? onRefreshKleinanzeigen?.() : setShowKleinanzeigenModal(true)}
                 isLoading={kleinanzeigenLoading}
               >
                 {kaDisplayStats ? (
@@ -194,8 +195,10 @@ export function MarketSlider({
                       {formatPrice(kaDisplayStats.minPrice)} – {formatPrice(kaDisplayStats.maxPrice)}
                     </Text>
                   </View>
+                ) : kleinanzeigenError ? (
+                  <Text className="text-red-400/70 text-xs">Suche fehlgeschlagen – tippen zum Wiederholen</Text>
                 ) : (
-                  <Text className="text-gray-600 text-xs">Keine Daten</Text>
+                  <Text className="text-gray-600 text-xs">Keine Treffer</Text>
                 )}
               </CompactCard>
           </MotiView>

@@ -19,6 +19,7 @@ export interface MarketSliderProps {
   kleinanzeigenPriceStats: PriceStats | null;
   kleinanzeigenListings: MarketListing[];
   kleinanzeigenLoading: boolean;
+  kleinanzeigenError?: string | null;
   onRefreshKleinanzeigen?: () => void;
   /** Callback wenn eBay Listings sich aendern (Selektion) */
   onEbayListingsChange?: (listings: MarketListing[]) => void;
@@ -39,5 +40,6 @@ export interface PlatformSlideProps {
   priceStats: PriceStats | null;
   listings: MarketListing[];
   isLoading: boolean;
+  error?: string | null;
   onPress: () => void;
 }

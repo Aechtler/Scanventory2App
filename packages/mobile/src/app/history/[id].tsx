@@ -35,6 +35,7 @@ export default function HistoryDetailScreen() {
     kleinanzeigenPriceStats,
     kleinanzeigenListings,
     kleinanzeigenLoading,
+    kleinanzeigenError,
     marketValue,
     marketValueLoading,
     loadEbayData,
@@ -169,6 +170,7 @@ export default function HistoryDetailScreen() {
               kleinanzeigenPriceStats={kleinanzeigenPriceStats}
               kleinanzeigenListings={kleinanzeigenListings}
               kleinanzeigenLoading={kleinanzeigenLoading}
+              kleinanzeigenError={kleinanzeigenError}
               onRefreshKleinanzeigen={() => loadKleinanzeigenData(
                 item.searchQueries?.kleinanzeigen || item.searchQueries?.generic || item.productName,
                 item.category

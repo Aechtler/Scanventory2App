@@ -14,7 +14,7 @@ export { getKleinanzeigenSearchUrl };
 
 /**
  * Searches for products on Kleinanzeigen
- * Returns null if no results found (API failed or no listings)
+ * Returns null if no results found, throws on network/API errors
  */
 export async function searchKleinanzeigen(
   query: string,

@@ -44,7 +44,7 @@ export async function searchKleinanzeigenReal(query: string): Promise<MarketResu
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[Kleinanzeigen] Search failed:', response.status, errorText);
-      return null;
+      throw new Error(`Kleinanzeigen API Fehler (${response.status})`);
     }
 
     const data = await response.json();
@@ -113,9 +113,9 @@ export async function searchKleinanzeigenReal(query: string): Promise<MarketResu
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       console.error('[Kleinanzeigen] Request timeout');
-    } else {
-      console.error('[Kleinanzeigen] Search error:', error);
+      throw new Error('Zeitüberschreitung bei der Suche');
     }
-    return null;
+    console.error('[Kleinanzeigen] Search error:', error);
+    throw error;
   }
 }
