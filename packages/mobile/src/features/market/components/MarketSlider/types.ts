@@ -15,12 +15,6 @@ export interface MarketSliderProps {
   ebayListings: MarketListing[];
   ebayLoading: boolean;
   onRefreshEbay?: () => void;
-  /** Kleinanzeigen Preisdaten */
-  kleinanzeigenPriceStats: PriceStats | null;
-  kleinanzeigenListings: MarketListing[];
-  kleinanzeigenLoading: boolean;
-  kleinanzeigenError?: string | null;
-  onRefreshKleinanzeigen?: () => void;
   /** Callback wenn eBay Listings sich aendern (Selektion) */
   onEbayListingsChange?: (listings: MarketListing[]) => void;
 }
@@ -30,13 +24,11 @@ export interface SummarySlideProps {
   marketValueLoading: boolean;
   ebayPriceStats: PriceStats | null;
   ebayLoading: boolean;
-  kleinanzeigenPriceStats: PriceStats | null;
-  kleinanzeigenLoading: boolean;
   onPress: () => void;
 }
 
 export interface PlatformSlideProps {
-  platform: 'ebay' | 'kleinanzeigen';
+  platform: 'ebay';
   priceStats: PriceStats | null;
   listings: MarketListing[];
   isLoading: boolean;

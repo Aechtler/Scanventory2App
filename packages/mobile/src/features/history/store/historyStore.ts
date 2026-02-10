@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PriceStats, MarketListing } from '@/features/market/services/ebay';
 import { MarketValueResult } from '@/features/market/services/perplexity';
 import { cacheImage, removeCachedImage } from '../services/imageCacheService';
-import { syncNewItem, syncPrices, syncKleinanzeigenPrices, syncMarketValue, syncDeleteItem, syncItemUpdate } from '../services/syncService';
+import { syncNewItem, syncPrices, syncMarketValue, syncDeleteItem, syncItemUpdate } from '../services/syncService';
 
 export interface HistoryItem {
   id: string;
@@ -23,7 +23,6 @@ export interface HistoryItem {
   searchQuery: string; // Allgemeiner Suchbegriff für Quicklinks
   searchQueries?: {    // Plattformspezifische Suchbegriffe
     ebay?: string;
-    kleinanzeigen?: string;
     amazon?: string;
     idealo?: string;
     generic?: string;
@@ -32,8 +31,6 @@ export interface HistoryItem {
   priceStats: PriceStats;
   ebayListings?: MarketListing[];    // Cached eBay listings for detail view
   ebayListingsFetchedAt?: string;    // When listings were last fetched
-  kleinanzeigenListings?: MarketListing[];  // Cached Kleinanzeigen listings
-  kleinanzeigenListingsFetchedAt?: string;  // When KA listings were last fetched
   marketValue?: MarketValueResult;   // Cached Perplexity AI market analysis
   marketValueFetchedAt?: string;     // When market value was last fetched
   finalPrice?: number;               // Manuell gesetzter Verkaufspreis
@@ -52,7 +49,6 @@ interface HistoryState {
   getItemById: (id: string) => HistoryItem | undefined;
   setOffline: (offline: boolean) => void;
   updateItemPrices: (id: string, priceStats: PriceStats, listings?: MarketListing[]) => void;
-  updateItemKleinanzeigenPrices: (id: string, listings: MarketListing[]) => void;
   updateMarketValue: (id: string, marketValue: MarketValueResult) => void;
   updateItem: (id: string, fields: Partial<Pick<HistoryItem,
     'productName' | 'category' | 'brand' | 'condition' | 'gtin' |
@@ -97,8 +93,6 @@ export const useHistoryStore = create<HistoryState>()(
           priceStats: item.priceStats as unknown as Record<string, unknown>,
           ebayListings: item.ebayListings,
           ebayListingsFetchedAt: item.ebayListingsFetchedAt,
-          kleinanzeigenListings: item.kleinanzeigenListings,
-          kleinanzeigenListingsFetchedAt: item.kleinanzeigenListingsFetchedAt,
           marketValue: item.marketValue as unknown as Record<string, unknown>,
           marketValueFetchedAt: item.marketValueFetchedAt,
           scannedAt: newItem.scannedAt,
@@ -169,25 +163,6 @@ export const useHistoryStore = create<HistoryState>()(
             priceStats as unknown as Record<string, unknown>,
             listings
           );
-        }
-      },
-
-      updateItemKleinanzeigenPrices: (id, listings) => {
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  kleinanzeigenListings: listings,
-                  kleinanzeigenListingsFetchedAt: new Date().toISOString()
-                }
-              : item
-          ),
-        }));
-        // Fire-and-forget: Backend sync
-        const item = get().items.find(i => i.id === id);
-        if (item?.serverId) {
-          syncKleinanzeigenPrices(item.serverId, listings);
         }
       },
 

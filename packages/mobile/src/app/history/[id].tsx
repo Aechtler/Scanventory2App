@@ -21,7 +21,6 @@ export default function HistoryDetailScreen() {
   const removeItem = useHistoryStore((state) => state.removeItem);
   const updateMarketValue = useHistoryStore((state) => state.updateMarketValue);
   const updateItemPrices = useHistoryStore((state) => state.updateItemPrices);
-  const updateItemKleinanzeigenPrices = useHistoryStore((state) => state.updateItemKleinanzeigenPrices);
   const updateItem = useHistoryStore((state) => state.updateItem);
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,28 +31,17 @@ export default function HistoryDetailScreen() {
     ebayPriceStats,
     ebayListings,
     ebayLoading,
-    kleinanzeigenPriceStats,
-    kleinanzeigenListings,
-    kleinanzeigenLoading,
-    kleinanzeigenError,
     marketValue,
     marketValueLoading,
     loadEbayData,
-    loadKleinanzeigenData,
     loadMarketValue,
     loadAllData,
     setEbayData,
-    setKleinanzeigenData,
     setMarketValue,
   } = useMarketData({
     onEbayDataLoaded: (priceStats, listings) => {
       if (item) {
         updateItemPrices(item.id, priceStats, listings);
-      }
-    },
-    onKleinanzeigenDataLoaded: (listings) => {
-      if (item) {
-        updateItemKleinanzeigenPrices(item.id, listings);
       }
     },
     onMarketValueLoaded: (value) => {
@@ -70,7 +58,6 @@ export default function HistoryDetailScreen() {
       const fallback = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
       setPlatformLinks(generatePlatformLinks({
         ebay: item.searchQueries?.ebay || fallback,
-        kleinanzeigen: item.searchQueries?.kleinanzeigen || fallback,
         amazon: item.searchQueries?.amazon || fallback,
         idealo: item.searchQueries?.idealo || fallback,
         generic: item.searchQueries?.generic || fallback,
@@ -79,22 +66,6 @@ export default function HistoryDetailScreen() {
       // Load cached data
       if (item.marketValue) setMarketValue(item.marketValue);
       if (item.priceStats) setEbayData(item.priceStats, item.ebayListings);
-      
-      if (item.kleinanzeigenListings?.length) {
-        const prices = item.kleinanzeigenListings.map(l => l.price).filter(p => p > 0);
-        if (prices.length) {
-          prices.sort((a, b) => a - b);
-          const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-          setKleinanzeigenData({
-            minPrice: prices[0],
-            maxPrice: prices[prices.length - 1],
-            avgPrice: Math.round(avg * 100) / 100,
-            medianPrice: prices[Math.floor(prices.length / 2)],
-            totalListings: item.kleinanzeigenListings.length,
-            soldListings: item.kleinanzeigenListings.filter(l => l.sold).length,
-          }, item.kleinanzeigenListings);
-        }
-      }
 
       // Auto-load market data if not yet fetched
       const searchQuery = item.searchQueries?.generic || item.productName;
@@ -103,12 +74,6 @@ export default function HistoryDetailScreen() {
       }
       if (!item.ebayListings?.length) {
         loadEbayData(searchQuery, item.gtin || undefined);
-      }
-      if (!item.kleinanzeigenListings?.length) {
-        loadKleinanzeigenData(
-          item.searchQueries?.kleinanzeigen || searchQuery,
-          item.category
-        );
       }
     }
   }, [item?.id]);
@@ -121,7 +86,6 @@ export default function HistoryDetailScreen() {
         searchQuery,
         productName: item.productName,
         category: item.category,
-        kleinanzeigenQuery: item.searchQueries?.kleinanzeigen || searchQuery,
         forceRefresh: true,
       });
     }
@@ -167,14 +131,6 @@ export default function HistoryDetailScreen() {
               ebayListings={ebayListings}
               ebayLoading={ebayLoading}
               onRefreshEbay={() => loadEbayData(item.searchQueries?.generic || item.productName)}
-              kleinanzeigenPriceStats={kleinanzeigenPriceStats}
-              kleinanzeigenListings={kleinanzeigenListings}
-              kleinanzeigenLoading={kleinanzeigenLoading}
-              kleinanzeigenError={kleinanzeigenError}
-              onRefreshKleinanzeigen={() => loadKleinanzeigenData(
-                item.searchQueries?.kleinanzeigen || item.searchQueries?.generic || item.productName,
-                item.category
-              )}
             />
           </FadeInView>
 

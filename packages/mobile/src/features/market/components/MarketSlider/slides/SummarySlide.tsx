@@ -1,5 +1,5 @@
 /**
- * Summary Slide - Perplexity AI-Preis + eBay/Kleinanzeigen Ranges
+ * Summary Slide - Perplexity AI-Preis + eBay Range
  */
 
 import React from 'react';
@@ -16,8 +16,6 @@ export function SummarySlide({
   marketValueLoading,
   ebayPriceStats,
   ebayLoading,
-  kleinanzeigenPriceStats,
-  kleinanzeigenLoading,
   onPress,
 }: SummarySlideProps) {
   return (
@@ -86,57 +84,29 @@ export function SummarySlide({
           </View>
         )}
 
-        {/* Platform Ranges - Side by Side */}
-        <View className="flex-row gap-2">
-          {/* eBay Range */}
-          <View className="flex-1 bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-            <View className="flex-row items-center mb-1.5">
-              <Icons.Money size={14} color="#a78bfa" />
-              <Text className="text-gray-300 text-xs font-semibold ml-1">eBay</Text>
-            </View>
-            {ebayLoading ? (
-              <ActivityIndicator size="small" color="#6366f1" />
-            ) : ebayPriceStats ? (
-              <>
-                <Text className="text-white font-bold text-base">
-                  {formatPrice(ebayPriceStats.avgPrice)}
-                </Text>
-                <Text className="text-gray-500 text-xs mt-0.5">
-                  {formatPrice(ebayPriceStats.minPrice)} – {formatPrice(ebayPriceStats.maxPrice)}
-                </Text>
-                <Text className="text-gray-600 text-xs mt-0.5">
-                  {ebayPriceStats.totalListings} Angebote
-                </Text>
-              </>
-            ) : (
-              <Text className="text-gray-600 text-xs">Keine Daten</Text>
-            )}
+        {/* eBay Range */}
+        <View className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+          <View className="flex-row items-center mb-1.5">
+            <Icons.Money size={14} color="#a78bfa" />
+            <Text className="text-gray-300 text-xs font-semibold ml-1">eBay</Text>
           </View>
-
-          {/* Kleinanzeigen Range */}
-          <View className="flex-1 bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-            <View className="flex-row items-center mb-1.5">
-              <Icons.Tag size={14} color="#22c55e" />
-              <Text className="text-gray-300 text-xs font-semibold ml-1">Kleinanzeigen</Text>
-            </View>
-            {kleinanzeigenLoading ? (
-              <ActivityIndicator size="small" color="#22c55e" />
-            ) : kleinanzeigenPriceStats ? (
-              <>
-                <Text className="text-white font-bold text-base">
-                  {formatPrice(kleinanzeigenPriceStats.avgPrice)}
-                </Text>
-                <Text className="text-gray-500 text-xs mt-0.5">
-                  {formatPrice(kleinanzeigenPriceStats.minPrice)} – {formatPrice(kleinanzeigenPriceStats.maxPrice)}
-                </Text>
-                <Text className="text-gray-600 text-xs mt-0.5">
-                  {kleinanzeigenPriceStats.totalListings} Angebote
-                </Text>
-              </>
-            ) : (
-              <Text className="text-gray-600 text-xs">Keine Daten</Text>
-            )}
-          </View>
+          {ebayLoading ? (
+            <ActivityIndicator size="small" color="#6366f1" />
+          ) : ebayPriceStats ? (
+            <>
+              <Text className="text-white font-bold text-base">
+                {formatPrice(ebayPriceStats.avgPrice)}
+              </Text>
+              <Text className="text-gray-500 text-xs mt-0.5">
+                {formatPrice(ebayPriceStats.minPrice)} – {formatPrice(ebayPriceStats.maxPrice)}
+              </Text>
+              <Text className="text-gray-600 text-xs mt-0.5">
+                {ebayPriceStats.totalListings} Angebote
+              </Text>
+            </>
+          ) : (
+            <Text className="text-gray-600 text-xs">Keine Daten</Text>
+          )}
         </View>
 
         {/* Footer */}

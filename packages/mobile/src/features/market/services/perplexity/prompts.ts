@@ -12,9 +12,9 @@ Antworte immer auf Deutsch und in folgendem JSON-Format:
   "zusammenfassung": "Kurze Erklärung zum Marktwert",
   "quellen": ["quelle1", "quelle2"]
 }
-Recherchiere aktuelle Preise auf deutschen Marktplätzen (eBay, Amazon, Kleinanzeigen, Idealo).
+Recherchiere aktuelle Preise auf deutschen Marktplätzen (eBay, Amazon, Idealo, Kleinanzeigen).
 Berücksichtige den Zustand (neu vs. gebraucht) und gib realistische Preise an.`;
 
 export function createUserPrompt(query: string): string {
-  return `Was ist der aktuelle Marktwert für "${query}" in Deutschland? Suche auf eBay Kleinanzeigen, eBay, Amazon und Idealo nach aktuellen Preisen.`;
+  return `Was ist der aktuelle Marktwert für "${query}" in Deutschland? Suche auf eBay, Amazon, Idealo und Kleinanzeigen nach aktuellen Preisen.`;
 }

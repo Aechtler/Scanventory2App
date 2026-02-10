@@ -34,7 +34,7 @@ export interface MarketplaceResult {
 
 export interface MarketResult {
   query: string;
-  platform: 'ebay' | 'kleinanzeigen' | 'amazon' | 'idealo';
+  platform: 'ebay' | 'amazon' | 'idealo';
   priceStats: PriceStats;
   listings: MarketListing[];
   marketplaceResults?: MarketplaceResult[];  // Results grouped by marketplace
@@ -63,7 +63,6 @@ export const MARKETPLACE_NAMES: Record<string, string> = {
   'EBAY_CA': '🇨🇦 Kanada',
   'EBAY_IT': '🇮🇹 Italien',
   'EBAY_ES': '🇪🇸 Spanien',
-  'KLEINANZEIGEN': '📦 Kleinanzeigen',
 };
 
 export const EBAY_CONFIG: EbayConfig = {

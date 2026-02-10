@@ -25,14 +25,12 @@ const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 const PLATFORM_CONFIG = [
   { key: 'generic' as const, label: 'Generisch', icon: 'Search' as const },
   { key: 'ebay' as const, label: 'eBay', icon: 'Globe' as const },
-  { key: 'kleinanzeigen' as const, label: 'Kleinanzeigen', icon: 'Store' as const },
   { key: 'amazon' as const, label: 'Amazon', icon: 'Package' as const },
   { key: 'idealo' as const, label: 'Idealo', icon: 'Tag' as const },
 ];
 
 type SearchQueries = {
   ebay?: string;
-  kleinanzeigen?: string;
   amazon?: string;
   idealo?: string;
   generic?: string;

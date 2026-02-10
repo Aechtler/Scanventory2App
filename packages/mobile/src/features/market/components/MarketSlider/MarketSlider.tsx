@@ -1,7 +1,7 @@
 /**
  * MarketSlider - Kompakte, aufklappbare Marktanalyse
- * Eingeklappt: Einzeiler mit KI-Preis + Plattform-Averages
- * Ausgeklappt: Kompakte Karten fuer KI, eBay, Kleinanzeigen — Tap → Detail-Modal
+ * Eingeklappt: Einzeiler mit KI-Preis + eBay-Average
+ * Ausgeklappt: Kompakte Karten fuer KI und eBay — Tap → Detail-Modal
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -23,24 +23,16 @@ export function MarketSlider({
   ebayListings,
   ebayLoading,
   onRefreshEbay,
-  kleinanzeigenPriceStats,
-  kleinanzeigenListings,
-  kleinanzeigenLoading,
-  kleinanzeigenError,
-  onRefreshKleinanzeigen,
   onEbayListingsChange,
 }: MarketSliderProps) {
   const [expanded, setExpanded] = useState(false);
   const [showMarketValueModal, setShowMarketValueModal] = useState(false);
   const [showEbayModal, setShowEbayModal] = useState(false);
-  const [showKleinanzeigenModal, setShowKleinanzeigenModal] = useState(false);
 
   // Local listings state for selection
   const [localEbayListings, setLocalEbayListings] = useState<MarketListing[]>(ebayListings || []);
-  const [localKAListings, setLocalKAListings] = useState<MarketListing[]>(kleinanzeigenListings || []);
 
   useEffect(() => { if (ebayListings) setLocalEbayListings(ebayListings); }, [ebayListings]);
-  useEffect(() => { if (kleinanzeigenListings) setLocalKAListings(kleinanzeigenListings); }, [kleinanzeigenListings]);
 
   const hasEbaySelection = localEbayListings.some((l) => l.selected);
   const ebayDisplayStats = useMemo(() => {
@@ -48,24 +40,12 @@ export function MarketSlider({
     return ebayPriceStats;
   }, [localEbayListings, ebayPriceStats, hasEbaySelection]);
 
-  const hasKASelection = localKAListings.some((l) => l.selected);
-  const kaDisplayStats = useMemo(() => {
-    if (hasKASelection) return recalculatePriceStats(localKAListings);
-    return kleinanzeigenPriceStats;
-  }, [localKAListings, kleinanzeigenPriceStats, hasKASelection]);
-
-  // Grouped listings for modals
+  // Grouped listings for modal
   const ebayGrouped: GroupedListings = useMemo(() => {
     const g: GroupedListings = {};
     localEbayListings.forEach((l) => { const mp = l.marketplace || 'UNKNOWN'; if (!g[mp]) g[mp] = []; g[mp].push(l); });
     return g;
   }, [localEbayListings]);
-
-  const kaGrouped: GroupedListings = useMemo(() => {
-    const g: GroupedListings = {};
-    localKAListings.forEach((l) => { const mp = l.marketplace || 'KLEINANZEIGEN'; if (!g[mp]) g[mp] = []; g[mp].push(l); });
-    return g;
-  }, [localKAListings]);
 
   // Toggle helpers
   const toggleEbayListing = (id: string) => {
@@ -79,15 +59,8 @@ export function MarketSlider({
     setLocalEbayListings(updated);
     onEbayListingsChange?.(updated);
   };
-  const toggleKAListing = (id: string) => {
-    setLocalKAListings((prev) => prev.map((l) => l.id === id ? { ...l, selected: !l.selected } : l));
-  };
-  const toggleKAMarketplace = (marketplace: string) => {
-    const allSelected = localKAListings.filter((l) => l.marketplace === marketplace).every((l) => l.selected);
-    setLocalKAListings((prev) => prev.map((l) => l.marketplace === marketplace ? { ...l, selected: !allSelected } : l));
-  };
 
-  const isLoading = marketValueLoading || ebayLoading || kleinanzeigenLoading;
+  const isLoading = marketValueLoading || ebayLoading;
 
   return (
     <>
@@ -114,8 +87,6 @@ export function MarketSlider({
               marketValueLoading={marketValueLoading}
               ebayStats={ebayDisplayStats}
               ebayLoading={ebayLoading}
-              kaStats={kaDisplayStats}
-              kaLoading={kleinanzeigenLoading}
             />
           )}
         </Pressable>
@@ -176,36 +147,11 @@ export function MarketSlider({
                   <Text className="text-gray-600 text-xs">Keine Daten</Text>
                 )}
               </CompactCard>
-
-              {/* Kleinanzeigen-Karte */}
-              <CompactCard
-                icon={<Icons.Tag size={16} color="#22c55e" />}
-                label="Kleinanzeigen"
-                color="green"
-                count={localKAListings.length}
-                onPress={() => kleinanzeigenError ? onRefreshKleinanzeigen?.() : setShowKleinanzeigenModal(true)}
-                isLoading={kleinanzeigenLoading}
-              >
-                {kaDisplayStats ? (
-                  <View className="flex-row items-baseline gap-3">
-                    <Text className="text-white text-lg font-bold">
-                      {formatPrice(kaDisplayStats.avgPrice)}
-                    </Text>
-                    <Text className="text-gray-500 text-xs">
-                      {formatPrice(kaDisplayStats.minPrice)} – {formatPrice(kaDisplayStats.maxPrice)}
-                    </Text>
-                  </View>
-                ) : kleinanzeigenError ? (
-                  <Text className="text-red-400/70 text-xs">Suche fehlgeschlagen – tippen zum Wiederholen</Text>
-                ) : (
-                  <Text className="text-gray-600 text-xs">Keine Treffer</Text>
-                )}
-              </CompactCard>
           </MotiView>
         )}
       </View>
 
-      {/* Modals — bleiben wie bisher */}
+      {/* Modals */}
       {marketValue && (
         <MarketValueModal
           visible={showMarketValueModal}
@@ -227,19 +173,6 @@ export function MarketSlider({
           onRefresh={onRefreshEbay}
         />
       )}
-      {kaDisplayStats && (
-        <PriceEstimateModal
-          visible={showKleinanzeigenModal}
-          priceStats={kaDisplayStats}
-          groupedListings={kaGrouped}
-          listings={localKAListings}
-          selectedCount={localKAListings.filter((l) => l.selected).length}
-          onClose={() => setShowKleinanzeigenModal(false)}
-          onToggleListing={toggleKAListing}
-          onToggleMarketplace={toggleKAMarketplace}
-          onRefresh={onRefreshKleinanzeigen}
-        />
-      )}
     </>
   );
 }
@@ -250,18 +183,14 @@ function CollapsedSummary({
   marketValueLoading,
   ebayStats,
   ebayLoading,
-  kaStats,
-  kaLoading,
 }: {
   marketValue: MarketSliderProps['marketValue'];
   marketValueLoading: boolean;
   ebayStats: ReturnType<typeof recalculatePriceStats> | null;
   ebayLoading: boolean;
-  kaStats: ReturnType<typeof recalculatePriceStats> | null;
-  kaLoading: boolean;
 }) {
-  const anyData = marketValue || ebayStats || kaStats;
-  const allLoading = marketValueLoading && ebayLoading && kaLoading;
+  const anyData = marketValue || ebayStats;
+  const allLoading = marketValueLoading && ebayLoading;
 
   if (allLoading) {
     return (
@@ -271,7 +200,7 @@ function CollapsedSummary({
     );
   }
 
-  if (!anyData && !marketValueLoading && !ebayLoading && !kaLoading) {
+  if (!anyData && !marketValueLoading && !ebayLoading) {
     return (
       <View className="flex-row items-center mt-3">
         <Text className="text-gray-600 text-sm">Keine Marktdaten verfuegbar</Text>
@@ -293,13 +222,6 @@ function CollapsedSummary({
         <PricePill label="eBay" loading color="#818cf8" />
       ) : ebayStats ? (
         <PricePill label="eBay" value={formatPrice(ebayStats.avgPrice)} color="#818cf8" />
-      ) : null}
-
-      {/* Kleinanzeigen */}
-      {kaLoading ? (
-        <PricePill label="KA" loading color="#22c55e" />
-      ) : kaStats ? (
-        <PricePill label="KA" value={formatPrice(kaStats.avgPrice)} color="#22c55e" />
       ) : null}
     </View>
   );
@@ -347,8 +269,7 @@ function CompactCard({
 }) {
   const borderColor =
     color === 'purple' ? 'border-purple-500/20' :
-    color === 'indigo' ? 'border-indigo-500/20' :
-    'border-green-500/20';
+    'border-indigo-500/20';
 
   return (
     <Pressable onPress={onPress} className="mb-2">

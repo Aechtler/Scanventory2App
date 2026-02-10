@@ -18,7 +18,6 @@ export interface VisionMatch {
   searchQuery: string; // Allgemeiner Suchbegriff
   searchQueries?: {
     ebay?: string;        // Optimiert für eBay (präzise mit Modell)
-    kleinanzeigen?: string; // Optimiert für Kleinanzeigen (allgemeiner)
     amazon?: string;      // Optimiert für Amazon (mit Produktdetails)
     idealo?: string;      // Optimiert für Idealo (Produktname)
     generic?: string;     // Fallback für alle Plattformen
@@ -79,7 +78,6 @@ Antworte als JSON:
       "searchQuery": "Allgemeiner Suchbegriff (Marke + Produktname)",
       "searchQueries": {
         "ebay": "Präzise für eBay: Marke Produktname Modell Edition (detailliert)",
-        "kleinanzeigen": "Einfach für Kleinanzeigen: Marke Produktname (kurz, allgemein)",
         "amazon": "Amazon-optimiert: Marke Produktname Modell (wie auf Amazon gelistet)",
         "idealo": "Produkt-fokussiert: Marke Produktname ohne Zustand",
         "generic": "Universal: Marke Produkttyp (funktioniert überall)"
@@ -95,7 +93,6 @@ REGELN:
 
 SUCHBEGRIFF-STRATEGIE:
 - ebay: Sehr spezifisch mit allen Details (Nutzer suchen präzise)
-- kleinanzeigen: Kürzer, allgemeiner (Privatverkäufer nutzen weniger Details)
 - amazon: Wie auf Amazon gelistet (offizielle Produktnamen)
 - idealo: Neutraler Produktname ohne Zustandsangaben
 - generic: Fallback für alle Plattformen
@@ -103,7 +100,6 @@ SUCHBEGRIFF-STRATEGIE:
 Beispiel searchQueries für "iPhone 14 Pro 256GB Space Black":
 {
   "ebay": "Apple iPhone 14 Pro 256GB Space Black",
-  "kleinanzeigen": "iPhone 14 Pro 256GB",
   "amazon": "Apple iPhone 14 Pro 256GB Schwarz",
   "idealo": "Apple iPhone 14 Pro 256GB",
   "generic": "iPhone 14 Pro"
@@ -180,7 +176,7 @@ export async function analyzeImageMock(_imageUri: string): Promise<VisionResult>
         searchQuery: 'iPhone 14 Pro 128GB',
         searchQueries: {
           ebay: 'Apple iPhone 14 Pro 128GB Space Black',
-          kleinanzeigen: 'iPhone 14 Pro 128GB',
+
           amazon: 'Apple iPhone 14 Pro 128GB Schwarz',
           idealo: 'Apple iPhone 14 Pro 128GB',
           generic: 'iPhone 14 Pro',
@@ -196,7 +192,7 @@ export async function analyzeImageMock(_imageUri: string): Promise<VisionResult>
         searchQuery: 'iPhone 14 128GB',
         searchQueries: {
           ebay: 'Apple iPhone 14 128GB',
-          kleinanzeigen: 'iPhone 14',
+
           amazon: 'Apple iPhone 14 128GB',
           idealo: 'Apple iPhone 14 128GB',
           generic: 'iPhone 14',
@@ -212,7 +208,7 @@ export async function analyzeImageMock(_imageUri: string): Promise<VisionResult>
         searchQuery: 'iPhone 13 Pro 128GB',
         searchQueries: {
           ebay: 'Apple iPhone 13 Pro 128GB',
-          kleinanzeigen: 'iPhone 13 Pro',
+
           amazon: 'Apple iPhone 13 Pro 128GB',
           idealo: 'Apple iPhone 13 Pro 128GB',
           generic: 'iPhone 13 Pro',

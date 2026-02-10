@@ -20,7 +20,6 @@ export interface EditableTagProps {
 export interface SearchQueriesSectionProps {
   searchQueries: {
     ebay?: string;
-    kleinanzeigen?: string;
     amazon?: string;
     idealo?: string;
     generic?: string;

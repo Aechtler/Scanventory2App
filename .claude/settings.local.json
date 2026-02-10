@@ -56,7 +56,8 @@
       "WebFetch(domain:www.kleinanzeigen.de)",
       "WebFetch(domain:www.amazon.de)",
       "WebFetch(domain:www.idealo.de)",
-      "WebFetch(domain:docs.expo.dev)"
+      "WebFetch(domain:docs.expo.dev)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

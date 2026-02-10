@@ -4,7 +4,6 @@
  */
 
 import { searchMarket, formatPrice, MarketResult, PriceStats } from '@/features/market/services/ebay';
-import { searchKleinanzeigen } from '@/features/market/services/kleinanzeigen';
 import { searchAmazon } from '@/features/market/services/amazon';
 import { searchIdealo } from '@/features/market/services/idealo';
 
@@ -12,7 +11,6 @@ export { formatPrice };
 
 export interface PlatformQueries {
   ebay?: string;
-  kleinanzeigen?: string;
   amazon?: string;
   idealo?: string;
   generic?: string;
@@ -42,7 +40,6 @@ export async function searchAllMarkets(
     // Fallback: Verwende gleichen Query für alle Plattformen
     queries = {
       ebay: query,
-      kleinanzeigen: query,
       amazon: query,
       idealo: query,
       generic: query,
@@ -50,20 +47,19 @@ export async function searchAllMarkets(
     displayQuery = query;
   } else {
     queries = query;
-    displayQuery = query.generic || query.ebay || query.kleinanzeigen || query.amazon || query.idealo || '';
+    displayQuery = query.generic || query.ebay || query.amazon || query.idealo || '';
   }
 
   console.log('[MarketAggregator] Platform-specific queries:', queries);
 
   // Parallele Suche auf allen Plattformen mit spezifischen Queries
-  const [ebay, kleinanzeigen, amazon, idealo] = await Promise.all([
+  const [ebay, amazon, idealo] = await Promise.all([
     searchMarket(queries.ebay || queries.generic || ''),
-    searchKleinanzeigen(queries.kleinanzeigen || queries.generic || '', category),
     searchAmazon(queries.amazon || queries.generic || '', category),
     searchIdealo(queries.idealo || queries.generic || '', category),
   ]);
 
-  const platforms = [ebay, kleinanzeigen, amazon, idealo].filter((p): p is MarketResult => p !== null);
+  const platforms = [ebay, amazon, idealo].filter((p): p is MarketResult => p !== null);
 
   // Kombinierte Statistiken berechnen
   const allPrices: number[] = [];

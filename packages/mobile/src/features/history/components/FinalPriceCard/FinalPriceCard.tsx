@@ -55,7 +55,7 @@ export function FinalPriceCard({
   };
 
   const hasComparison =
-    comparison?.aiPrice || comparison?.ebayAvg || comparison?.kleinanzeigenAvg;
+    comparison?.aiPrice || comparison?.ebayAvg;
 
   return (
     <MotiView
@@ -112,11 +112,6 @@ export function FinalPriceCard({
           {comparison?.ebayAvg !== undefined && (
             <Text className="text-gray-500 text-xs">
               eBay: {formatPrice(comparison.ebayAvg)}€
-            </Text>
-          )}
-          {comparison?.kleinanzeigenAvg !== undefined && (
-            <Text className="text-gray-500 text-xs">
-              KA: {formatPrice(comparison.kleinanzeigenAvg)}€
             </Text>
           )}
         </View>

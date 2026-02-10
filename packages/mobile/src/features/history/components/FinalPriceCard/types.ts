@@ -5,7 +5,6 @@
 export interface PriceComparison {
   aiPrice?: number | string;
   ebayAvg?: number;
-  kleinanzeigenAvg?: number;
 }
 
 export interface FinalPriceCardProps {

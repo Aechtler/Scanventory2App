@@ -23,7 +23,6 @@ export const IMAGE_CONFIG = {
  */
 export const MARKET_PLATFORMS = {
   EBAY: 'ebay',
-  KLEINANZEIGEN: 'kleinanzeigen',
   AMAZON: 'amazon',
   IDEALO: 'idealo',
 } as const;

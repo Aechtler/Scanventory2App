@@ -1,13 +1,12 @@
 /**
  * useMarketData Hook
- * 
- * Shared hook for loading market data (eBay, Kleinanzeigen, AI Market Value).
+ *
+ * Shared hook for loading market data (eBay, AI Market Value).
  * Used by both analyze.tsx and history/[id].tsx to avoid code duplication.
  */
 
 import { useState, useCallback } from 'react';
 import { searchMarket, PriceStats, MarketListing } from '@/features/market/services/ebay';
-import { searchKleinanzeigen } from '@/features/market/services/kleinanzeigen';
 import { getMarketValue, MarketValueResult } from '@/features/market/services/perplexity';
 
 export interface MarketDataState {
@@ -15,13 +14,7 @@ export interface MarketDataState {
   ebayPriceStats: PriceStats | null;
   ebayListings: MarketListing[];
   ebayLoading: boolean;
-  
-  // Kleinanzeigen data
-  kleinanzeigenPriceStats: PriceStats | null;
-  kleinanzeigenListings: MarketListing[];
-  kleinanzeigenLoading: boolean;
-  kleinanzeigenError: string | null;
-  
+
   // AI Market Value
   marketValue: MarketValueResult | null;
   marketValueLoading: boolean;
@@ -29,19 +22,16 @@ export interface MarketDataState {
 
 export interface MarketDataActions {
   loadEbayData: (searchQuery: string, gtin?: string) => Promise<void>;
-  loadKleinanzeigenData: (searchQuery: string, category?: string) => Promise<void>;
   loadMarketValue: (productName: string, category?: string, forceRefresh?: boolean) => Promise<void>;
   loadAllData: (params: {
     searchQuery: string;
     productName: string;
     category?: string;
-    kleinanzeigenQuery?: string;
     gtin?: string;
     cachedMarketValue?: MarketValueResult;
     forceRefresh?: boolean;
   }) => Promise<void>;
   setEbayData: (priceStats: PriceStats | null, listings?: MarketListing[]) => void;
-  setKleinanzeigenData: (priceStats: PriceStats | null, listings?: MarketListing[]) => void;
   setMarketValue: (value: MarketValueResult | null) => void;
 }
 
@@ -49,27 +39,19 @@ export type UseMarketDataReturn = MarketDataState & MarketDataActions;
 
 /**
  * Hook for managing market data loading and state
- * 
+ *
  * @param options.onEbayDataLoaded - Callback when eBay data is loaded (for persisting to store)
- * @param options.onKleinanzeigenDataLoaded - Callback when Kleinanzeigen data is loaded
  * @param options.onMarketValueLoaded - Callback when market value is loaded
  */
 export function useMarketData(options?: {
   onEbayDataLoaded?: (priceStats: PriceStats, listings: MarketListing[]) => void;
-  onKleinanzeigenDataLoaded?: (listings: MarketListing[]) => void;
   onMarketValueLoaded?: (value: MarketValueResult) => void;
 }): UseMarketDataReturn {
   // eBay state
   const [ebayPriceStats, setEbayPriceStats] = useState<PriceStats | null>(null);
   const [ebayListings, setEbayListings] = useState<MarketListing[]>([]);
   const [ebayLoading, setEbayLoading] = useState(false);
-  
-  // Kleinanzeigen state
-  const [kleinanzeigenPriceStats, setKleinanzeigenPriceStats] = useState<PriceStats | null>(null);
-  const [kleinanzeigenListings, setKleinanzeigenListings] = useState<MarketListing[]>([]);
-  const [kleinanzeigenLoading, setKleinanzeigenLoading] = useState(false);
-  const [kleinanzeigenError, setKleinanzeigenError] = useState<string | null>(null);
-  
+
   // AI Market Value state
   const [marketValue, setMarketValueState] = useState<MarketValueResult | null>(null);
   const [marketValueLoading, setMarketValueLoading] = useState(false);
@@ -79,7 +61,6 @@ export function useMarketData(options?: {
    */
   const loadEbayData = useCallback(async (searchQuery: string, gtin?: string) => {
     setEbayLoading(true);
-    // Only clear stats if we are not doing a refined search with GTIN
     if (!gtin) {
       setEbayPriceStats(null);
       setEbayListings([]);
@@ -101,40 +82,13 @@ export function useMarketData(options?: {
   }, [options?.onEbayDataLoaded]);
 
   /**
-   * Load Kleinanzeigen data
-   */
-  const loadKleinanzeigenData = useCallback(async (searchQuery: string, category?: string) => {
-    setKleinanzeigenLoading(true);
-    setKleinanzeigenError(null);
-    setKleinanzeigenPriceStats(null);
-    setKleinanzeigenListings([]);
-
-    try {
-      console.log('[useMarketData] Loading Kleinanzeigen data for:', searchQuery);
-      const result = await searchKleinanzeigen(searchQuery, category);
-      if (result) {
-        setKleinanzeigenPriceStats(result.priceStats);
-        setKleinanzeigenListings(result.listings || []);
-        options?.onKleinanzeigenDataLoaded?.(result.listings || []);
-      }
-      // result === null means no results found (not an error)
-    } catch (err) {
-      console.error('[useMarketData] Kleinanzeigen loading error:', err);
-      setKleinanzeigenError(err instanceof Error ? err.message : 'Suche fehlgeschlagen');
-    } finally {
-      setKleinanzeigenLoading(false);
-    }
-  }, [options?.onKleinanzeigenDataLoaded]);
-
-  /**
    * Load AI market value estimate
    */
   const loadMarketValue = useCallback(async (
-    productName: string, 
+    productName: string,
     category?: string,
     forceRefresh = false
   ) => {
-    // Skip if we have cached value and not forcing refresh
     if (!forceRefresh && marketValue) {
       return;
     }
@@ -165,31 +119,19 @@ export function useMarketData(options?: {
     searchQuery: string;
     productName: string;
     category?: string;
-    kleinanzeigenQuery?: string;
     gtin?: string;
     cachedMarketValue?: MarketValueResult;
     forceRefresh?: boolean;
   }) => {
-    const { 
-      searchQuery, 
-      productName, 
-      category, 
-      kleinanzeigenQuery, 
-      gtin,
-      cachedMarketValue,
-      forceRefresh = false 
-    } = params;
+    const { searchQuery, productName, category, gtin, cachedMarketValue, forceRefresh = false } = params;
 
-    // Use cached market value if available and not forcing refresh
     if (cachedMarketValue && !forceRefresh) {
       setMarketValueState(cachedMarketValue);
     }
 
-    // Load all data in parallel (non-blocking)
     loadEbayData(searchQuery, gtin);
     loadMarketValue(productName, category, forceRefresh);
-    loadKleinanzeigenData(kleinanzeigenQuery || searchQuery, category);
-  }, [loadEbayData, loadMarketValue, loadKleinanzeigenData]);
+  }, [loadEbayData, loadMarketValue]);
 
   /**
    * Manually set eBay data (for loading from cache)
@@ -202,16 +144,6 @@ export function useMarketData(options?: {
   }, []);
 
   /**
-   * Manually set Kleinanzeigen data (for loading from cache)
-   */
-  const setKleinanzeigenData = useCallback((priceStats: PriceStats | null, listings?: MarketListing[]) => {
-    setKleinanzeigenPriceStats(priceStats);
-    if (listings) {
-      setKleinanzeigenListings(listings);
-    }
-  }, []);
-
-  /**
    * Manually set market value (for loading from cache)
    */
   const setMarketValue = useCallback((value: MarketValueResult | null) => {
@@ -219,23 +151,15 @@ export function useMarketData(options?: {
   }, []);
 
   return {
-    // State
     ebayPriceStats,
     ebayListings,
     ebayLoading,
-    kleinanzeigenPriceStats,
-    kleinanzeigenListings,
-    kleinanzeigenLoading,
-    kleinanzeigenError,
     marketValue,
     marketValueLoading,
-    // Actions
     loadEbayData,
-    loadKleinanzeigenData,
     loadMarketValue,
     loadAllData,
     setEbayData,
-    setKleinanzeigenData,
     setMarketValue,
   };
 }

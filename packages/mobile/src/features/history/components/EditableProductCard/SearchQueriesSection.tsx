@@ -1,6 +1,6 @@
 /**
  * SearchQueriesSection - Aufklappbare plattformspezifische Suchbegriffe
- * Collapsed by default, zeigt 5 Felder: eBay, Kleinanzeigen, Amazon, Idealo, Generisch
+ * Collapsed by default, zeigt 4 Felder: eBay, Amazon, Idealo, Generisch
  */
 
 import React, { useState } from 'react';
@@ -13,7 +13,6 @@ import { SearchQueriesSectionProps } from './types';
 const PLATFORMS: { key: keyof SearchQueriesSectionProps['searchQueries']; label: string }[] = [
   { key: 'generic', label: 'Generisch' },
   { key: 'ebay', label: 'eBay' },
-  { key: 'kleinanzeigen', label: 'Kleinanzeigen' },
   { key: 'amazon', label: 'Amazon' },
   { key: 'idealo', label: 'Idealo' },
 ];

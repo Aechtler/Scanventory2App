@@ -30,7 +30,6 @@ export interface ProductEditData {
   gtin?: string | null;
   searchQueries?: {
     ebay?: string;
-    kleinanzeigen?: string;
     amazon?: string;
     idealo?: string;
     generic?: string;
@@ -50,7 +49,6 @@ const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 const PLATFORM_CONFIG = [
   { key: 'generic' as const, label: 'Generisch', icon: 'Search' },
   { key: 'ebay' as const, label: 'eBay', icon: 'Globe' },
-  { key: 'kleinanzeigen' as const, label: 'Kleinanzeigen', icon: 'Store' },
   { key: 'amazon' as const, label: 'Amazon', icon: 'Package' },
   { key: 'idealo' as const, label: 'Idealo', icon: 'Tag' },
 ];

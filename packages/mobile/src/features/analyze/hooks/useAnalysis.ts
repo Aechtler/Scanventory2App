@@ -106,7 +106,6 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
     const fallback = match.searchQuery;
     const links = generatePlatformLinks({
       ebay: match.searchQueries?.ebay || fallback,
-      kleinanzeigen: match.searchQueries?.kleinanzeigen || fallback,
       amazon: match.searchQueries?.amazon || fallback,
       idealo: match.searchQueries?.idealo || fallback,
       generic: match.searchQueries?.generic || fallback,
