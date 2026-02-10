@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
+import { useHistoryStore } from '../../features/history/store/historyStore';
 import { Button } from '../../shared/components';
 import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
 import { useMarketData } from '../../features/market/hooks';
@@ -17,14 +17,12 @@ import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
  */
 export default function HistoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const getItemById = useHistoryStore((state: { getItemById: (id: string) => HistoryItem | undefined }) => state.getItemById);
+  const item = useHistoryStore((state) => id ? state.items.find((i) => i.id === id) : undefined) ?? null;
   const removeItem = useHistoryStore((state) => state.removeItem);
   const updateMarketValue = useHistoryStore((state) => state.updateMarketValue);
   const updateItemPrices = useHistoryStore((state) => state.updateItemPrices);
   const updateItemKleinanzeigenPrices = useHistoryStore((state) => state.updateItemKleinanzeigenPrices);
   const updateItem = useHistoryStore((state) => state.updateItem);
-
-  const item = id ? getItemById(id) : null;
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [priceSheetVisible, setPriceSheetVisible] = useState(false);
@@ -96,8 +94,23 @@ export default function HistoryDetailScreen() {
           }, item.kleinanzeigenListings);
         }
       }
+
+      // Auto-load market data if not yet fetched
+      const searchQuery = item.searchQueries?.generic || item.productName;
+      if (!item.marketValue) {
+        loadMarketValue(item.productName, item.category);
+      }
+      if (!item.ebayListings?.length) {
+        loadEbayData(searchQuery, item.gtin || undefined);
+      }
+      if (!item.kleinanzeigenListings?.length) {
+        loadKleinanzeigenData(
+          item.searchQueries?.kleinanzeigen || searchQuery,
+          item.category
+        );
+      }
     }
-  }, [item]);
+  }, [item?.id]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

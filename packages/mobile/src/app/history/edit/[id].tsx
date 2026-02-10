@@ -18,7 +18,7 @@ import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
-import { useHistoryStore, HistoryItem } from '@/features/history/store/historyStore';
+import { useHistoryStore } from '@/features/history/store/historyStore';
 
 const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 
@@ -40,12 +40,8 @@ type SearchQueries = {
 
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const getItemById = useHistoryStore(
-    (state: { getItemById: (id: string) => HistoryItem | undefined }) => state.getItemById
-  );
+  const item = useHistoryStore((state) => id ? state.items.find((i) => i.id === id) : undefined) ?? null;
   const updateItem = useHistoryStore((state) => state.updateItem);
-
-  const item = id ? getItemById(id) : null;
 
   const [productName, setProductName] = useState('');
   const [category, setCategory] = useState('');
@@ -89,7 +85,7 @@ export default function ProductEditScreen() {
       updateItem(id, changes);
     }
 
-    router.back();
+    router.replace(`/history/${id}`);
   };
 
   if (!item) {

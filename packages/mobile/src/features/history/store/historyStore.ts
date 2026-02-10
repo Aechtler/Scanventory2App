@@ -46,7 +46,7 @@ export interface HistoryItem {
 interface HistoryState {
   items: HistoryItem[];
   isOffline: boolean;
-  addItem: (item: Omit<HistoryItem, 'id' | 'scannedAt' | 'cachedImageUri' | 'serverId' | 'syncStatus'>) => Promise<void>;
+  addItem: (item: Omit<HistoryItem, 'id' | 'scannedAt' | 'cachedImageUri' | 'serverId' | 'syncStatus'>) => Promise<string>;
   removeItem: (id: string) => void;
   clearHistory: () => void;
   getItemById: (id: string) => HistoryItem | undefined;
@@ -117,6 +117,8 @@ export const useHistoryStore = create<HistoryState>()(
             }));
           }
         });
+
+        return newItem.id;
       },
 
       removeItem: (id) => {
