@@ -8,6 +8,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks';
 import { recalculatePriceStats, formatPrice, MarketListing } from '@/features/market/services/ebay';
 import { MarketValueModal } from '@/features/market/components/MarketValue/components/MarketValueModal';
 import { PriceEstimateModal } from '@/features/market/components/PriceEstimate/components/PriceEstimateModal';
@@ -60,23 +61,24 @@ export function MarketSlider({
     onEbayListingsChange?.(updated);
   };
 
+  const colors = useThemeColors();
   const isLoading = marketValueLoading || ebayLoading;
 
   return (
     <>
-      <View className="bg-background-card rounded-xl border border-gray-800 overflow-hidden">
+      <View className="bg-background-card rounded-xl border border-border overflow-hidden">
         {/* Collapsed Header — immer sichtbar */}
         <Pressable onPress={() => setExpanded(!expanded)} className="p-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
-              <Icons.Stats size={18} color="#a78bfa" />
+              <Icons.Stats size={18} color={colors.primaryLight} />
               <Text className="text-white font-semibold text-sm">Marktanalyse</Text>
-              {isLoading && <ActivityIndicator size="small" color="#a78bfa" />}
+              {isLoading && <ActivityIndicator size="small" color={colors.primaryLight} />}
             </View>
             {expanded ? (
-              <Icons.ChevronUp size={18} color="#6b7280" />
+              <Icons.ChevronUp size={18} color={colors.textSecondary} />
             ) : (
-              <Icons.ChevronDown size={18} color="#6b7280" />
+              <Icons.ChevronDown size={18} color={colors.textSecondary} />
             )}
           </View>
 
@@ -101,7 +103,7 @@ export function MarketSlider({
           >
               {/* KI-Karte */}
               <CompactCard
-                icon={<Icons.AI size={16} color="#a78bfa" />}
+                icon={<Icons.AI size={16} color={colors.primaryLight} />}
                 label="KI-Schaetzung"
                 color="purple"
                 badge={marketValue?.confidence}
@@ -112,22 +114,22 @@ export function MarketSlider({
                   <View>
                     <Text className="text-white text-lg font-bold">{marketValue.estimatedPrice}</Text>
                     {marketValue.priceRange && (
-                      <Text className="text-gray-500 text-xs">{marketValue.priceRange}</Text>
+                      <Text className="text-foreground-secondary text-xs">{marketValue.priceRange}</Text>
                     )}
                     {marketValue.summary && (
-                      <Text className="text-gray-400 text-xs mt-1" numberOfLines={2}>
+                      <Text className="text-foreground-secondary text-xs mt-1" numberOfLines={2}>
                         {marketValue.summary}
                       </Text>
                     )}
                   </View>
                 ) : (
-                  <Text className="text-gray-600 text-xs">Nicht verfuegbar</Text>
+                  <Text className="text-foreground-secondary text-xs">Nicht verfuegbar</Text>
                 )}
               </CompactCard>
 
               {/* eBay-Karte */}
               <CompactCard
-                icon={<Icons.Money size={16} color="#818cf8" />}
+                icon={<Icons.Money size={16} color={colors.primary} />}
                 label="eBay"
                 color="indigo"
                 count={localEbayListings.length}
@@ -139,12 +141,12 @@ export function MarketSlider({
                     <Text className="text-white text-lg font-bold">
                       {formatPrice(ebayDisplayStats.avgPrice)}
                     </Text>
-                    <Text className="text-gray-500 text-xs">
+                    <Text className="text-foreground-secondary text-xs">
                       {formatPrice(ebayDisplayStats.minPrice)} – {formatPrice(ebayDisplayStats.maxPrice)}
                     </Text>
                   </View>
                 ) : (
-                  <Text className="text-gray-600 text-xs">Keine Daten</Text>
+                  <Text className="text-foreground-secondary text-xs">Keine Daten</Text>
                 )}
               </CompactCard>
           </MotiView>
@@ -189,13 +191,14 @@ function CollapsedSummary({
   ebayStats: ReturnType<typeof recalculatePriceStats> | null;
   ebayLoading: boolean;
 }) {
+  const colors = useThemeColors();
   const anyData = marketValue || ebayStats;
   const allLoading = marketValueLoading && ebayLoading;
 
   if (allLoading) {
     return (
       <View className="flex-row items-center mt-3">
-        <Text className="text-gray-500 text-sm">Daten werden geladen...</Text>
+        <Text className="text-foreground-secondary text-sm">Daten werden geladen...</Text>
       </View>
     );
   }
@@ -203,7 +206,7 @@ function CollapsedSummary({
   if (!anyData && !marketValueLoading && !ebayLoading) {
     return (
       <View className="flex-row items-center mt-3">
-        <Text className="text-gray-600 text-sm">Keine Marktdaten verfuegbar</Text>
+        <Text className="text-foreground-secondary text-sm">Keine Marktdaten verfuegbar</Text>
       </View>
     );
   }
@@ -212,16 +215,16 @@ function CollapsedSummary({
     <View className="flex-row items-center gap-4 mt-3">
       {/* KI-Preis */}
       {marketValueLoading ? (
-        <PricePill label="KI" loading color="#a78bfa" />
+        <PricePill label="KI" loading color={colors.primaryLight} />
       ) : marketValue ? (
-        <PricePill label="KI" value={marketValue.estimatedPrice} color="#a78bfa" />
+        <PricePill label="KI" value={marketValue.estimatedPrice} color={colors.primaryLight} />
       ) : null}
 
       {/* eBay */}
       {ebayLoading ? (
-        <PricePill label="eBay" loading color="#818cf8" />
+        <PricePill label="eBay" loading color={colors.primary} />
       ) : ebayStats ? (
-        <PricePill label="eBay" value={formatPrice(ebayStats.avgPrice)} color="#818cf8" />
+        <PricePill label="eBay" value={formatPrice(ebayStats.avgPrice)} color={colors.primary} />
       ) : null}
     </View>
   );
@@ -237,7 +240,7 @@ function PricePill({ label, value, loading, color }: {
   return (
     <View className="flex-row items-center gap-1.5">
       <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />
-      <Text className="text-gray-500 text-xs">{label}</Text>
+      <Text className="text-foreground-secondary text-xs">{label}</Text>
       {loading ? (
         <ActivityIndicator size={10} color={color} />
       ) : (
@@ -267,18 +270,19 @@ function CompactCard({
   isLoading: boolean;
   children: React.ReactNode;
 }) {
+  const colors = useThemeColors();
   const borderColor =
     color === 'purple' ? 'border-purple-500/20' :
     'border-indigo-500/20';
 
   return (
     <Pressable onPress={onPress} className="mb-2">
-      <View className={`bg-gray-800/40 rounded-lg p-3 border ${borderColor} flex-row items-center`}>
+      <View className={`bg-background-elevated/40 rounded-lg p-3 border ${borderColor} flex-row items-center`}>
         {/* Left: Icon + Info */}
         <View className="flex-1">
           <View className="flex-row items-center gap-1.5 mb-1">
             {icon}
-            <Text className="text-gray-400 text-xs font-medium">{label}</Text>
+            <Text className="text-foreground-secondary text-xs font-medium">{label}</Text>
             {badge && confidenceColors[badge as keyof typeof confidenceColors] && (
               <View className={`px-1.5 py-0.5 rounded-full ${confidenceColors[badge as keyof typeof confidenceColors].bg}`}>
                 <Text className={`text-[10px] font-bold uppercase ${confidenceColors[badge as keyof typeof confidenceColors].text}`}>
@@ -287,18 +291,18 @@ function CompactCard({
               </View>
             )}
             {count !== undefined && count > 0 && (
-              <Text className="text-gray-600 text-[10px]">{count} Angebote</Text>
+              <Text className="text-foreground-secondary text-[10px]">{count} Angebote</Text>
             )}
           </View>
           {isLoading ? (
-            <ActivityIndicator size="small" color="#6b7280" style={{ alignSelf: 'flex-start' }} />
+            <ActivityIndicator size="small" color={colors.textSecondary} style={{ alignSelf: 'flex-start' }} />
           ) : (
             children
           )}
         </View>
 
         {/* Right: Chevron */}
-        <Icons.ChevronRight size={16} color="#4b5563" />
+        <Icons.ChevronRight size={16} color={colors.textSecondary} />
       </View>
     </Pressable>
   );

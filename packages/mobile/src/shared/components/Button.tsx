@@ -30,7 +30,7 @@ export function Button({
   const variantStyles = {
     primary: 'bg-primary-500 active:bg-primary-600',
     secondary: 'bg-background-card active:bg-background-elevated',
-    outline: 'bg-transparent border border-gray-600 active:bg-gray-800',
+    outline: 'bg-transparent border border-border active:bg-background-elevated',
     danger: 'bg-red-500/15 border border-red-500/30 active:bg-red-500/25',
   };
 
@@ -51,7 +51,7 @@ export function Button({
   const textColorStyles = {
     primary: 'text-white',
     secondary: 'text-white',
-    outline: 'text-gray-300',
+    outline: 'text-foreground-secondary',
     danger: 'text-red-400',
   };
 

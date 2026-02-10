@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks';
 import { formatPrice, MARKETPLACE_NAMES } from '@/features/market/services/ebay';
 import { Top3Listings } from '@/features/market/components/PriceEstimate/components/Top3Listings';
 import { PlatformSlideProps } from '../types';
@@ -17,6 +18,7 @@ export function EbaySlide({
   isLoading,
   onPress,
 }: PlatformSlideProps) {
+  const colors = useThemeColors();
   // Get top 3 listings - prioritize German results
   const top3 = useMemo(() => {
     return [...listings]
@@ -46,7 +48,7 @@ export function EbaySlide({
       >
         {/* Header */}
         <View className="flex-row items-center mb-2">
-          <Icons.Money size={20} color="#818cf8" />
+          <Icons.Money size={20} color={colors.primary} />
           <Text className="text-white font-semibold text-base ml-2">eBay</Text>
           <View className="ml-auto flex-row items-center gap-1">
             {marketplaces.slice(0, 4).map((mp) => (
@@ -55,7 +57,7 @@ export function EbaySlide({
               </Text>
             ))}
             {marketplaces.length > 4 && (
-              <Text className="text-gray-400 text-xs ml-0.5">+{marketplaces.length - 4}</Text>
+              <Text className="text-foreground-secondary text-xs ml-0.5">+{marketplaces.length - 4}</Text>
             )}
           </View>
         </View>
@@ -67,10 +69,10 @@ export function EbaySlide({
               animate={{ rotate: '360deg' }}
               transition={{ type: 'timing', duration: 1500, loop: true }}
             >
-              <Icons.Refresh size={32} color="#818cf8" />
+              <Icons.Refresh size={32} color={colors.primary} />
             </MotiView>
-            <Text className="text-gray-400 text-sm mt-3">Suche eBay-Angebote...</Text>
-            <Text className="text-gray-600 text-xs mt-1">
+            <Text className="text-foreground-secondary text-sm mt-3">Suche eBay-Angebote...</Text>
+            <Text className="text-foreground-secondary text-xs mt-1">
               {marketplaces.length > 0 ? `${marketplaces.length} Laender` : '6 Laender werden durchsucht'}
             </Text>
           </View>
@@ -78,7 +80,7 @@ export function EbaySlide({
           <View className="flex-1 justify-between">
             {/* Main Price */}
             <View className="items-center py-2">
-              <Text className="text-gray-400 text-xs mb-1">
+              <Text className="text-foreground-secondary text-xs mb-1">
                 Durchschnittspreis
               </Text>
               <MotiView
@@ -96,31 +98,31 @@ export function EbaySlide({
             </View>
 
             {/* Price Range Bar */}
-            <View className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/30">
+            <View className="bg-background-elevated/50 rounded-lg p-3 border border-border/30">
               <View className="flex-row justify-between mb-2">
                 <View className="items-center flex-1">
-                  <Text className="text-gray-500 text-xs">Guenstigster</Text>
+                  <Text className="text-foreground-secondary text-xs">Guenstigster</Text>
                   <Text className="text-green-400 font-bold text-sm">
                     {formatPrice(priceStats.minPrice)}
                   </Text>
                 </View>
-                <View className="w-px bg-gray-700" />
+                <View className="w-px bg-border" />
                 <View className="items-center flex-1">
-                  <Text className="text-gray-500 text-xs">Median</Text>
+                  <Text className="text-foreground-secondary text-xs">Median</Text>
                   <Text className="text-white font-bold text-sm">
                     {formatPrice(priceStats.medianPrice)}
                   </Text>
                 </View>
-                <View className="w-px bg-gray-700" />
+                <View className="w-px bg-border" />
                 <View className="items-center flex-1">
-                  <Text className="text-gray-500 text-xs">Teuerster</Text>
+                  <Text className="text-foreground-secondary text-xs">Teuerster</Text>
                   <Text className="text-red-400 font-bold text-sm">
                     {formatPrice(priceStats.maxPrice)}
                   </Text>
                 </View>
               </View>
               {/* Visual range bar */}
-              <View className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <View className="h-1.5 bg-border rounded-full overflow-hidden">
                 <View className="h-full bg-indigo-500/60 rounded-full" style={{ width: '100%' }} />
               </View>
             </View>
@@ -130,14 +132,14 @@ export function EbaySlide({
 
             {/* Footer */}
             <View className="flex-row items-center justify-center mt-2">
-              <Text className="text-gray-500 text-xs">Tippen fuer alle Angebote</Text>
-              <Icons.ChevronDown size={12} color="#6b7280" />
+              <Text className="text-foreground-secondary text-xs">Tippen fuer alle Angebote</Text>
+              <Icons.ChevronDown size={12} color={colors.textSecondary} />
             </View>
           </View>
         ) : (
           <View className="flex-1 items-center justify-center">
-            <Icons.Package size={32} color="#4b5563" />
-            <Text className="text-gray-500 text-sm mt-2">Keine eBay-Daten verfuegbar</Text>
+            <Icons.Package size={32} color={colors.textSecondary} />
+            <Text className="text-foreground-secondary text-sm mt-2">Keine eBay-Daten verfuegbar</Text>
           </View>
         )}
       </MotiView>

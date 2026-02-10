@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -20,16 +21,18 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, header, footer }: AuthLayoutProps) {
+  const colors = useThemeColors();
+
   return (
-    <View className="flex-1 bg-[#1a1a2e]">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <StatusBar style="light" />
-      <ImageBackground 
-        source={require('../../../../../assets/auth_bg.png')} 
+      <ImageBackground
+        source={require('../../../../../assets/auth_bg.png')}
         className="flex-1 justify-center"
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(26,26,46,0.3)', 'rgba(26,26,46,0.8)', '#1a1a2e']}
+          colors={[`${colors.background}4D`, `${colors.background}CC`, colors.background]}
           className="absolute inset-0"
         />
 

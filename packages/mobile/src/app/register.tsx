@@ -45,7 +45,7 @@ export default function RegisterScreen() {
       <Text className="text-4xl font-bold text-white mb-2">
         Account erstellen
       </Text>
-      <Text className="text-gray-300 text-lg">
+      <Text className="text-foreground-secondary text-lg">
         Starte deine Sammlung.
       </Text>
     </View>
@@ -53,7 +53,7 @@ export default function RegisterScreen() {
 
   const footer = (
     <View className="flex-row justify-center mt-6">
-      <Text className="text-gray-400">Bereits registriert? </Text>
+      <Text className="text-foreground-secondary">Bereits registriert? </Text>
       <Pressable onPress={() => router.back()} disabled={isLoading}>
         <Text className="text-primary-400 font-bold border-b border-primary-500/50">
           Anmelden

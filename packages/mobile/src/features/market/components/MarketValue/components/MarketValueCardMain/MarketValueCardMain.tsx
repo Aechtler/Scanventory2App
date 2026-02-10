@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks';
 import { MarketValueResult } from '@/features/market/services/perplexity';
 import { confidenceColors } from '../../utils';
 
@@ -19,6 +20,7 @@ export function MarketValueCardMain({
   result,
   onPress,
 }: MarketValueCardMainProps) {
+  const themeColors = useThemeColors();
   const colors = confidenceColors[result.confidence];
 
   return (
@@ -31,7 +33,7 @@ export function MarketValueCardMain({
       >
         {/* Header */}
         <View className="flex-row items-center mb-3">
-          <Icons.AI size={24} color="#a78bfa" />
+          <Icons.AI size={24} color={themeColors.primaryLight} />
           <Text className="text-white font-semibold text-lg ml-2">
             KI-Marktwertanalyse
           </Text>
@@ -71,20 +73,20 @@ export function MarketValueCardMain({
         </View>
 
         {/* Summary Preview */}
-        <View className="bg-gray-800/50 rounded-lg p-3 mt-2">
-          <Text className="text-gray-300 text-sm leading-5" numberOfLines={2}>
+        <View className="bg-background-elevated/50 rounded-lg p-3 mt-2">
+          <Text className="text-foreground-secondary text-sm leading-5" numberOfLines={2}>
             {result.summary}
           </Text>
           <View className="flex-row items-center mt-2">
             <Text className="text-purple-400 text-xs">Tippen für Details</Text>
             <View className="ml-1">
-              <Icons.ChevronDown size={12} color="#a78bfa" />
+              <Icons.ChevronDown size={12} color={themeColors.primaryLight} />
             </View>
           </View>
         </View>
 
         {/* Disclaimer */}
-        <Text className="text-gray-600 text-xs text-center mt-2">
+        <Text className="text-foreground-secondary text-xs text-center mt-2">
           Powered by Perplexity AI • Keine Gewährleistung
         </Text>
       </MotiView>

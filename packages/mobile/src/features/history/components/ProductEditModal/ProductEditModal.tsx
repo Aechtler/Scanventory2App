@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { Button } from '@/shared/components';
 
 export interface ProductEditData {
@@ -60,6 +61,7 @@ export function ProductEditModal({
   onSave,
   onClose,
 }: ProductEditModalProps) {
+  const colors = useThemeColors();
   // Local state für alle editierbaren Felder
   const [productName, setProductName] = useState(initialData.productName);
   const [category, setCategory] = useState(initialData.category);
@@ -135,7 +137,7 @@ export function ProductEditModal({
               tint="dark" 
               className="overflow-hidden border-b border-white/10"
             >
-              <View className="flex-row items-center justify-between px-4 py-4 min-h-[60px] bg-gray-900/40">
+              <View className="flex-row items-center justify-between px-4 py-4 min-h-[60px] bg-background/40">
                 {/* Close Button - larger touch target */}
                 <Pressable
                   onPress={onClose}
@@ -143,11 +145,11 @@ export function ProductEditModal({
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   style={{ zIndex: 100 }}
                 >
-                  <Icons.Close size={22} color="#ffffff" />
+                  <Icons.Close size={22} color={colors.textPrimary} />
                 </Pressable>
 
                 {/* Title */}
-                <Text className="text-white text-lg font-semibold flex-shrink">Bearbeiten</Text>
+                <Text className="text-foreground text-lg font-semibold flex-shrink">Bearbeiten</Text>
 
                 {/* Save Button - ensure no overlap */}
                 <Pressable
@@ -179,43 +181,43 @@ export function ProductEditModal({
 
             {/* Produktname - Großes Eingabefeld */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Produktname</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Produktname</Text>
               <TextInput
                 value={productName}
                 onChangeText={setProductName}
                 placeholder="Produktname eingeben..."
-                placeholderTextColor="#6b7280"
-                className="text-white text-xl font-bold bg-gray-800 p-4 rounded-xl"
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground text-xl font-bold bg-background-elevated p-4 rounded-xl"
                 multiline
               />
             </View>
 
             {/* Tags: Kategorie, Marke, Zustand */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Kategorie</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Kategorie</Text>
               <TextInput
                 value={category}
                 onChangeText={setCategory}
                 placeholder="Kategorie..."
-                placeholderTextColor="#6b7280"
-                className="text-gray-200 text-base bg-gray-800 p-4 rounded-xl"
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground text-base bg-background-elevated p-4 rounded-xl"
               />
             </View>
 
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Marke</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Marke</Text>
               <TextInput
                 value={brand}
                 onChangeText={setBrand}
                 placeholder="Marke (optional)..."
-                placeholderTextColor="#6b7280"
-                className="text-gray-200 text-base bg-gray-800 p-4 rounded-xl"
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground text-base bg-background-elevated p-4 rounded-xl"
               />
             </View>
 
             {/* Zustand mit Preset-Chips */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Zustand</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Zustand</Text>
               <View className="flex-row flex-wrap gap-2">
                 {CONDITION_PRESETS.map((preset) => (
                   <Pressable
@@ -224,12 +226,12 @@ export function ProductEditModal({
                     className={`px-4 py-3 rounded-xl border ${
                       preset === condition
                         ? 'bg-primary-500/30 border-primary-500'
-                        : 'bg-gray-800 border-gray-700'
+                        : 'bg-background-elevated border-border'
                     }`}
                   >
                     <Text
                       className={`text-base ${
-                        preset === condition ? 'text-primary-400 font-semibold' : 'text-gray-200'
+                        preset === condition ? 'text-primary-400 font-semibold' : 'text-foreground'
                       }`}
                     >
                       {preset}
@@ -241,14 +243,14 @@ export function ProductEditModal({
 
             {/* GTIN */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Artikelnummer (GTIN)</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Artikelnummer (GTIN)</Text>
               <TextInput
                 value={gtin}
                 onChangeText={setGtin}
                 placeholder="EAN / GTIN eingeben..."
-                placeholderTextColor="#6b7280"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
-                className="text-gray-400 text-base font-mono bg-gray-800 p-4 rounded-xl"
+                className="text-foreground-secondary text-base font-mono bg-background-elevated p-4 rounded-xl"
               />
             </View>
 
@@ -256,16 +258,16 @@ export function ProductEditModal({
             <View className="mb-5">
               <Pressable
                 onPress={() => setShowSearchQueries(!showSearchQueries)}
-                className="flex-row items-center justify-between p-4 bg-gray-800 rounded-xl"
+                className="flex-row items-center justify-between p-4 bg-background-elevated rounded-xl"
               >
                 <View className="flex-row items-center gap-3">
-                  <Icons.Search size={20} color="#9ca3af" />
-                  <Text className="text-gray-200 text-base font-medium">Suchbegriffe anpassen</Text>
+                  <Icons.Search size={20} color={colors.textSecondary} />
+                  <Text className="text-foreground text-base font-medium">Suchbegriffe anpassen</Text>
                 </View>
                 {showSearchQueries ? (
-                  <Icons.ChevronUp size={20} color="#9ca3af" />
+                  <Icons.ChevronUp size={20} color={colors.textSecondary} />
                 ) : (
-                  <Icons.ChevronDown size={20} color="#9ca3af" />
+                  <Icons.ChevronDown size={20} color={colors.textSecondary} />
                 )}
               </Pressable>
 
@@ -280,17 +282,17 @@ export function ProductEditModal({
                     const IconComponent = Icons[icon as keyof typeof Icons];
                     return (
                       <View key={key} className="flex-row items-center gap-3">
-                        <View className="w-10 h-10 bg-gray-700 rounded-lg items-center justify-center">
-                          {IconComponent && <IconComponent size={18} color="#9ca3af" />}
+                        <View className="w-10 h-10 bg-background-elevated rounded-lg items-center justify-center">
+                          {IconComponent && <IconComponent size={18} color={colors.textSecondary} />}
                         </View>
                         <View className="flex-1">
-                          <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+                          <Text className="text-foreground-secondary text-xs mb-1">{label}</Text>
                           <TextInput
                             value={searchQueries[key] || ''}
                             onChangeText={(val) => updateSearchQuery(key, val)}
                             placeholder={`${label}-Suchbegriff...`}
-                            placeholderTextColor="#4b5563"
-                            className="text-gray-200 text-sm bg-gray-800 p-3 rounded-lg"
+                            placeholderTextColor={colors.textSecondary}
+                            className="text-foreground text-sm bg-background-elevated p-3 rounded-lg"
                           />
                         </View>
                       </View>

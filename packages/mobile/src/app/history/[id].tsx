@@ -11,11 +11,13 @@ import { HistoryDetailHeader } from '../../features/history/components/HistoryDe
 import { PriceEditSheet } from '../../features/history/components/PriceEditSheet';
 import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
 import { Icons } from '../../shared/components/Icons';
+import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
 /**
  * History Detail Screen - Zeigt Item mit Preisen, Quicklinks und Edit-Navigation
  */
 export default function HistoryDetailScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const item = useHistoryStore((state) => id ? state.items.find((i) => i.id === id) : undefined) ?? null;
   const removeItem = useHistoryStore((state) => state.removeItem);
@@ -113,9 +115,9 @@ export default function HistoryDetailScreen() {
       <>
         <Stack.Screen options={{ title: 'Nicht gefunden' }} />
         <SafeAreaView className="flex-1 bg-background items-center justify-center">
-          <Text className="text-white text-lg">Item nicht gefunden</Text>
+          <Text className="text-foreground text-lg">Item nicht gefunden</Text>
           <AnimatedButton onPress={() => router.back()} className="mt-4 bg-primary-500 px-6 py-3 rounded-xl">
-            <Text className="text-white font-semibold">Zurück</Text>
+            <Text className="text-foreground font-semibold">Zurück</Text>
           </AnimatedButton>
         </SafeAreaView>
       </>
@@ -143,7 +145,7 @@ export default function HistoryDetailScreen() {
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ padding: 16 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
           {/* Hero Header — Preis-Badge oben rechts, Tap auf Bild → Edit */}
           <HistoryDetailHeader

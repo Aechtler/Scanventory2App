@@ -7,6 +7,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { FinalPriceCardProps } from './types';
 
 export function FinalPriceCard({
@@ -16,6 +17,7 @@ export function FinalPriceCard({
   onSavePrice,
   onSaveNote,
 }: FinalPriceCardProps) {
+  const colors = useThemeColors();
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceDraft, setPriceDraft] = useState(
     finalPrice !== undefined ? finalPrice.toString() : ''
@@ -83,7 +85,7 @@ export function FinalPriceCard({
               onBlur={handlePriceSave}
               onSubmitEditing={handlePriceSave}
               placeholder="0"
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="decimal-pad"
               className="text-white text-4xl font-bold flex-1"
               returnKeyType="done"
@@ -94,9 +96,9 @@ export function FinalPriceCard({
               {finalPrice !== undefined ? formatPrice(finalPrice) : '—'}
             </Text>
           )}
-          <Text className="text-gray-400 text-lg ml-2">EUR</Text>
+          <Text className="text-foreground-secondary text-lg ml-2">EUR</Text>
           {!editingPrice && (
-            <Icons.Pencil size={14} color="#6b7280" strokeWidth={1.5} />
+            <Icons.Pencil size={14} color={colors.textSecondary} strokeWidth={1.5} />
           )}
         </View>
       </Pressable>
@@ -105,12 +107,12 @@ export function FinalPriceCard({
       {hasComparison && (
         <View className="flex-row flex-wrap gap-x-3 mt-2">
           {comparison?.aiPrice !== undefined && (
-            <Text className="text-gray-500 text-xs">
+            <Text className="text-foreground-secondary text-xs">
               KI: {typeof comparison.aiPrice === 'number' ? formatPrice(comparison.aiPrice) + '€' : comparison.aiPrice}
             </Text>
           )}
           {comparison?.ebayAvg !== undefined && (
-            <Text className="text-gray-500 text-xs">
+            <Text className="text-foreground-secondary text-xs">
               eBay: {formatPrice(comparison.ebayAvg)}€
             </Text>
           )}
@@ -126,8 +128,8 @@ export function FinalPriceCard({
           onBlur={handleNoteSave}
           onSubmitEditing={handleNoteSave}
           placeholder="Notiz hinzufügen..."
-          placeholderTextColor="#4b5563"
-          className="text-gray-400 text-sm border-b border-gray-700 pb-1"
+          placeholderTextColor={colors.textSecondary}
+          className="text-foreground-secondary text-sm border-b border-border pb-1"
           returnKeyType="done"
           blurOnSubmit
         />

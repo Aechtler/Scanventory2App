@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { View, Text, Image, Pressable, Alert, RefreshControl } from 'react-native';
+import { useState, useCallback, useMemo } from 'react';
+import { View, Text, Image, Pressable, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { MotiView } from 'moti';
@@ -12,6 +12,9 @@ import { useLibraryFilters } from '../../features/history/hooks/useLibraryFilter
 import { LibrarySearchBar } from '../../features/history/components/LibrarySearchBar';
 import { LibraryFilterBar } from '../../features/history/components/LibraryFilterBar';
 import { SwipeableLibraryItem } from '../../features/history/components/SwipeableLibraryItem';
+import { useThemeColors } from '../../shared/hooks/useThemeColors';
+
+const PAGE_SIZE = 20;
 
 /**
  * Bibliothek Tab - Gescannte Gegenstände
@@ -22,6 +25,8 @@ export default function LibraryTab() {
   const isEmpty = items.length === 0;
   const [isExporting, setIsExporting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const colors = useThemeColors();
 
   const {
     filters,
@@ -57,10 +62,23 @@ export default function LibraryTab() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    setVisibleCount(PAGE_SIZE);
     setTimeout(() => setRefreshing(false), 800);
   }, []);
 
   const totalValue = calculateTotalValue(filteredItems);
+
+  const paginatedItems = useMemo(
+    () => filteredItems.slice(0, visibleCount),
+    [filteredItems, visibleCount]
+  );
+  const hasMore = visibleCount < filteredItems.length;
+
+  const loadMore = useCallback(() => {
+    if (hasMore) {
+      setVisibleCount((prev) => prev + PAGE_SIZE);
+    }
+  }, [hasMore]);
 
   const renderItem = ({ item, index }: { item: HistoryItem; index: number }) => (
     <StaggeredItem index={index}>
@@ -69,7 +87,7 @@ export default function LibraryTab() {
         onDelete={() => removeItem(item.id)}
       >
         <Pressable
-          className="bg-background-card rounded-xl p-4 mb-3 flex-row border border-gray-800 active:border-primary-500/50"
+          className="bg-background-card rounded-xl p-4 mb-3 flex-row border border-border active:border-primary-500/50"
           onPress={() => router.push(`/history/${item.id}`)}
         >
           <MotiView
@@ -85,26 +103,26 @@ export default function LibraryTab() {
           </MotiView>
 
           <View className="flex-1 ml-4 justify-center">
-            <Text className="text-white font-semibold text-base" numberOfLines={2}>
+            <Text className="text-foreground font-semibold text-base" numberOfLines={2}>
               {item.productName}
             </Text>
 
             <View className="flex-row items-center mt-1.5 gap-2">
-              <View className="bg-gray-700/50 px-2 py-0.5 rounded">
-                <Text className="text-gray-300 text-xs">{item.category}</Text>
+              <View className="bg-background-elevated/50 px-2 py-0.5 rounded">
+                <Text className="text-foreground-secondary text-xs">{item.category}</Text>
               </View>
               {item.brand && (
-                <View className="bg-gray-700/50 px-2 py-0.5 rounded">
-                  <Text className="text-gray-300 text-xs">{item.brand}</Text>
+                <View className="bg-background-elevated/50 px-2 py-0.5 rounded">
+                  <Text className="text-foreground-secondary text-xs">{item.brand}</Text>
                 </View>
               )}
             </View>
 
             <View className="flex-row justify-between items-center mt-2">
-              <Text className="text-primary-400 font-bold text-lg">
+              <Text className="text-primary font-bold text-lg">
                 {formatPrice(item.priceStats.avgPrice)}
               </Text>
-              <Text className="text-gray-500 text-xs">
+              <Text className="text-foreground-secondary text-xs">
                 {formatDate(item.scannedAt)}
               </Text>
             </View>
@@ -122,14 +140,14 @@ export default function LibraryTab() {
             from={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="mb-6 bg-gray-800/50 p-6 rounded-full"
+            className="mb-6 bg-background-elevated/50 p-6 rounded-full"
           >
-            <Icons.Inbox size={64} color="#6b7280" />
+            <Icons.Inbox size={64} color={colors.textSecondary} />
           </MotiView>
-          <Text className="text-white text-2xl font-bold mb-2 text-center">
+          <Text className="text-foreground text-2xl font-bold mb-2 text-center">
             Noch keine Scans
           </Text>
-          <Text className="text-gray-400 text-center mb-8 max-w-xs">
+          <Text className="text-foreground-secondary text-center mb-8 max-w-xs">
             Scanne deinen ersten Gegenstand und entdecke seinen Marktwert
           </Text>
         </FadeInView>
@@ -151,16 +169,26 @@ export default function LibraryTab() {
           </View>
 
           <FlashList
-            data={filteredItems}
+            data={paginatedItems}
             keyExtractor={(item: HistoryItem) => item.id}
             contentContainerStyle={{ padding: 16, paddingTop: 0, paddingBottom: 100 }}
             renderItem={renderItem}
+            estimatedItemSize={100}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.5}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#6366f1"
+                tintColor={colors.primary}
               />
+            }
+            ListFooterComponent={
+              hasMore ? (
+                <View className="items-center py-4">
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              ) : null
             }
             ListHeaderComponent={
               <FadeInView delay={0} className="mb-4">
@@ -168,29 +196,29 @@ export default function LibraryTab() {
                   <View className="bg-gradient-to-r from-primary-500/20 to-primary-600/10 border border-primary-500/30 rounded-2xl p-5 mb-4">
                     <View className="flex-row justify-between items-center">
                       <View>
-                        <Text className="text-gray-400 text-sm">
+                        <Text className="text-foreground-secondary text-sm">
                           {isFiltered ? 'Gefilterter Wert' : 'Geschätzter Gesamtwert'}
                         </Text>
-                        <Text className="text-white text-3xl font-bold mt-1">
+                        <Text className="text-foreground text-3xl font-bold mt-1">
                           {formatPrice(totalValue)}
                         </Text>
                       </View>
                       <View className="bg-primary-500/20 w-14 h-14 rounded-xl items-center justify-center">
-                        <Icons.Money size={32} color="#a78bfa" />
+                        <Icons.Money size={32} color={colors.primaryLight} />
                       </View>
                     </View>
-                    <View className="flex-row mt-4 pt-4 border-t border-gray-700/50">
+                    <View className="flex-row mt-4 pt-4 border-t border-border/50">
                       <View className="flex-1">
-                        <Text className="text-gray-500 text-xs">Anzahl</Text>
-                        <Text className="text-white font-bold">
+                        <Text className="text-foreground-secondary text-xs">Anzahl</Text>
+                        <Text className="text-foreground font-bold">
                           {isFiltered
                             ? `${filteredItems.length} von ${items.length}`
                             : items.length}
                         </Text>
                       </View>
                       <View className="flex-1">
-                        <Text className="text-gray-500 text-xs">Ø Wert</Text>
-                        <Text className="text-white font-bold">
+                        <Text className="text-foreground-secondary text-xs">Ø Wert</Text>
+                        <Text className="text-foreground font-bold">
                           {filteredItems.length > 0
                             ? formatPrice(totalValue / filteredItems.length)
                             : formatPrice(0)}
@@ -201,8 +229,8 @@ export default function LibraryTab() {
                         disabled={isExporting}
                         className="px-3 py-1 bg-primary-500/10 rounded-lg border border-primary-500/30 flex-row items-center"
                       >
-                        <Icons.Share size={16} color="#c7d2fe" />
-                        <Text className="text-primary-400 text-sm font-medium ml-2">
+                        <Icons.Share size={16} color={colors.primaryLight} />
+                        <Text className="text-primary text-sm font-medium ml-2">
                           {isExporting ? '...' : 'Export'}
                         </Text>
                       </AnimatedButton>
@@ -215,12 +243,12 @@ export default function LibraryTab() {
             ListEmptyComponent={
               isFiltered ? (
                 <View className="items-center py-12">
-                  <Icons.Search size={40} color="#4b5563" />
-                  <Text className="text-gray-400 text-base mt-3">
+                  <Icons.Search size={40} color={colors.textSecondary} />
+                  <Text className="text-foreground-secondary text-base mt-3">
                     Keine Treffer
                   </Text>
                   <Pressable onPress={() => { setSearchQuery(''); setCategory(null); }}>
-                    <Text className="text-primary-400 text-sm mt-2">
+                    <Text className="text-primary text-sm mt-2">
                       Filter zurücksetzen
                     </Text>
                   </Pressable>

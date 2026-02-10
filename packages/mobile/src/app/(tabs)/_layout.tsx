@@ -1,15 +1,18 @@
 import { Tabs } from 'expo-router';
+import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
 /**
  * Tabs Layout - Tab Bar wird global via GlobalTabBar gerendert
  */
 export default function TabsLayout() {
+  const colors = useThemeColors();
+
   return (
     <Tabs
       tabBar={() => null}
       screenOptions={{
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.textPrimary,
         headerTitleStyle: { fontWeight: '600' },
       }}
     >
@@ -24,6 +27,7 @@ export default function TabsLayout() {
         name="library"
         options={{
           title: 'Bibliothek',
+          headerShown: false,
         }}
       />
       <Tabs.Screen

@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks';
 import {
   PriceStats,
   formatPrice,
@@ -39,6 +40,7 @@ export function PriceEstimateModal({
   onToggleMarketplace,
   onRefresh,
 }: PriceEstimateModalProps) {
+  const colors = useThemeColors();
   return (
     <Modal
       visible={visible}
@@ -46,21 +48,21 @@ export function PriceEstimateModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-gray-900">
+      <View className="flex-1 bg-background">
         {/* Modal Header */}
-        <View className="flex-row items-center justify-between p-4 border-b border-gray-700">
+        <View className="flex-row items-center justify-between p-4 border-b border-border">
           <View className="flex-row items-center gap-3">
-            <Icons.Money size={24} color="#a78bfa" />
+            <Icons.Money size={24} color={colors.primaryLight} />
             <View>
               <Text className="text-white font-bold text-lg">Preisanalyse</Text>
-              <Text className="text-gray-400 text-xs">
+              <Text className="text-foreground-secondary text-xs">
                 {selectedCount} von {listings.length} ausgewählt
               </Text>
             </View>
           </View>
           <Pressable
             onPress={onClose}
-            className="bg-gray-800 px-4 py-2 rounded-lg"
+            className="bg-background-elevated px-4 py-2 rounded-lg"
           >
             <Text className="text-white font-medium">Fertig</Text>
           </Pressable>
@@ -75,10 +77,10 @@ export function PriceEstimateModal({
             <Text className="text-white text-4xl font-bold text-center">
               {formatPrice(priceStats.avgPrice)}
             </Text>
-            <Text className="text-gray-400 text-center mt-2">
+            <Text className="text-foreground-secondary text-center mt-2">
               {formatPriceRange(priceStats.minPrice, priceStats.maxPrice)}
             </Text>
-            <Text className="text-gray-500 text-xs text-center mt-2">
+            <Text className="text-foreground-secondary text-xs text-center mt-2">
               Basierend auf {selectedCount} ausgewählten Angeboten
             </Text>
           </View>
@@ -91,7 +93,7 @@ export function PriceEstimateModal({
             return (
               <View
                 key={marketplace}
-                className="bg-gray-800/50 rounded-xl p-4 mb-4"
+                className="bg-background-elevated/50 rounded-xl p-4 mb-4"
               >
                 {/* Marketplace Header */}
                 <Pressable
@@ -102,18 +104,18 @@ export function PriceEstimateModal({
                     <Text className="text-white font-semibold text-lg">
                       {MARKETPLACE_NAMES[marketplace] || marketplace}
                     </Text>
-                    <Text className="text-gray-400 ml-2">
+                    <Text className="text-foreground-secondary ml-2">
                       ({selectedInMp}/{mpListings.length})
                     </Text>
                   </View>
                   <View
                     className={`px-3 py-1 rounded-lg flex-row items-center ${
-                      allSelected ? 'bg-primary-500' : 'bg-gray-600'
+                      allSelected ? 'bg-primary-500' : 'bg-background-elevated'
                     }`}
                   >
                     {allSelected && (
                       <View className="mr-1">
-                        <Icons.Check size={14} color="#ffffff" />
+                        <Icons.Check size={14} color={colors.textPrimary} />
                       </View>
                     )}
                     <Text className="text-white text-sm">
@@ -136,8 +138,8 @@ export function PriceEstimateModal({
 
           {/* No listings fallback */}
           {listings.length === 0 && (
-            <View className="bg-gray-800/50 rounded-xl p-4 mb-4">
-              <Text className="text-gray-400 text-center">
+            <View className="bg-background-elevated/50 rounded-xl p-4 mb-4">
+              <Text className="text-foreground-secondary text-center">
                 Keine Angebote gefunden.{'\n'}Bitte "Neu laden" drücken.
               </Text>
             </View>
@@ -153,13 +155,13 @@ export function PriceEstimateModal({
               className="bg-primary-600 py-4 px-6 rounded-xl items-center mb-6"
             >
               <View className="flex-row items-center">
-                <Icons.Refresh size={18} color="#ffffff" />
+                <Icons.Refresh size={18} color={colors.textPrimary} />
                 <Text className="text-white font-semibold ml-2">Neu laden</Text>
               </View>
             </Pressable>
           )}
 
-          <Text className="text-gray-600 text-xs text-center mb-4">
+          <Text className="text-foreground-secondary text-xs text-center mb-4">
             Wähle Angebote aus um den Durchschnittspreis anzupassen
           </Text>
         </ScrollView>

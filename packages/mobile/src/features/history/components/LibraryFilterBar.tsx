@@ -36,12 +36,12 @@ function Chip({
       className={`px-3 py-1.5 rounded-lg border mr-2 ${
         active
           ? 'bg-primary-500/20 border-primary-500/50'
-          : 'bg-gray-800 border-gray-700'
+          : 'bg-background-elevated border-border'
       }`}
     >
       <Text
         className={`text-xs font-medium ${
-          active ? 'text-primary-400' : 'text-gray-400'
+          active ? 'text-primary-400' : 'text-foreground-secondary'
         }`}
       >
         {label}

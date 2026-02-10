@@ -5,6 +5,7 @@ import { VisionMatch } from '@/features/scan/services/visionService';
 import { Icons } from '@/shared/components/Icons';
 import { TextInput } from 'react-native';
 import { AnimatedButton } from '@/shared/components/Animated';
+import { useThemeColors } from '@/shared/hooks';
 
 interface MatchSelectionSheetProps {
   visible: boolean;
@@ -22,6 +23,7 @@ export function MatchSelectionSheet({
   onSelect,
   onManualSearch,
 }: MatchSelectionSheetProps) {
+  const colors = useThemeColors();
   const [searchQuery, setSearchQuery] = React.useState('');
   const hasMatches = matches.length > 0;
   const getConfidenceColor = (confidence: number) => {
@@ -62,7 +64,7 @@ export function MatchSelectionSheet({
             from={{ width: 0 }}
             animate={{ width: 48 }}
             transition={{ type: 'timing', duration: 400, delay: 200 }}
-            className="self-center h-1 bg-gray-600 rounded-full mb-5"
+            className="self-center h-1 bg-foreground-secondary/30 rounded-full mb-5"
           />
 
           {/* Header */}
@@ -72,10 +74,10 @@ export function MatchSelectionSheet({
             transition={{ type: 'timing', duration: 300, delay: 100 }}
             className="items-center mb-5"
           >
-            <Text className="text-white text-2xl font-bold">
+            <Text className="text-foreground text-2xl font-bold">
               {hasMatches ? '🔍 Was ist das?' : '🔎 Produkt suchen'}
             </Text>
-            <Text className="text-gray-400 mt-2 text-center">
+            <Text className="text-foreground-secondary mt-2 text-center">
               {hasMatches 
                 ? 'Wähle die beste Übereinstimmung aus oder suche manuell' 
                 : 'Wir konnten das Produkt nicht eindeutig erkennen. Suche manuell:'}
@@ -84,12 +86,12 @@ export function MatchSelectionSheet({
 
           {/* Search Input */}
           <View className="mb-6 px-1">
-            <View className="flex-row items-center bg-background rounded-xl border border-gray-700 px-4 py-2">
-              <Icons.Search size={20} color="#9ca3af" />
+            <View className="flex-row items-center bg-background rounded-xl border border-border px-4 py-2">
+              <Icons.Search size={20} color={colors.textSecondary} />
               <TextInput
-                className="flex-1 ml-3 text-white text-base py-2"
+                className="flex-1 ml-3 text-foreground text-base py-2"
                 placeholder="Marke, Modell, Details..."
-                placeholderTextColor="#6b7280"
+                placeholderTextColor={colors.textSecondary}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 onSubmitEditing={() => searchQuery.trim() && onManualSearch(searchQuery)}
@@ -97,7 +99,7 @@ export function MatchSelectionSheet({
               />
               {searchQuery.length > 0 && (
                 <Pressable onPress={() => setSearchQuery('')}>
-                  <Icons.Close size={20} color="#9ca3af" />
+                  <Icons.Close size={20} color={colors.textSecondary} />
                 </Pressable>
               )}
             </View>
@@ -110,7 +112,7 @@ export function MatchSelectionSheet({
           </View>
 
           {/* Matches Liste mit Stagger */}
-          <Text className="text-gray-500 text-xs font-bold uppercase mb-3 px-1">
+          <Text className="text-foreground-secondary text-xs font-bold uppercase mb-3 px-1">
             {hasMatches ? 'KI-Vorschläge' : ''}
           </Text>
 
@@ -130,26 +132,26 @@ export function MatchSelectionSheet({
               >
                 <AnimatedButton
                   onPress={() => onSelect(index)}
-                  className="bg-background rounded-xl p-4 mb-3 border-2 border-gray-800"
+                  className="bg-background rounded-xl p-4 mb-3 border-2 border-border"
                 >
                   <View className="flex-row items-start gap-3">
                     {/* Product Image */}
                     {match.imageUrl ? (
                       <Image
                         source={{ uri: match.imageUrl }}
-                        className="w-20 h-20 rounded-lg bg-gray-800"
+                        className="w-20 h-20 rounded-lg bg-background-elevated"
                         resizeMode="cover"
                       />
                     ) : (
-                      <View className="w-20 h-20 rounded-lg bg-gray-800 items-center justify-center">
-                        <Icons.Package size={32} color="#6b7280" />
+                      <View className="w-20 h-20 rounded-lg bg-background-elevated items-center justify-center">
+                        <Icons.Package size={32} color={colors.textSecondary} />
                       </View>
                     )}
 
                     {/* Product Info */}
                     <View className="flex-1">
                       <View className="flex-row justify-between items-start mb-2">
-                        <Text className="text-white font-semibold text-base flex-1" numberOfLines={2}>
+                        <Text className="text-foreground font-semibold text-base flex-1" numberOfLines={2}>
                           {match.productName}
                         </Text>
                         <View className={`items-center px-2 py-1 rounded-lg ml-2 ${getConfidenceBg(match.confidence)}`}>
@@ -158,7 +160,7 @@ export function MatchSelectionSheet({
                           </Text>
                         </View>
                       </View>
-                      <Text className="text-gray-400 text-xs" numberOfLines={2}>
+                      <Text className="text-foreground-secondary text-xs" numberOfLines={2}>
                         {match.description}
                       </Text>
                     </View>
@@ -166,16 +168,16 @@ export function MatchSelectionSheet({
 
                   {/* Tags */}
                   <View className="flex-row flex-wrap gap-2 mt-3">
-                    <View className="bg-gray-700/60 px-3 py-1 rounded-full">
-                      <Text className="text-gray-300 text-xs">{match.category}</Text>
+                    <View className="bg-background-elevated/60 px-3 py-1 rounded-full">
+                      <Text className="text-foreground-secondary text-xs">{match.category}</Text>
                     </View>
                     {match.brand && (
-                      <View className="bg-gray-700/60 px-3 py-1 rounded-full">
-                        <Text className="text-gray-300 text-xs">{match.brand}</Text>
+                      <View className="bg-background-elevated/60 px-3 py-1 rounded-full">
+                        <Text className="text-foreground-secondary text-xs">{match.brand}</Text>
                       </View>
                     )}
-                    <View className="bg-gray-700/60 px-3 py-1 rounded-full">
-                      <Text className="text-gray-300 text-xs">{match.condition}</Text>
+                    <View className="bg-background-elevated/60 px-3 py-1 rounded-full">
+                      <Text className="text-foreground-secondary text-xs">{match.condition}</Text>
                     </View>
                   </View>
                 </AnimatedButton>

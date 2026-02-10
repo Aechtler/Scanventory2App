@@ -5,12 +5,14 @@ import { MotiView } from 'moti';
 import { Icons } from '../shared/components/Icons';
 import { useAuthStore } from '../features/auth/store/authStore';
 import { AuthLayout, AuthInput, AuthButton } from '../features/auth/components';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const login = useAuthStore((state) => state.login);
+  const colors = useThemeColors();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -35,13 +37,13 @@ export default function LoginScreen() {
         transition={{ type: 'spring', delay: 300 }}
         className="w-24 h-24 bg-primary-500/20 rounded-3xl items-center justify-center mb-6 border border-primary-500/30"
       >
-        <Icons.Search size={48} color="#a78bfa" />
+        <Icons.Search size={48} color={colors.primaryLight} />
       </MotiView>
       
-      <Text className="text-5xl font-bold text-white mb-2 tracking-tight">
+      <Text className="text-5xl font-bold text-foreground mb-2 tracking-tight">
         Scan<Text className="text-primary-400">App</Text>
       </Text>
-      <Text className="text-gray-300 text-lg font-light tracking-wide">
+      <Text className="text-foreground-secondary text-lg font-light tracking-wide">
         DEIN WERT. DEIN WISSEN.
       </Text>
     </View>
@@ -54,7 +56,7 @@ export default function LoginScreen() {
       transition={{ delay: 600 }}
       className="flex-row justify-center mt-8"
     >
-      <Text className="text-gray-400">Neu hier? </Text>
+      <Text className="text-foreground-secondary">Neu hier? </Text>
       <Pressable onPress={() => router.push('/register')} disabled={isLoading}>
         <Text className="text-primary-400 font-bold border-b border-primary-500/50">
           Account erstellen

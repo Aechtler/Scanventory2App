@@ -7,6 +7,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { MotiView, AnimatePresence } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { EditableFieldProps } from './types';
 
 export function EditableField({
@@ -14,9 +15,10 @@ export function EditableField({
   onSave,
   label,
   placeholder,
-  textClassName = 'text-white text-xl font-bold',
+  textClassName = 'text-foreground text-xl font-bold',
   multiline = false,
 }: EditableFieldProps) {
+  const colors = useThemeColors();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<TextInput>(null);
@@ -43,7 +45,7 @@ export function EditableField({
         transition={{ type: 'timing', duration: 150 }}
       >
         {label && (
-          <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+          <Text className="text-foreground-secondary text-xs mb-1">{label}</Text>
         )}
         <TextInput
           ref={inputRef}
@@ -52,7 +54,7 @@ export function EditableField({
           onBlur={handleSave}
           onSubmitEditing={handleSave}
           placeholder={placeholder}
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={colors.textSecondary}
           multiline={multiline}
           className={`${textClassName} border-b border-primary-500 pb-1`}
           returnKeyType="done"
@@ -70,13 +72,13 @@ export function EditableField({
         transition={{ type: 'timing', duration: 150 }}
       >
         {label && (
-          <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+          <Text className="text-foreground-secondary text-xs mb-1">{label}</Text>
         )}
         <View className="flex-row items-center gap-2">
           <Text className={`${textClassName} flex-1`}>
             {value || placeholder}
           </Text>
-          <Icons.Pencil size={14} color="#6b7280" />
+          <Icons.Pencil size={14} color={colors.textSecondary} />
         </View>
       </MotiView>
     </Pressable>

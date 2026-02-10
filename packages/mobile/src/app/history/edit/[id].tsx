@@ -20,6 +20,7 @@ import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
 import { useHistoryStore } from '@/features/history/store/historyStore';
 import { useUIStore } from '@/shared/store/uiStore';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 
 const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 
@@ -38,6 +39,7 @@ type SearchQueries = {
 };
 
 export default function ProductEditScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const item = useHistoryStore((state) => id ? state.items.find((i) => i.id === id) : undefined) ?? null;
   const updateItem = useHistoryStore((state) => state.updateItem);
@@ -104,7 +106,7 @@ export default function ProductEditScreen() {
       <>
         <Stack.Screen options={{ title: 'Nicht gefunden' }} />
         <SafeAreaView className="flex-1 bg-background items-center justify-center">
-          <Text className="text-white text-lg">Item nicht gefunden</Text>
+          <Text className="text-foreground text-lg">Item nicht gefunden</Text>
         </SafeAreaView>
       </>
     );
@@ -125,7 +127,7 @@ export default function ProductEditScreen() {
               onPress={handleSave}
               className="px-4 py-2 rounded-full bg-primary-500 active:bg-primary-600"
             >
-              <Text className="text-white font-semibold">Speichern</Text>
+              <Text className="text-foreground font-semibold">Speichern</Text>
             </Pressable>
           ),
         }}
@@ -169,19 +171,19 @@ export default function ProductEditScreen() {
               {/* Toggle-Bar */}
               <Pressable
                 onPress={() => toggleImageExpanded(!imageExpanded)}
-                className="flex-row items-center justify-center py-2 bg-gray-800/90"
+                className="flex-row items-center justify-center py-2 bg-background-elevated/90"
                 style={{ gap: 6 }}
               >
                 {imageExpanded ? (
                   <>
-                    <Icons.Minimize size={14} color="#a78bfa" />
+                    <Icons.Minimize size={14} color={colors.primaryLight} />
                     <Text className="text-primary-400 text-xs font-medium">
                       Details einblenden
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Icons.Maximize size={14} color="#a78bfa" />
+                    <Icons.Maximize size={14} color={colors.primaryLight} />
                     <Text className="text-primary-400 text-xs font-medium">
                       Bild vergrößern
                     </Text>
@@ -195,44 +197,44 @@ export default function ProductEditScreen() {
             <>
             {/* Produktname */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Produktname</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Produktname</Text>
               <TextInput
                 value={productName}
                 onChangeText={setProductName}
                 placeholder="Produktname eingeben..."
-                placeholderTextColor="#6b7280"
-                className="text-white text-xl font-bold bg-gray-800 p-4 rounded-xl"
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground text-xl font-bold bg-background-elevated p-4 rounded-xl"
                 multiline
               />
             </View>
 
             {/* Kategorie */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Kategorie</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Kategorie</Text>
               <TextInput
                 value={category}
                 onChangeText={setCategory}
                 placeholder="Kategorie..."
-                placeholderTextColor="#6b7280"
-                className="text-gray-200 text-base bg-gray-800 p-4 rounded-xl"
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground text-base bg-background-elevated p-4 rounded-xl"
               />
             </View>
 
             {/* Marke */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Marke</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Marke</Text>
               <TextInput
                 value={brand}
                 onChangeText={setBrand}
                 placeholder="Marke (optional)..."
-                placeholderTextColor="#6b7280"
-                className="text-gray-200 text-base bg-gray-800 p-4 rounded-xl"
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground text-base bg-background-elevated p-4 rounded-xl"
               />
             </View>
 
             {/* Zustand mit Preset-Chips */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">Zustand</Text>
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Zustand</Text>
               <View className="flex-row flex-wrap gap-2">
                 {CONDITION_PRESETS.map((preset) => (
                   <Pressable
@@ -241,12 +243,12 @@ export default function ProductEditScreen() {
                     className={`px-4 py-3 rounded-xl border ${
                       preset === condition
                         ? 'bg-primary-500/30 border-primary-500'
-                        : 'bg-gray-800 border-gray-700'
+                        : 'bg-background-elevated border-border'
                     }`}
                   >
                     <Text
                       className={`text-base ${
-                        preset === condition ? 'text-primary-400 font-semibold' : 'text-gray-200'
+                        preset === condition ? 'text-primary-400 font-semibold' : 'text-foreground'
                       }`}
                     >
                       {preset}
@@ -258,16 +260,16 @@ export default function ProductEditScreen() {
 
             {/* GTIN */}
             <View className="mb-5">
-              <Text className="text-gray-400 text-sm mb-2 font-medium">
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">
                 Artikelnummer (GTIN)
               </Text>
               <TextInput
                 value={gtin}
                 onChangeText={setGtin}
                 placeholder="EAN / GTIN eingeben..."
-                placeholderTextColor="#6b7280"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="numeric"
-                className="text-gray-400 text-base font-mono bg-gray-800 p-4 rounded-xl"
+                className="text-foreground-secondary text-base font-mono bg-background-elevated p-4 rounded-xl"
               />
             </View>
 
@@ -275,18 +277,18 @@ export default function ProductEditScreen() {
             <View className="mb-5">
               <Pressable
                 onPress={() => setShowSearchQueries(!showSearchQueries)}
-                className="flex-row items-center justify-between p-4 bg-gray-800 rounded-xl"
+                className="flex-row items-center justify-between p-4 bg-background-elevated rounded-xl"
               >
                 <View className="flex-row items-center gap-3">
-                  <Icons.Search size={20} color="#9ca3af" />
-                  <Text className="text-gray-200 text-base font-medium">
+                  <Icons.Search size={20} color={colors.textSecondary} />
+                  <Text className="text-foreground text-base font-medium">
                     Suchbegriffe anpassen
                   </Text>
                 </View>
                 {showSearchQueries ? (
-                  <Icons.ChevronUp size={20} color="#9ca3af" />
+                  <Icons.ChevronUp size={20} color={colors.textSecondary} />
                 ) : (
-                  <Icons.ChevronDown size={20} color="#9ca3af" />
+                  <Icons.ChevronDown size={20} color={colors.textSecondary} />
                 )}
               </Pressable>
 
@@ -301,17 +303,17 @@ export default function ProductEditScreen() {
                     const IconComponent = Icons[icon];
                     return (
                       <View key={key} className="flex-row items-center gap-3">
-                        <View className="w-10 h-10 bg-gray-700 rounded-lg items-center justify-center">
-                          {IconComponent && <IconComponent size={18} color="#9ca3af" />}
+                        <View className="w-10 h-10 bg-background-elevated rounded-lg items-center justify-center">
+                          {IconComponent && <IconComponent size={18} color={colors.textSecondary} />}
                         </View>
                         <View className="flex-1">
-                          <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+                          <Text className="text-foreground-secondary text-xs mb-1">{label}</Text>
                           <TextInput
                             value={searchQueries[key] || ''}
                             onChangeText={(val) => updateSearchQuery(key, val)}
                             placeholder={`${label}-Suchbegriff...`}
-                            placeholderTextColor="#4b5563"
-                            className="text-gray-200 text-sm bg-gray-800 p-3 rounded-lg"
+                            placeholderTextColor={colors.textSecondary}
+                            className="text-foreground text-sm bg-background-elevated p-3 rounded-lg"
                           />
                         </View>
                       </View>

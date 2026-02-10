@@ -9,8 +9,10 @@ import { MotiView } from 'moti';
 import { FadeInView } from '@/shared/components/Animated';
 import { AnalysisResultSkeleton } from '@/shared/components/Skeleton';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks';
 
 export function AnalyzingState() {
+  const colors = useThemeColors();
   return (
     <FadeInView delay={100}>
       <View className="bg-background-card rounded-xl p-6 items-center mb-4">
@@ -19,17 +21,17 @@ export function AnalyzingState() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', delay: 200 }}
         >
-          <Icons.Search size={48} color="#a78bfa" />
+          <Icons.Search size={48} color={colors.primaryLight} />
         </MotiView>
-        <Text className="text-white mt-4 text-lg font-semibold">
+        <Text className="text-foreground mt-4 text-lg font-semibold">
           Analysiere Bild...
         </Text>
-        <Text className="text-gray-400 mt-2 text-center">
+        <Text className="text-foreground-secondary mt-2 text-center">
           KI erkennt den Gegenstand
         </Text>
-        
+
         {/* Loading Bar */}
-        <View className="w-full h-1 bg-gray-700 rounded-full mt-4 overflow-hidden">
+        <View className="w-full h-1 bg-background-elevated rounded-full mt-4 overflow-hidden">
           <MotiView
             from={{ translateX: -200 }}
             animate={{ translateX: 200 }}

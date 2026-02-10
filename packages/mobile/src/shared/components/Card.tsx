@@ -24,7 +24,7 @@ export function Card({
 
   const variantStyles = {
     default: 'bg-background-card',
-    elevated: 'bg-background-elevated border border-gray-700',
+    elevated: 'bg-background-elevated border border-border',
   };
 
   return (

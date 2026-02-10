@@ -9,17 +9,19 @@ import { MotiView } from 'moti';
 import { FadeInView, StaggeredItem } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
 import { VisionMatch } from '@/features/scan/services/visionService';
+import { useThemeColors } from '@/shared/hooks';
 
 interface ProductResultCardProps {
   match: VisionMatch;
 }
 
 export function ProductResultCard({ match }: ProductResultCardProps) {
+  const colors = useThemeColors();
   return (
     <FadeInView delay={50}>
-      <View className="bg-background-card rounded-xl p-4 mb-4 border border-gray-800">
+      <View className="bg-background-card rounded-xl p-4 mb-4 border border-border">
         <View className="flex-row justify-between items-start mb-3">
-          <Text className="text-white text-xl font-bold flex-1">
+          <Text className="text-foreground text-xl font-bold flex-1">
             {match.productName}
           </Text>
           <MotiView
@@ -35,9 +37,9 @@ export function ProductResultCard({ match }: ProductResultCardProps) {
         </View>
 
         {match.gtin && (
-          <View className="flex-row items-center mb-3 bg-gray-800/40 self-start px-2 py-1 rounded border border-gray-700">
-            <Icons.Tag size={12} color="#9ca3af" />
-            <Text className="text-gray-400 text-xs ml-1 font-mono">
+          <View className="flex-row items-center mb-3 bg-background-elevated/40 self-start px-2 py-1 rounded border border-border">
+            <Icons.Tag size={12} color={colors.textSecondary} />
+            <Text className="text-foreground-secondary text-xs ml-1 font-mono">
               ID: {match.gtin}
             </Text>
           </View>
@@ -48,14 +50,14 @@ export function ProductResultCard({ match }: ProductResultCardProps) {
             .filter(Boolean)
             .map((tag, i) => (
               <StaggeredItem key={i} index={i}>
-                <View className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
-                  <Text className="text-gray-200 text-sm">{tag}</Text>
+                <View className="bg-background-elevated/50 px-3 py-1.5 rounded-full border border-border">
+                  <Text className="text-foreground text-sm">{tag}</Text>
                 </View>
               </StaggeredItem>
             ))}
         </View>
 
-        <Text className="text-gray-400 leading-5">
+        <Text className="text-foreground-secondary leading-5">
           {match.description}
         </Text>
       </View>

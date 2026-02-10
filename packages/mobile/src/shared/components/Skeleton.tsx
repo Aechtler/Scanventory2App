@@ -40,7 +40,7 @@ export function Skeleton({
           borderRadius,
         },
       ]}
-      className={`bg-gray-700 ${className}`}
+      className={`bg-background-elevated ${className}`}
     />
   );
 }
@@ -58,7 +58,7 @@ export function ImageSkeleton({ aspectRatio = 4/3 }: { aspectRatio?: number }) {
         duration: 1000,
         loop: true,
       }}
-      className="bg-gray-700 rounded-2xl w-full"
+      className="bg-background-elevated rounded-2xl w-full"
       style={{ aspectRatio }}
     />
   );
@@ -75,7 +75,7 @@ export function HistoryItemSkeleton() {
         from={{ opacity: 0.5 }}
         animate={{ opacity: 1 }}
         transition={{ type: 'timing', duration: 1000, loop: true }}
-        className="w-20 h-20 rounded-lg bg-gray-700"
+        className="w-20 h-20 rounded-lg bg-background-elevated"
       />
       
       {/* Content Skeleton */}

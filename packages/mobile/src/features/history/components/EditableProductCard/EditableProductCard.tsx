@@ -35,14 +35,14 @@ export function EditableProductCard({
   };
 
   return (
-    <View className="bg-background-card rounded-xl p-4 mb-4 border border-gray-800">
+    <View className="bg-background-card rounded-xl p-4 mb-4 border border-border">
       {/* Produktname + Confidence */}
       <View className="flex-row justify-between items-start mb-3">
         <View className="flex-1 mr-3">
           <EditableField
             value={productName}
             onSave={(val) => onUpdate({ productName: val })}
-            textClassName="text-white text-xl font-bold"
+            textClassName="text-foreground text-xl font-bold"
           />
         </View>
         <View className="bg-primary-500/20 px-3 py-1 rounded-lg">
@@ -59,7 +59,7 @@ export function EditableProductCard({
           onSave={(val) => onUpdate({ gtin: val || null })}
           label="Artikelnummer"
           placeholder="EAN / GTIN eingeben..."
-          textClassName="text-gray-400 text-xs font-mono"
+          textClassName="text-foreground-secondary text-xs font-mono"
         />
       </View>
 
@@ -95,7 +95,7 @@ export function EditableProductCard({
       />
 
       {/* Datum */}
-      <Text className="text-gray-500 text-sm mt-3">
+      <Text className="text-foreground-secondary text-sm mt-3">
         Gescannt: {formatDate(scannedAt)}
       </Text>
     </View>

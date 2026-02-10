@@ -3,11 +3,14 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Icons } from '../../shared/components/Icons';
+import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
 /**
  * Scan Tab - Kamera-Scan oder Bild-Upload
  */
 export default function ScanTab() {
+  const colors = useThemeColors();
+
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -62,8 +65,8 @@ export default function ScanTab() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-6 pt-8">
-        <Text className="text-3xl font-bold text-white mb-2">Scannen</Text>
-        <Text className="text-gray-400 mb-8">
+        <Text className="text-3xl font-bold text-foreground mb-2">Scannen</Text>
+        <Text className="text-foreground-secondary mb-8">
           Wähle eine Option um einen Gegenstand zu scannen
         </Text>
 
@@ -87,30 +90,30 @@ export default function ScanTab() {
 
           <Pressable
             onPress={pickImage}
-            className="bg-background-card rounded-2xl p-6 border border-gray-700 active:bg-background-elevated"
+            className="bg-background-card rounded-2xl p-6 border border-border active:bg-background-elevated"
           >
             <View className="items-center">
               <View className="mb-4">
-                <Icons.Image size={48} color="#9ca3af" />
+                <Icons.Image size={48} color={colors.textSecondary} />
               </View>
-              <Text className="text-white text-xl font-semibold mb-1">
+              <Text className="text-foreground text-xl font-semibold mb-1">
                 Galerie
               </Text>
-              <Text className="text-gray-400 text-center">
+              <Text className="text-foreground-secondary text-center">
                 Wähle ein vorhandenes Bild
               </Text>
             </View>
           </Pressable>
         </View>
 
-        <View className="mt-auto mb-24 bg-background-card rounded-xl p-4 border border-gray-800">
+        <View className="mt-auto mb-24 bg-background-card rounded-xl p-4 border border-border">
           <View className="flex-row items-center mb-2">
             <Icons.Lightbulb size={20} color="#fbbf24" strokeWidth={2.5} />
-            <Text className="text-white font-semibold ml-2">Tipps für beste Ergebnisse:</Text>
+            <Text className="text-foreground font-semibold ml-2">Tipps für beste Ergebnisse:</Text>
           </View>
-          <Text className="text-gray-400">• Gute Beleuchtung verwenden</Text>
-          <Text className="text-gray-400">• Gegenstand mittig platzieren</Text>
-          <Text className="text-gray-400">• Hintergrund sollte einfarbig sein</Text>
+          <Text className="text-foreground-secondary">• Gute Beleuchtung verwenden</Text>
+          <Text className="text-foreground-secondary">• Gegenstand mittig platzieren</Text>
+          <Text className="text-foreground-secondary">• Hintergrund sollte einfarbig sein</Text>
         </View>
       </View>
     </SafeAreaView>

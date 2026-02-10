@@ -7,6 +7,7 @@
 import { View, Text } from 'react-native';
 import { FadeInView, AnimatedButton } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks';
 
 interface AnalysisActionsProps {
   onSave: () => void;
@@ -14,6 +15,7 @@ interface AnalysisActionsProps {
 }
 
 export function AnalysisActions({ onSave, onNewScan }: AnalysisActionsProps) {
+  const colors = useThemeColors();
   return (
     <FadeInView delay={250} className="gap-3 mt-6">
       <AnimatedButton
@@ -21,7 +23,7 @@ export function AnalysisActions({ onSave, onNewScan }: AnalysisActionsProps) {
         className="bg-primary-500 rounded-xl p-4"
       >
         <View className="flex-row items-center justify-center">
-          <Icons.Check size={20} color="#ffffff" />
+          <Icons.Check size={20} color="#FFFFFF" />
           <Text className="text-white text-center text-lg font-semibold ml-2">
             Im Verlauf speichern
           </Text>
@@ -30,9 +32,9 @@ export function AnalysisActions({ onSave, onNewScan }: AnalysisActionsProps) {
       
       <AnimatedButton
         onPress={onNewScan}
-        className="bg-background-card border border-gray-700 rounded-xl p-4"
+        className="bg-background-card border border-border rounded-xl p-4"
       >
-        <Text className="text-gray-300 text-center text-lg font-semibold">
+        <Text className="text-foreground-secondary text-center text-lg font-semibold">
           Neuen Scan starten
         </Text>
       </AnimatedButton>

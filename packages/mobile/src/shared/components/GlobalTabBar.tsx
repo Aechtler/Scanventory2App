@@ -16,9 +16,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icons } from './Icons';
 import { useUIStore } from '../store/uiStore';
+import { useThemeColors } from '../hooks/useThemeColors';
+import { useResolvedColorScheme } from '../store/themeStore';
 
-const ACTIVE_COLOR = '#6366f1';
-const INACTIVE_COLOR = '#6b7280';
+const INACTIVE_COLOR_LIGHT = '#9ca3af';
+const INACTIVE_COLOR_DARK = '#6b7280';
 
 interface TabDef {
   route: string;
@@ -55,12 +57,16 @@ function GlobalTabItem({
   tab,
   isFocused,
   onPress,
+  activeColor,
+  inactiveColor,
 }: {
   tab: TabDef;
   isFocused: boolean;
   onPress: () => void;
+  activeColor: string;
+  inactiveColor: string;
 }) {
-  const color = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
+  const color = isFocused ? activeColor : inactiveColor;
 
   const animatedDot = useAnimatedStyle(() => ({
     opacity: withSpring(isFocused ? 1 : 0, { damping: 20, stiffness: 300 }),
@@ -94,7 +100,7 @@ function GlobalTabItem({
       >
         {tab.label}
       </Text>
-      <Animated.View style={[styles.dot, { backgroundColor: ACTIVE_COLOR }, animatedDot]} />
+      <Animated.View style={[styles.dot, { backgroundColor: activeColor }, animatedDot]} />
     </Pressable>
   );
 }
@@ -104,6 +110,8 @@ export function GlobalTabBar() {
   const router = useRouter();
   const segments = useSegments();
   const tabBarHidden = useUIStore((s) => s.tabBarHidden);
+  const colors = useThemeColors();
+  const scheme = useResolvedColorScheme();
 
   const firstSegment = segments[0] ?? '';
   const secondSegment = segments[1] ?? '';
@@ -112,6 +120,7 @@ export function GlobalTabBar() {
   if (HIDDEN_SEGMENTS.includes(firstSegment)) return null;
 
   const bottomPadding = Math.max(insets.bottom - 8, 8);
+  const inactiveColor = scheme === 'dark' ? INACTIVE_COLOR_DARK : INACTIVE_COLOR_LIGHT;
 
   const getIsActive = (tab: TabDef): boolean => {
     if (firstSegment === 'history' && tab.matchSegments.includes('history')) {
@@ -138,17 +147,29 @@ export function GlobalTabBar() {
 
   return (
     <Animated.View
-      style={[styles.container, { bottom: bottomPadding }, animatedContainer]}
+      style={[
+        styles.container,
+        {
+          bottom: bottomPadding,
+          shadowColor: colors.primary,
+          borderColor: scheme === 'dark'
+            ? 'rgba(99, 102, 241, 0.1)'
+            : 'rgba(99, 102, 241, 0.15)',
+        },
+        animatedContainer,
+      ]}
       pointerEvents={tabBarHidden ? 'none' : 'box-none'}
     >
-      <BlurView intensity={60} tint="dark" style={styles.blur}>
-        <View style={styles.inner}>
+      <BlurView intensity={60} tint={scheme} style={styles.blur}>
+        <View style={[styles.inner, { backgroundColor: colors.tabBarBackground }]}>
           {TABS.map((tab) => (
             <GlobalTabItem
               key={tab.route}
               tab={tab}
               isFocused={getIsActive(tab)}
               onPress={() => router.navigate(tab.route as never)}
+              activeColor={colors.primary}
+              inactiveColor={inactiveColor}
             />
           ))}
         </View>
@@ -164,13 +185,11 @@ const styles = StyleSheet.create({
     right: 20,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#6366f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
     borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.1)',
     zIndex: 999,
   },
   blur: {
@@ -180,7 +199,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 8,
-    backgroundColor: 'rgba(26, 26, 46, 0.85)',
   },
   tabItem: {
     flex: 1,

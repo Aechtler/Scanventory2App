@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Light Mode (Default) */
+:root {
+  --color-background: 248 248 252;
+  --color-background-card: 255 255 255;
+  --color-background-elevated: 240 240 248;
+  --color-text-primary: 26 26 46;
+  --color-text-secondary: 107 107 138;
+  --color-border: 226 226 239;
+  --color-primary: 99 102 241;
+  --color-primary-light: 129 140 248;
+  --color-accent: 233 69 96;
+  --color-surface-overlay: 26 26 46;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: 15 15 26;
+    --color-background-card: 26 26 46;
+    --color-background-elevated: 37 37 71;
+    --color-text-primary: 240 240 245;
+    --color-text-secondary: 139 139 163;
+    --color-border: 42 42 69;
+    --color-primary: 129 140 248;
+    --color-primary-light: 165 180 252;
+    --color-accent: 233 69 96;
+    --color-surface-overlay: 26 26 46;
+  }
+}

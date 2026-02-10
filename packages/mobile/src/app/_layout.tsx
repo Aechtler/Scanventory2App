@@ -6,8 +6,11 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
+import { useColorScheme } from 'nativewind';
 import { useAuthStore } from '../features/auth/store/authStore';
 import { GlobalTabBar } from '../shared/components/GlobalTabBar';
+import { useThemeStore, useResolvedColorScheme } from '../shared/store/themeStore';
+import { useThemeColors } from '../shared/hooks/useThemeColors';
 
 /**
  * Root Layout - App-weite Navigation und Provider
@@ -16,6 +19,15 @@ export default function RootLayout() {
   const { isAuthenticated, isLoading, loadUser } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const theme = useThemeStore((s) => s.theme);
+  const resolvedScheme = useResolvedColorScheme();
+  const colors = useThemeColors();
+  const { setColorScheme } = useColorScheme();
+
+  // NativeWind Farbschema synchronisieren
+  useEffect(() => {
+    setColorScheme(theme === 'system' ? 'system' : theme);
+  }, [theme]);
 
   useEffect(() => {
     loadUser();
@@ -36,14 +48,14 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
+        <StatusBar style={resolvedScheme === 'dark' ? 'light' : 'dark'} />
         <View style={{ flex: 1 }}>
           <Stack
             screenOptions={{
-              headerStyle: { backgroundColor: '#1a1a2e' },
-              headerTintColor: '#fff',
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.textPrimary,
               headerTitleStyle: { fontWeight: '600' },
-              contentStyle: { backgroundColor: '#1a1a2e' },
+              contentStyle: { backgroundColor: colors.background },
             }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

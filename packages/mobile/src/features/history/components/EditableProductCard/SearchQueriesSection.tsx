@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { MotiView, AnimatePresence } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { EditableField } from './EditableField';
 import { SearchQueriesSectionProps } from './types';
 
@@ -18,6 +19,7 @@ const PLATFORMS: { key: keyof SearchQueriesSectionProps['searchQueries']; label:
 ];
 
 export function SearchQueriesSection({ searchQueries, onSave }: SearchQueriesSectionProps) {
+  const colors = useThemeColors();
   const [expanded, setExpanded] = useState(false);
 
   const handleSaveQuery = (key: string, value: string) => {
@@ -30,11 +32,11 @@ export function SearchQueriesSection({ searchQueries, onSave }: SearchQueriesSec
         onPress={() => setExpanded(!expanded)}
         className="flex-row items-center justify-between py-2"
       >
-        <Text className="text-gray-400 text-sm font-medium">Suchbegriffe</Text>
+        <Text className="text-foreground-secondary text-sm font-medium">Suchbegriffe</Text>
         {expanded ? (
-          <Icons.ChevronUp size={16} color="#9ca3af" />
+          <Icons.ChevronUp size={16} color={colors.textSecondary} />
         ) : (
-          <Icons.ChevronDown size={16} color="#9ca3af" />
+          <Icons.ChevronDown size={16} color={colors.textSecondary} />
         )}
       </Pressable>
 
@@ -54,7 +56,7 @@ export function SearchQueriesSection({ searchQueries, onSave }: SearchQueriesSec
                 value={searchQueries[key] || ''}
                 placeholder={`${label}-Suchbegriff...`}
                 onSave={(val) => handleSaveQuery(key, val)}
-                textClassName="text-gray-200 text-sm"
+                textClassName="text-foreground text-sm"
               />
             ))}
           </MotiView>

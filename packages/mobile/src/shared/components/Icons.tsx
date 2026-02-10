@@ -49,6 +49,9 @@ import {
   Info,
   Maximize2,
   Minimize2,
+  Sun,
+  Moon,
+  SunMoon,
 } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -61,7 +64,9 @@ export interface IconProps {
 
 const defaultProps: IconProps = {
   size: 24,
-  color: '#ffffff',
+  // Color should be provided by each usage via useThemeColors()
+  // Falls back to a neutral gray that works on both themes
+  color: '#8b8ba3',
   strokeWidth: 2,
 };
 
@@ -129,6 +134,9 @@ export const Icons = {
   Info: (props: IconProps) => <Info {...defaultProps} {...props} />,
   Maximize: (props: IconProps) => <Maximize2 {...defaultProps} {...props} />,
   Minimize: (props: IconProps) => <Minimize2 {...defaultProps} {...props} />,
+  Sun: (props: IconProps) => <Sun {...defaultProps} {...props} />,
+  Moon: (props: IconProps) => <Moon {...defaultProps} {...props} />,
+  SunMoon: (props: IconProps) => <SunMoon {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper

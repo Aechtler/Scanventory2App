@@ -6,9 +6,11 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { MotiView, AnimatePresence } from 'moti';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { EditableTagProps } from './types';
 
 export function EditableTag({ value, onSave, presets }: EditableTagProps) {
+  const colors = useThemeColors();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<TextInput>(null);
@@ -50,12 +52,12 @@ export function EditableTag({ value, onSave, presets }: EditableTagProps) {
               className={`px-3 py-1.5 rounded-full border ${
                 preset === value
                   ? 'bg-primary-500/30 border-primary-500'
-                  : 'bg-gray-700/50 border-gray-600'
+                  : 'bg-background-elevated/50 border-border'
               }`}
             >
               <Text
                 className={`text-sm ${
-                  preset === value ? 'text-primary-400 font-semibold' : 'text-gray-200'
+                  preset === value ? 'text-primary-400 font-semibold' : 'text-foreground'
                 }`}
               >
                 {preset}
@@ -64,8 +66,8 @@ export function EditableTag({ value, onSave, presets }: EditableTagProps) {
           </Pressable>
         ))}
         <Pressable onPress={() => setEditing(false)}>
-          <View className="px-3 py-1.5 rounded-full border border-gray-700">
-            <Text className="text-gray-400 text-sm">Abbrechen</Text>
+          <View className="px-3 py-1.5 rounded-full border border-border">
+            <Text className="text-foreground-secondary text-sm">Abbrechen</Text>
           </View>
         </Pressable>
       </MotiView>
@@ -85,8 +87,8 @@ export function EditableTag({ value, onSave, presets }: EditableTagProps) {
           onChangeText={setDraft}
           onBlur={handleSave}
           onSubmitEditing={handleSave}
-          placeholderTextColor="#6b7280"
-          className="text-gray-200 text-sm bg-gray-700/50 px-3 py-1.5 rounded-full border border-primary-500"
+          placeholderTextColor={colors.textSecondary}
+          className="text-foreground text-sm bg-background-elevated/50 px-3 py-1.5 rounded-full border border-primary-500"
           returnKeyType="done"
           blurOnSubmit
         />
@@ -96,8 +98,8 @@ export function EditableTag({ value, onSave, presets }: EditableTagProps) {
 
   return (
     <Pressable onPress={handleStartEdit}>
-      <View className="bg-gray-700/50 px-3 py-1.5 rounded-full border border-gray-600">
-        <Text className="text-gray-200 text-sm">{value}</Text>
+      <View className="bg-background-elevated/50 px-3 py-1.5 rounded-full border border-border">
+        <Text className="text-foreground text-sm">{value}</Text>
       </View>
     </Pressable>
   );

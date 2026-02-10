@@ -24,7 +24,7 @@ export function PriceEstimateCompact({
           from={{ opacity: 0.5 }}
           animate={{ opacity: 1 }}
           transition={{ type: 'timing', duration: 500, loop: true }}
-          className="h-4 w-20 bg-gray-700 rounded"
+          className="h-4 w-20 bg-background-elevated rounded"
         />
       </View>
     );
@@ -39,7 +39,7 @@ export function PriceEstimateCompact({
       <Text className="text-primary-400 font-bold">
         ~{formatPrice(priceStats.avgPrice)}
       </Text>
-      <Text className="text-gray-500 text-sm">
+      <Text className="text-foreground-secondary text-sm">
         ({formatPriceRange(priceStats.minPrice, priceStats.maxPrice)})
       </Text>
     </View>

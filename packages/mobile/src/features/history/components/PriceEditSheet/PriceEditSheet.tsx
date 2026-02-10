@@ -7,6 +7,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { PriceEditSheetProps } from './types';
 
 export function PriceEditSheet({
@@ -16,6 +17,7 @@ export function PriceEditSheet({
   onSave,
   onClose,
 }: PriceEditSheetProps) {
+  const colors = useThemeColors();
   const [priceDraft, setPriceDraft] = useState('');
   const [noteDraft, setNoteDraft] = useState('');
   const priceInputRef = useRef<TextInput>(null);
@@ -58,10 +60,10 @@ export function PriceEditSheet({
               from={{ translateY: 200, opacity: 0 }}
               animate={{ translateY: 0, opacity: 1 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="bg-gray-900 rounded-t-3xl px-6 pt-4 pb-8 border-t border-gray-700/50"
+              className="bg-background rounded-t-3xl px-6 pt-4 pb-8 border-t border-border/50"
             >
               {/* Handle Bar */}
-              <View className="w-10 h-1 bg-gray-600 rounded-full self-center mb-5" />
+              <View className="w-10 h-1 bg-border rounded-full self-center mb-5" />
 
               {/* Header */}
               <View className="flex-row items-center justify-between mb-6">
@@ -70,7 +72,7 @@ export function PriceEditSheet({
                 </Text>
                 {currentPrice !== undefined && (
                   <Pressable onPress={handleClear} hitSlop={8}>
-                    <Text className="text-gray-500 text-sm">Zurücksetzen</Text>
+                    <Text className="text-foreground-secondary text-sm">Zurücksetzen</Text>
                   </Pressable>
                 )}
               </View>
@@ -83,14 +85,14 @@ export function PriceEditSheet({
                   onChangeText={setPriceDraft}
                   onSubmitEditing={handleSave}
                   placeholder="0"
-                  placeholderTextColor="#4b5563"
+                  placeholderTextColor={colors.textSecondary}
                   keyboardType="decimal-pad"
                   className="text-white text-5xl font-bold text-center min-w-[120px]"
                   style={{ textAlign: 'center' }}
                   returnKeyType="done"
                   blurOnSubmit={false}
                 />
-                <Text className="text-gray-400 text-2xl font-medium ml-1">€</Text>
+                <Text className="text-foreground-secondary text-2xl font-medium ml-1">€</Text>
               </View>
 
               {/* Notiz */}
@@ -98,8 +100,8 @@ export function PriceEditSheet({
                 value={noteDraft}
                 onChangeText={setNoteDraft}
                 placeholder="Notiz (optional)"
-                placeholderTextColor="#4b5563"
-                className="text-gray-300 text-sm bg-gray-800/60 px-4 py-3 rounded-xl mb-5"
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground-secondary text-sm bg-background-elevated/60 px-4 py-3 rounded-xl mb-5"
                 returnKeyType="done"
                 onSubmitEditing={handleSave}
                 blurOnSubmit

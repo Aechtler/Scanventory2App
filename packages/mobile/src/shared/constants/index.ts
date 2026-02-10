@@ -31,6 +31,7 @@ export type MarketPlatform = typeof MARKET_PLATFORMS[keyof typeof MARKET_PLATFOR
 
 /**
  * App Farben (für programmatische Verwendung)
+ * @deprecated Verwende `useThemeColors()` aus `@/shared/hooks` stattdessen
  */
 export const COLORS = {
   primary: '#6366f1',

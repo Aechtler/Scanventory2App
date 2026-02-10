@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
+import { useThemeColors } from '@/shared/hooks';
 import { PriceStats, formatPrice, MARKETPLACE_NAMES, MarketListing } from '@/features/market/services/ebay';
 import { Top3Listings } from '@/features/market/components/PriceEstimate/components/Top3Listings';
 import { GroupedListings } from '@/features/market/components/PriceEstimate/types';
@@ -28,6 +29,7 @@ export function PriceEstimateCard({
   hasSelection,
   onPress,
 }: PriceEstimateCardProps) {
+  const colors = useThemeColors();
   return (
     <Pressable onPress={onPress}>
       <MotiView
@@ -38,7 +40,7 @@ export function PriceEstimateCard({
       >
         {/* Header */}
         <View className="flex-row items-center mb-3">
-          <Icons.Money size={24} color="#a78bfa" />
+          <Icons.Money size={24} color={colors.primaryLight} />
           <Text className="text-white font-semibold text-lg ml-2">
             Preisschätzung
           </Text>
@@ -51,7 +53,7 @@ export function PriceEstimateCard({
                 </Text>
               ))}
             {Object.keys(groupedListings).length > 3 && (
-              <Text className="text-gray-400 text-xs">
+              <Text className="text-foreground-secondary text-xs">
                 +{Object.keys(groupedListings).length - 3}
               </Text>
             )}
@@ -62,7 +64,7 @@ export function PriceEstimateCard({
         <View className="items-center py-3">
           {hasSelection ? (
             <>
-              <Text className="text-gray-400 text-sm mb-1">
+              <Text className="text-foreground-secondary text-sm mb-1">
                 Referenzpreis ({selectedCount} gewählt)
               </Text>
               <MotiView
@@ -83,29 +85,29 @@ export function PriceEstimateCard({
                   Kein Referenzprodukt
                 </Text>
               </View>
-              <Text className="text-gray-400 text-lg">Tippen zum Auswählen</Text>
+              <Text className="text-foreground-secondary text-lg">Tippen zum Auswählen</Text>
             </>
           )}
         </View>
 
         {/* Price Range */}
-        <View className="flex-row justify-between bg-gray-800/50 rounded-lg p-3 mt-2">
+        <View className="flex-row justify-between bg-background-elevated/50 rounded-lg p-3 mt-2">
           <View className="items-center flex-1">
-            <Text className="text-gray-400 text-xs">Von</Text>
+            <Text className="text-foreground-secondary text-xs">Von</Text>
             <Text className="text-green-400 font-semibold">
               {formatPrice(priceStats.minPrice)}
             </Text>
           </View>
-          <View className="w-px bg-gray-700" />
+          <View className="w-px bg-border" />
           <View className="items-center flex-1">
-            <Text className="text-gray-400 text-xs">Bis</Text>
+            <Text className="text-foreground-secondary text-xs">Bis</Text>
             <Text className="text-red-400 font-semibold">
               {formatPrice(priceStats.maxPrice)}
             </Text>
           </View>
-          <View className="w-px bg-gray-700" />
+          <View className="w-px bg-border" />
           <View className="items-center flex-1">
-            <Text className="text-gray-400 text-xs">Länder</Text>
+            <Text className="text-foreground-secondary text-xs">Länder</Text>
             <Text className="text-white font-semibold">
               {Object.keys(groupedListings).length}
             </Text>
@@ -117,11 +119,11 @@ export function PriceEstimateCard({
 
         {/* Footer */}
         <View className="flex-row items-center justify-center mt-3">
-          <Text className="text-gray-500 text-xs">
+          <Text className="text-foreground-secondary text-xs">
             Tippen zum Auswählen der Angebote
           </Text>
           <View className="ml-1">
-            <Icons.ChevronDown size={14} color="#6b7280" />
+            <Icons.ChevronDown size={14} color={colors.textSecondary} />
           </View>
         </View>
       </MotiView>
