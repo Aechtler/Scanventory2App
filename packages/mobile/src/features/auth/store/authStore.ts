@@ -25,6 +25,10 @@ interface AuthState {
 const TOKEN_KEY = 'auth_token';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
+if (!process.env.EXPO_PUBLIC_API_URL && !__DEV__) {
+  console.warn('EXPO_PUBLIC_API_URL is not set — falling back to localhost. This will not work in production.');
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
@@ -77,11 +81,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Login failed');
+        let message = 'Login failed';
+        try {
+          const error = await response.json();
+          message = error.error || message;
+        } catch { /* non-JSON response */ }
+        throw new Error(message);
       }
 
       const data = await response.json();
+
+      if (!data?.token || !data?.user?.id) {
+        throw new Error('Invalid server response');
+      }
 
       // Save token to secure storage
       await SecureStore.setItemAsync(TOKEN_KEY, data.token);
@@ -106,11 +118,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Registration failed');
+        let message = 'Registration failed';
+        try {
+          const error = await response.json();
+          message = error.error || message;
+        } catch { /* non-JSON response */ }
+        throw new Error(message);
       }
 
       const data = await response.json();
+
+      if (!data?.token || !data?.user?.id) {
+        throw new Error('Invalid server response');
+      }
 
       // Save token to secure storage
       await SecureStore.setItemAsync(TOKEN_KEY, data.token);

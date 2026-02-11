@@ -3,6 +3,7 @@ import { View, Text, Image, Pressable, Alert, RefreshControl, ActivityIndicator 
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { MotiView } from 'moti';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
 import { formatPrice } from '../../features/market/services/ebay';
 import { exportAndShareCSV, calculateTotalValue } from '../../features/history/services/exportService';
@@ -10,7 +11,6 @@ import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../../s
 import { Icons } from '../../shared/components/Icons';
 import { useLibraryFilters } from '../../features/history/hooks/useLibraryFilters';
 import { LibrarySearchBar } from '../../features/history/components/LibrarySearchBar';
-import { LibraryFilterBar } from '../../features/history/components/LibraryFilterBar';
 import { SwipeableLibraryItem } from '../../features/history/components/SwipeableLibraryItem';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
@@ -133,7 +133,7 @@ export default function LibraryTab() {
   );
 
   return (
-    <View className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {isEmpty ? (
         <FadeInView delay={0} className="flex-1 items-center justify-center px-6">
           <MotiView
@@ -153,20 +153,18 @@ export default function LibraryTab() {
         </FadeInView>
       ) : (
         <View className="flex-1">
-          {/* Suche & Filter bleiben sichtbar beim Scrollen */}
-          <View className="px-4 pt-4">
-            <LibrarySearchBar
-              value={filters.searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            <LibraryFilterBar
-              categories={categories}
-              selectedCategory={filters.category}
-              onSelectCategory={setCategory}
-              sortBy={filters.sortBy}
-              onSelectSort={setSortBy}
-            />
-          </View>
+          {/* Kompakte Suche + Filter */}
+          <LibrarySearchBar
+            value={filters.searchQuery}
+            onChangeText={setSearchQuery}
+            categories={categories}
+            selectedCategory={filters.category}
+            onSelectCategory={setCategory}
+            sortBy={filters.sortBy}
+            onSelectSort={setSortBy}
+            itemCount={items.length}
+            filteredCount={filteredItems.length}
+          />
 
           <FlashList
             data={paginatedItems}
@@ -258,6 +256,6 @@ export default function LibraryTab() {
           />
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }

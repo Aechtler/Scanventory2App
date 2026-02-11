@@ -1,12 +1,12 @@
 /**
  * AuthLayout Component
  * 
- * Shared layout for login and register screens with glassmorphism design
+ * Shared layout for login and register screens with glassmorphism design.
+ * Note: StatusBar is managed by the root _layout.tsx — do not add one here.
  */
 
 import React, { ReactNode } from 'react';
 import { View, KeyboardAvoidingView, Platform, ImageBackground } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
@@ -25,7 +25,6 @@ export function AuthLayout({ children, header, footer }: AuthLayoutProps) {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <StatusBar style="light" />
       <ImageBackground
         source={require('../../../../../assets/auth_bg.png')}
         className="flex-1 justify-center"

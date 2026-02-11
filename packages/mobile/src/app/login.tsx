@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { MotiView } from 'moti';
-import { Icons } from '../shared/components/Icons';
-import { useAuthStore } from '../features/auth/store/authStore';
-import { AuthLayout, AuthInput, AuthButton } from '../features/auth/components';
+import { Icons } from '@/shared/components/Icons';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { AuthLayout, AuthInput, AuthButton } from '@/features/auth/components';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 
 export default function LoginScreen() {
@@ -15,16 +15,19 @@ export default function LoginScreen() {
   const colors = useThemeColors();
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password) {
       Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben');
       return;
     }
 
     setIsLoading(true);
     try {
-      await login(email, password);
+      await login(trimmedEmail, password);
     } catch (error) {
       Alert.alert('Login fehlgeschlagen', error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten');
+    } finally {
       setIsLoading(false);
     }
   };
