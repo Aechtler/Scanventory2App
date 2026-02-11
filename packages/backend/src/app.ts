@@ -10,7 +10,9 @@ import { errorHandler } from './middleware/errorHandler';
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*',
+}));
 app.use(express.json());
 
 // API Routes

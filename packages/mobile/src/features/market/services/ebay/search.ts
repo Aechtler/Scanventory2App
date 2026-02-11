@@ -130,7 +130,10 @@ function calculatePriceStats(listings: MarketListing[]): {
   }
 
   const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-  const medianPrice = prices[Math.floor(prices.length / 2)];
+  const mid = Math.floor(prices.length / 2);
+  const medianPrice = prices.length % 2 !== 0
+    ? prices[mid]
+    : (prices[mid - 1] + prices[mid]) / 2;
 
   return {
     minPrice: prices[0],

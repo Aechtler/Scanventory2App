@@ -67,12 +67,15 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
 
       // Load product images for all matches in parallel
       console.log('[useAnalysis] Loading product images for', vision.matches.length, 'matches...');
-      const matchesWithImages = await Promise.all(
+      const imageResults = await Promise.allSettled(
         vision.matches.map(async (match) => {
           const searchQuery = match.searchQueries?.ebay || match.searchQuery;
           const imageUrl = await getProductImage(searchQuery);
           return { ...match, imageUrl };
         })
+      );
+      const matchesWithImages = imageResults.map((result, i) =>
+        result.status === 'fulfilled' ? result.value : { ...vision.matches[i] }
       );
 
       const visionWithImages = { ...vision, matches: matchesWithImages };
@@ -151,7 +154,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
       brand: null,
       condition: 'Gut',
       description: `Manuelle Suche nach: ${query}`,
-      confidence: 1.0,
+      confidence: 0,
       searchQuery: query,
       searchQueries: {
         ebay: query,

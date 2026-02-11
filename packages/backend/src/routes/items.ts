@@ -67,7 +67,13 @@ router.post('/', upload.single('image'), async (req: AuthRequest, res: Response)
   }
 
   const imageFilename = saveImage(req.file);
-  const item = await itemService.createItem(userId, data, imageFilename);
+  let item;
+  try {
+    item = await itemService.createItem(userId, data, imageFilename);
+  } catch (err) {
+    deleteImage(imageFilename);
+    throw err;
+  }
 
   const response: ApiResponse<typeof item> = { success: true, data: item };
   res.status(201).json(response);
@@ -102,7 +108,11 @@ router.delete('/:id', async (req: AuthRequest<IdParams>, res: Response) => {
     return;
   }
 
-  deleteImage(deleted.imageFilename);
+  try {
+    deleteImage(deleted.imageFilename);
+  } catch (err) {
+    console.error('Failed to delete image:', err);
+  }
   res.json({ success: true, data: { deleted: true } });
 });
 

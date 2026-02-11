@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import {
   registerUser,
   loginUser,
@@ -8,11 +9,23 @@ import { jwtAuthMiddleware, AuthRequest } from '../middleware/jwtAuth';
 
 const router = Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts, please try again later' },
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many registration attempts, please try again later' },
+});
+
 /**
  * POST /auth/register
  * Register a new user
  */
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
@@ -45,7 +58,7 @@ router.post('/register', async (req, res) => {
  * POST /auth/login
  * Login user
  */
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 

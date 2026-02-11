@@ -56,7 +56,7 @@ export default function LibraryTab() {
   }, [hasMore]);
 
   const getDisplayPrice = (item: HistoryItem): string | null => {
-    if (item.finalPrice != null && item.finalPrice > 0) {
+    if (item.finalPrice != null) {
       return formatPrice(item.finalPrice);
     }
     return null;

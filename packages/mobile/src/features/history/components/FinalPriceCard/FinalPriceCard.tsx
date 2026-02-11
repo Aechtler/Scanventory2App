@@ -34,7 +34,8 @@ export function FinalPriceCard({
 
   const handlePriceSave = () => {
     setEditingPrice(false);
-    const parsed = parseFloat(priceDraft.replace(',', '.'));
+    const cleaned = priceDraft.replace(/\./g, '').replace(',', '.');
+    const parsed = parseFloat(cleaned);
     if (!isNaN(parsed) && parsed >= 0) {
       onSavePrice(parsed);
     } else if (priceDraft.trim() === '') {

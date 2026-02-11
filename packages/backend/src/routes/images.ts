@@ -24,7 +24,11 @@ router.get('/:filename', (req: Request<{ filename: string }>, res: Response) => 
     return;
   }
 
-  res.sendFile(getImagePath(safeName));
+  res.sendFile(getImagePath(safeName), (err) => {
+    if (err && !res.headersSent) {
+      res.status(404).end();
+    }
+  });
 });
 
 export default router;

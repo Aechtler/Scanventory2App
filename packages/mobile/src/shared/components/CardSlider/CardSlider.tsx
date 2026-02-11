@@ -19,17 +19,19 @@ export function CardSlider({
   const { width: screenWidth } = useWindowDimensions();
   const slideWidth = screenWidth - HORIZONTAL_PADDING * 2;
   const scrollViewRef = useRef<ScrollView>(null);
+  const currentPageRef = useRef(0);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const offsetX = event.nativeEvent.contentOffset.x;
       const page = Math.round(offsetX / slideWidth);
-      if (page !== currentPage) {
+      if (page !== currentPageRef.current) {
+        currentPageRef.current = page;
         setCurrentPage(page);
         onPageChange?.(page);
       }
     },
-    [slideWidth, currentPage, onPageChange]
+    [slideWidth, onPageChange]
   );
 
   const childArray = React.Children.toArray(children);

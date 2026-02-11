@@ -8,7 +8,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PriceStats, MarketListing } from '@/features/market/services/ebay';
 import { MarketValueResult } from '@/features/market/services/perplexity';
-import { cacheImage, removeCachedImage } from '../services/imageCacheService';
+import { cacheImage, removeCachedImage, clearImageCache } from '../services/imageCacheService';
 import { syncNewItem, syncPrices, syncMarketValue, syncDeleteItem, syncItemUpdate } from '../services/syncService';
 
 export interface HistoryItem {
@@ -130,7 +130,7 @@ export const useHistoryStore = create<HistoryState>()(
       },
 
       clearHistory: () => {
-        // TODO: Clear all cached images
+        clearImageCache();
         set({ items: [] });
       },
 
