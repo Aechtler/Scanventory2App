@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
@@ -68,13 +68,6 @@ function GlobalTabItem({
 }) {
   const color = isFocused ? activeColor : inactiveColor;
 
-  const animatedDot = useAnimatedStyle(() => ({
-    opacity: withSpring(isFocused ? 1 : 0, { damping: 20, stiffness: 300 }),
-    transform: [
-      { scale: withSpring(isFocused ? 1 : 0.5, { damping: 20, stiffness: 300 }) },
-    ],
-  }));
-
   const animatedIcon = useAnimatedStyle(() => ({
     transform: [
       { scale: withSpring(isFocused ? 1.1 : 1, { damping: 20, stiffness: 300 }) },
@@ -90,17 +83,8 @@ function GlobalTabItem({
       accessibilityLabel={tab.label}
     >
       <Animated.View style={animatedIcon}>
-        {tab.icon({ size: 22, color })}
+        {tab.icon({ size: 28, color })}
       </Animated.View>
-      <Text
-        style={[
-          styles.label,
-          { color, fontWeight: isFocused ? '600' : '400' },
-        ]}
-      >
-        {tab.label}
-      </Text>
-      <Animated.View style={[styles.dot, { backgroundColor: activeColor }, animatedDot]} />
     </Pressable>
   );
 }
@@ -119,7 +103,6 @@ export function GlobalTabBar() {
   // Auf Auth-Screens ausblenden
   if (HIDDEN_SEGMENTS.includes(firstSegment)) return null;
 
-  const bottomPadding = Math.max(insets.bottom - 8, 8);
   const inactiveColor = scheme === 'dark' ? INACTIVE_COLOR_DARK : INACTIVE_COLOR_LIGHT;
 
   const getIsActive = (tab: TabDef): boolean => {
@@ -150,11 +133,12 @@ export function GlobalTabBar() {
       style={[
         styles.container,
         {
-          bottom: bottomPadding,
+          bottom: 0,
+          paddingBottom: insets.bottom,
           shadowColor: colors.primary,
           borderColor: scheme === 'dark'
-            ? 'rgba(99, 102, 241, 0.1)'
-            : 'rgba(99, 102, 241, 0.15)',
+            ? 'rgba(255, 255, 255, 0.06)'
+            : 'rgba(0, 0, 0, 0.08)',
         },
         animatedContainer,
       ]}
@@ -181,15 +165,14 @@ export function GlobalTabBar() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    borderRadius: 24,
+    left: 0,
+    right: 0,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     elevation: 8,
-    borderWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     zIndex: 999,
   },
   blur: {
@@ -197,21 +180,13 @@ const styles = StyleSheet.create({
   },
   inner: {
     flexDirection: 'row',
-    paddingVertical: 10,
+    paddingVertical: 14,
     paddingHorizontal: 8,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-  },
-  label: {
-    fontSize: 11,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    minHeight: 44,
   },
 });

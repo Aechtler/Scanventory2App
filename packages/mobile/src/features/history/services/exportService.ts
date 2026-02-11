@@ -63,5 +63,10 @@ export async function exportAndShareCSV(items: HistoryItem[]): Promise<void> {
  * Berechnet den Gesamtwert aller Items
  */
 export function calculateTotalValue(items: HistoryItem[]): number {
-  return items.reduce((sum, item) => sum + item.priceStats.avgPrice, 0);
+  return items.reduce((sum, item) => {
+    if (item.finalPrice != null && item.finalPrice > 0) {
+      return sum + item.finalPrice;
+    }
+    return sum + item.priceStats.avgPrice;
+  }, 0);
 }

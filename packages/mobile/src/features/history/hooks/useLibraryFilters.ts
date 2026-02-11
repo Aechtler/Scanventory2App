@@ -68,10 +68,16 @@ export function useLibraryFilters(items: HistoryItem[]) {
           return new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime();
         case 'oldest':
           return new Date(a.scannedAt).getTime() - new Date(b.scannedAt).getTime();
-        case 'price_asc':
-          return (a.priceStats.avgPrice ?? 0) - (b.priceStats.avgPrice ?? 0);
-        case 'price_desc':
-          return (b.priceStats.avgPrice ?? 0) - (a.priceStats.avgPrice ?? 0);
+        case 'price_asc': {
+          const priceA = (a.finalPrice != null && a.finalPrice > 0) ? a.finalPrice : (a.priceStats.avgPrice ?? 0);
+          const priceB = (b.finalPrice != null && b.finalPrice > 0) ? b.finalPrice : (b.priceStats.avgPrice ?? 0);
+          return priceA - priceB;
+        }
+        case 'price_desc': {
+          const priceA = (a.finalPrice != null && a.finalPrice > 0) ? a.finalPrice : (a.priceStats.avgPrice ?? 0);
+          const priceB = (b.finalPrice != null && b.finalPrice > 0) ? b.finalPrice : (b.priceStats.avgPrice ?? 0);
+          return priceB - priceA;
+        }
         case 'name':
           return a.productName.localeCompare(b.productName, 'de');
         default:

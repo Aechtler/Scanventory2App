@@ -1,16 +1,15 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, Image, Pressable, Alert, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, Image, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { MotiView } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
 import { formatPrice } from '../../features/market/services/ebay';
-import { exportAndShareCSV, calculateTotalValue } from '../../features/history/services/exportService';
-import { FadeInView, BounceInView, AnimatedButton, StaggeredItem } from '../../shared/components/Animated';
+import { StaggeredItem } from '../../shared/components/Animated';
 import { Icons } from '../../shared/components/Icons';
 import { useLibraryFilters } from '../../features/history/hooks/useLibraryFilters';
-import { LibrarySearchBar } from '../../features/history/components/LibrarySearchBar';
+import { LibrarySearchBar, ViewMode } from '../../features/history/components/LibrarySearchBar';
 import { SwipeableLibraryItem } from '../../features/history/components/SwipeableLibraryItem';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
@@ -23,9 +22,9 @@ export default function LibraryTab() {
   const items = useHistoryStore((state) => state.items);
   const removeItem = useHistoryStore((state) => state.removeItem);
   const isEmpty = items.length === 0;
-  const [isExporting, setIsExporting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const colors = useThemeColors();
 
   const {
@@ -38,35 +37,11 @@ export default function LibraryTab() {
     isFiltered,
   } = useLibraryFilters(items);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const handleExport = async () => {
-    if (items.length === 0) return;
-    setIsExporting(true);
-    try {
-      await exportAndShareCSV(items);
-    } catch {
-      Alert.alert('Fehler', 'Export fehlgeschlagen');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setVisibleCount(PAGE_SIZE);
     setTimeout(() => setRefreshing(false), 800);
   }, []);
-
-  const totalValue = calculateTotalValue(filteredItems);
 
   const paginatedItems = useMemo(
     () => filteredItems.slice(0, visibleCount),
@@ -80,80 +55,122 @@ export default function LibraryTab() {
     }
   }, [hasMore]);
 
-  const renderItem = ({ item, index }: { item: HistoryItem; index: number }) => (
-    <StaggeredItem index={index}>
-      <SwipeableLibraryItem
-        itemName={item.productName}
-        onDelete={() => removeItem(item.id)}
-      >
-        <Pressable
-          className="bg-background-card rounded-xl p-4 mb-3 flex-row border border-border active:border-primary-500/50"
-          onPress={() => router.push(`/history/${item.id}`)}
+  const getDisplayPrice = (item: HistoryItem): string | null => {
+    if (item.finalPrice != null && item.finalPrice > 0) {
+      return formatPrice(item.finalPrice);
+    }
+    return null;
+  };
+
+  const renderListItem = ({ item, index }: { item: HistoryItem; index: number }) => {
+    const displayPrice = getDisplayPrice(item);
+
+    return (
+      <StaggeredItem index={index}>
+        <SwipeableLibraryItem
+          itemName={item.productName}
+          onDelete={() => removeItem(item.id)}
         >
-          <MotiView
-            from={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', delay: index * 50, damping: 25, stiffness: 300 }}
+          <Pressable
+            className="bg-background-card rounded-2xl mb-3 flex-row items-center overflow-hidden border border-border active:opacity-70"
+            onPress={() => router.push(`/history/${item.id}`)}
+            style={{ minHeight: 80 }}
           >
             <Image
               source={{ uri: item.cachedImageUri || item.imageUri }}
-              className="w-20 h-20 rounded-xl"
+              className="w-20 h-20"
               resizeMode="cover"
             />
-          </MotiView>
 
-          <View className="flex-1 ml-4 justify-center">
-            <Text className="text-foreground font-semibold text-base" numberOfLines={2}>
-              {item.productName}
-            </Text>
+            <View className="flex-1 px-4 py-3">
+              <Text className="text-foreground font-semibold text-[16px] leading-[22px]" numberOfLines={1}>
+                {item.productName}
+              </Text>
+              {item.condition ? (
+                <Text className="text-foreground-secondary text-[13px] mt-1">
+                  {item.condition}
+                </Text>
+              ) : null}
+            </View>
 
-            <View className="flex-row items-center mt-1.5 gap-2">
-              <View className="bg-background-elevated/50 px-2 py-0.5 rounded">
-                <Text className="text-foreground-secondary text-xs">{item.category}</Text>
-              </View>
-              {item.brand && (
-                <View className="bg-background-elevated/50 px-2 py-0.5 rounded">
-                  <Text className="text-foreground-secondary text-xs">{item.brand}</Text>
-                </View>
+            <View className="pr-5 items-end">
+              {displayPrice ? (
+                <Text className="text-foreground font-bold text-[17px]">
+                  {displayPrice}
+                </Text>
+              ) : (
+                <Text className="text-foreground-secondary text-[13px] italic">
+                  Kein Preis
+                </Text>
               )}
             </View>
+          </Pressable>
+        </SwipeableLibraryItem>
+      </StaggeredItem>
+    );
+  };
 
-            <View className="flex-row justify-between items-center mt-2">
-              <Text className="text-primary font-bold text-lg">
-                {formatPrice(item.priceStats.avgPrice)}
+  const renderGridItem = ({ item, index }: { item: HistoryItem; index: number }) => {
+    const displayPrice = getDisplayPrice(item);
+    const isLeft = index % 2 === 0;
+
+    return (
+      <StaggeredItem index={index}>
+        <Pressable
+          className={`flex-1 bg-background-card rounded-2xl mb-3.5 overflow-hidden border border-border active:opacity-70 ${
+            isLeft ? 'mr-1.5' : 'ml-1.5'
+          }`}
+          onPress={() => router.push(`/history/${item.id}`)}
+        >
+          <Image
+            source={{ uri: item.cachedImageUri || item.imageUri }}
+            className="w-full aspect-square"
+            resizeMode="cover"
+          />
+          <View className="px-3 pt-2.5 pb-3">
+            <Text className="text-foreground font-semibold text-[14px] leading-[19px]" numberOfLines={2}>
+              {item.productName}
+            </Text>
+            {displayPrice ? (
+              <Text className="text-foreground font-bold text-[15px] mt-1.5">
+                {displayPrice}
               </Text>
-              <Text className="text-foreground-secondary text-xs">
-                {formatDate(item.scannedAt)}
+            ) : (
+              <Text className="text-foreground-secondary text-[13px] italic mt-1.5">
+                Kein Preis
               </Text>
-            </View>
+            )}
           </View>
         </Pressable>
-      </SwipeableLibraryItem>
-    </StaggeredItem>
-  );
+      </StaggeredItem>
+    );
+  };
+
+  const toggleViewMode = useCallback(() => {
+    setViewMode((prev) => (prev === 'list' ? 'grid' : 'list'));
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {isEmpty ? (
-        <FadeInView delay={0} className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center px-8">
           <MotiView
             from={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="mb-6 bg-background-elevated/50 p-6 rounded-full"
+            className="mb-8 bg-background-elevated/50 p-8 rounded-full"
           >
-            <Icons.Inbox size={64} color={colors.textSecondary} />
+            <Icons.Inbox size={56} color={colors.textSecondary} />
           </MotiView>
-          <Text className="text-foreground text-2xl font-bold mb-2 text-center">
+          <Text className="text-foreground text-2xl font-bold mb-3 text-center">
             Noch keine Scans
           </Text>
-          <Text className="text-foreground-secondary text-center mb-8 max-w-xs">
+          <Text className="text-foreground-secondary text-base text-center leading-6 max-w-[280px]">
             Scanne deinen ersten Gegenstand und entdecke seinen Marktwert
           </Text>
-        </FadeInView>
+        </View>
       ) : (
         <View className="flex-1">
-          {/* Kompakte Suche + Filter */}
           <LibrarySearchBar
             value={filters.searchQuery}
             onChangeText={setSearchQuery}
@@ -164,14 +181,18 @@ export default function LibraryTab() {
             onSelectSort={setSortBy}
             itemCount={items.length}
             filteredCount={filteredItems.length}
+            viewMode={viewMode}
+            onToggleViewMode={toggleViewMode}
           />
 
           <FlashList
+            key={viewMode}
             data={paginatedItems}
             keyExtractor={(item: HistoryItem) => item.id}
-            contentContainerStyle={{ padding: 16, paddingTop: 0, paddingBottom: 100 }}
-            renderItem={renderItem}
-            estimatedItemSize={100}
+            numColumns={viewMode === 'grid' ? 2 : 1}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 120 }}
+            renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
+            estimatedItemSize={viewMode === 'grid' ? 240 : 88}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             refreshControl={
@@ -183,70 +204,23 @@ export default function LibraryTab() {
             }
             ListFooterComponent={
               hasMore ? (
-                <View className="items-center py-4">
+                <View className="items-center py-6">
                   <ActivityIndicator size="small" color={colors.primary} />
                 </View>
               ) : null
             }
-            ListHeaderComponent={
-              <FadeInView delay={0} className="mb-4">
-                <BounceInView delay={100}>
-                  <View className="bg-gradient-to-r from-primary-500/20 to-primary-600/10 border border-primary-500/30 rounded-2xl p-5 mb-4">
-                    <View className="flex-row justify-between items-center">
-                      <View>
-                        <Text className="text-foreground-secondary text-sm">
-                          {isFiltered ? 'Gefilterter Wert' : 'Geschätzter Gesamtwert'}
-                        </Text>
-                        <Text className="text-foreground text-3xl font-bold mt-1">
-                          {formatPrice(totalValue)}
-                        </Text>
-                      </View>
-                      <View className="bg-primary-500/20 w-14 h-14 rounded-xl items-center justify-center">
-                        <Icons.Money size={32} color={colors.primaryLight} />
-                      </View>
-                    </View>
-                    <View className="flex-row mt-4 pt-4 border-t border-border/50">
-                      <View className="flex-1">
-                        <Text className="text-foreground-secondary text-xs">Anzahl</Text>
-                        <Text className="text-foreground font-bold">
-                          {isFiltered
-                            ? `${filteredItems.length} von ${items.length}`
-                            : items.length}
-                        </Text>
-                      </View>
-                      <View className="flex-1">
-                        <Text className="text-foreground-secondary text-xs">Ø Wert</Text>
-                        <Text className="text-foreground font-bold">
-                          {filteredItems.length > 0
-                            ? formatPrice(totalValue / filteredItems.length)
-                            : formatPrice(0)}
-                        </Text>
-                      </View>
-                      <AnimatedButton
-                        onPress={handleExport}
-                        disabled={isExporting}
-                        className="px-3 py-1 bg-primary-500/10 rounded-lg border border-primary-500/30 flex-row items-center"
-                      >
-                        <Icons.Share size={16} color={colors.primaryLight} />
-                        <Text className="text-primary text-sm font-medium ml-2">
-                          {isExporting ? '...' : 'Export'}
-                        </Text>
-                      </AnimatedButton>
-                    </View>
-                  </View>
-                </BounceInView>
-
-              </FadeInView>
-            }
             ListEmptyComponent={
               isFiltered ? (
-                <View className="items-center py-12">
-                  <Icons.Search size={40} color={colors.textSecondary} />
-                  <Text className="text-foreground-secondary text-base mt-3">
+                <View className="items-center py-16">
+                  <Icons.Search size={44} color={colors.textSecondary} />
+                  <Text className="text-foreground-secondary text-base mt-4">
                     Keine Treffer
                   </Text>
-                  <Pressable onPress={() => { setSearchQuery(''); setCategory(null); }}>
-                    <Text className="text-primary text-sm mt-2">
+                  <Pressable
+                    onPress={() => { setSearchQuery(''); setCategory(null); }}
+                    className="mt-3 px-5 py-2.5 rounded-xl bg-primary-500/10"
+                  >
+                    <Text className="text-primary text-[15px] font-medium">
                       Filter zurücksetzen
                     </Text>
                   </Pressable>

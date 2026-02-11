@@ -18,12 +18,12 @@ function renderRightActions(
   dragX: Animated.AnimatedInterpolation<number>,
 ) {
   const scale = dragX.interpolate({
-    inputRange: [-80, 0],
+    inputRange: [-100, 0],
     outputRange: [1, 0.5],
     extrapolate: 'clamp',
   });
   const opacity = dragX.interpolate({
-    inputRange: [-60, 0],
+    inputRange: [-80, 0],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
@@ -31,7 +31,7 @@ function renderRightActions(
   return (
     <View style={styles.actionContainer}>
       <Animated.View style={[styles.deleteButton, { transform: [{ scale }], opacity }]}>
-        <Icons.Close size={24} color="#ef4444" />
+        <Icons.Close size={26} color="#ef4444" />
       </Animated.View>
     </View>
   );
@@ -69,7 +69,7 @@ export function SwipeableLibraryItem({
       renderRightActions={renderRightActions}
       onSwipeableOpen={handleSwipeOpen}
       overshootRight={false}
-      rightThreshold={60}
+      rightThreshold={70}
     >
       {children}
     </Swipeable>
@@ -80,17 +80,17 @@ const styles = StyleSheet.create({
   actionContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
-    width: 80,
+    marginLeft: 10,
+    width: 88,
   },
   deleteButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
+    width: 64,
+    height: 64,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: 'rgba(239, 68, 68, 0.25)',
   },
 });
