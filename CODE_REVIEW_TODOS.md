@@ -1,7 +1,7 @@
 # ScanApp - Code Review TODO Liste
 
 > Erstellt: 2026-02-11 | Reviewer: Claude Code (Senior Engineer Review)
-> Gesamtfunde: **71 Issues** across Frontend, Shared Code, Backend
+> Aktualisiert: 2026-02-11 | Erledigte Punkte entfernt
 
 ---
 
@@ -16,61 +16,13 @@
 
 ## P0 - CRITICAL (Sofort beheben)
 
-### Security
-
-- [ ] **SEC-01**: Hardcoded JWT Secret entfernen
-  - `packages/backend/src/services/authService.ts:5`
-  - Fallback `'scanapp-secret-key-change-in-production'` entfernen, JWT_SECRET als required env var erzwingen
-  - **Risiko**: Token-Fälschung in Production möglich
-
-- [ ] **SEC-02**: API Client prüft keine HTTP Status Codes
-  - `packages/mobile/src/shared/services/apiClient.ts:39-84`
-  - Alle API-Methoden rufen `.json()` auf ohne `res.ok` zu prüfen
-  - 500er, 401er, 403er Fehler werden als Success behandelt
-  - **Fix**: `if (!res.ok) throw new ApiError(res.status, await res.json())`
-
-- [ ] **SEC-03**: CORS erlaubt alle Origins
-  - `packages/backend/src/app.ts:13`
-  - `app.use(cors())` ohne Einschränkung
-  - **Fix**: `cors({ origin: process.env.ALLOWED_ORIGINS?.split(',') })`
-
-- [ ] **SEC-04**: Default API Key im Seed Script
-  - `packages/backend/prisma/seed.ts:11`
-  - `'change-me-to-a-secure-key'` als Fallback
-  - **Fix**: Required env var ohne Default
-
-- [ ] **SEC-05**: Kein Rate Limiting auf Auth-Endpoints
-  - `packages/backend/src/routes/auth.ts`
-  - Login/Register ohne Rate Limit = Brute-Force möglich
-  - **Fix**: `express-rate-limit` Middleware hinzufügen
-
-### Crashes & Datenverlust
-
-- [ ] **CRASH-01**: JSON.parse ohne try-catch bei Upload-Response
-  - `packages/mobile/src/shared/services/apiClient.ts:110`
-  - `JSON.parse(uploadResult.body)` wirft SyntaxError bei ungültigem JSON
-  - **Fix**: try-catch mit Fallback-Error
-
-- [ ] **CRASH-02**: Unsicherer Icon-Zugriff in ThemeSelector
-  - `packages/mobile/src/shared/components/ThemeSelector.tsx:28`
-  - `Icons[icon]` kann `undefined` sein → Crash beim Rendern
-  - **Fix**: Validierung oder Fallback-Icon
-
-- [ ] **BUG-01**: Seed Script fehlt required `email` Feld
-  - `packages/backend/prisma/seed.ts:13-22`
-  - User-Erstellung ohne email-Feld schlägt fehl (Schema: `@unique`)
-  - **Fix**: `email: process.env.ADMIN_EMAIL || 'admin@scanapp.local'` hinzufügen
+_Keine offenen P0-Issues mehr! 🎉_
 
 ---
 
 ## P1 - HIGH (Diese Woche beheben)
 
 ### Logische Bugs
-
-- [ ] **BUG-02**: `clearHistory()` löscht gecachte Bilder nicht
-  - `packages/mobile/src/features/history/store/historyStore.ts:133`
-  - TODO-Kommentar vorhanden, aber nicht implementiert → Speicherleck
-  - **Fix**: Alle gecachten Bilder beim Clear durchiterieren und löschen
 
 - [ ] **BUG-03**: `removeCachedImage()` bekommt falschen Parameter
   - `packages/mobile/src/features/history/store/historyStore.ts:121`
@@ -104,11 +56,6 @@
 
 ### Fehlende Fehlerbehandlung
 
-- [ ] **ERR-01**: API Request Timeout nicht implementiert
-  - `packages/mobile/src/shared/services/apiClient.ts:8`
-  - `API_CONFIG.TIMEOUT` definiert aber nie verwendet
-  - **Fix**: `AbortController` mit Timeout verwenden
-
 - [ ] **ERR-02**: `Promise.all()` statt `Promise.allSettled()` bei Image-Loading
   - `packages/mobile/src/features/analyze/hooks/useAnalysis.ts:70-76`
   - Ein hängendes Bild blockiert alle
@@ -135,16 +82,6 @@
 
 ### Performance
 
-- [ ] **PERF-01**: CardSlider `handleScroll` wird bei jedem Scroll neu erstellt
-  - `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx:23-33`
-  - `currentPage` in useCallback deps → infinite recreations
-  - **Fix**: `currentPage` aus deps entfernen, useRef verwenden
-
-- [ ] **PERF-02**: Mehrere PrismaClient Instanzen
-  - `packages/backend/src/services/itemService.ts:8`
-  - `new PrismaClient()` pro Service → Connection Pool Exhaustion
-  - **Fix**: Singleton-Pattern, eine Instanz exportieren
-
 - [ ] **PERF-03**: FlashList re-rendert komplett bei ViewMode-Toggle
   - `packages/mobile/src/app/(tabs)/library.tsx:188-210`
   - `key={viewMode}` zwingt vollständigen Rebuild
@@ -156,25 +93,25 @@
 
 ### Projektregeln-Verletzungen (>150 Zeilen)
 
-- [ ] **SIZE-01**: `packages/mobile/src/app/(tabs)/library.tsx` — 236 Zeilen
+- [ ] **SIZE-01**: `packages/mobile/src/app/(tabs)/library.tsx` — 235 Zeilen
   - Aufteilen in: LibraryListItem, LibraryGridItem, Pagination-Hook
 
-- [ ] **SIZE-02**: `packages/mobile/src/shared/components/Animated.tsx` — 233 Zeilen
+- [ ] **SIZE-02**: `packages/mobile/src/shared/components/Animated.tsx` — 232 Zeilen
   - Aufteilen in: AnimatedButton.tsx, FadeInView.tsx, etc.
 
-- [ ] **SIZE-03**: `packages/mobile/src/features/market/services/ebay/search.ts` — 213 Zeilen
+- [ ] **SIZE-03**: `packages/mobile/src/features/market/services/ebay/search.ts` — 215 Zeilen
   - Aufteilen in: parseListings.ts, calculateStats.ts, search.ts
 
-- [ ] **SIZE-04**: `packages/mobile/src/features/history/store/historyStore.ts` — 206 Zeilen
+- [ ] **SIZE-04**: `packages/mobile/src/features/history/store/historyStore.ts` — 205 Zeilen
   - Aufteilen in: actions.ts, selectors.ts
 
-- [ ] **SIZE-05**: `packages/mobile/src/features/analyze/hooks/useAnalysis.ts` — 202 Zeilen
+- [ ] **SIZE-05**: `packages/mobile/src/features/analyze/hooks/useAnalysis.ts` — 204 Zeilen
   - Aufteilen in: useVisionAnalysis, useProductImages, usePlatformLinks
 
-- [ ] **SIZE-06**: `packages/backend/src/routes/items.ts` — 200 Zeilen
+- [ ] **SIZE-06**: `packages/backend/src/routes/items.ts` — 210 Zeilen
   - Aufteilen in: separate Handler-Dateien pro Route
 
-- [ ] **SIZE-07**: `packages/mobile/src/app/history/[id].tsx` — 192 Zeilen
+- [ ] **SIZE-07**: `packages/mobile/src/app/history/[id].tsx` — 191 Zeilen
   - MarketSlider und HeaderActions als separate Komponenten
 
 - [ ] **SIZE-08**: `packages/backend/src/services/itemService.ts` — 163 Zeilen
@@ -292,10 +229,6 @@
 - [ ] **MINOR-02**: `useAsync` Return-Type nicht explizit
   - `packages/mobile/src/shared/hooks/useAsync.ts:43-47`
 
-- [ ] **MINOR-03**: Skeleton width `undefined` in Style
-  - `packages/mobile/src/shared/components/Skeleton.tsx:35-44`
-  - `width: undefined` ist ungültig in RN Styles
-
 - [ ] **MINOR-04**: Preisverteilung künstlich linear
   - `packages/mobile/src/features/market/services/marketAggregator.ts:71-75`
   - Generiert gleichmäßig verteilte Preise statt realer Daten
@@ -310,20 +243,38 @@
 
 | Priorität | Anzahl | Status |
 |-----------|--------|--------|
-| P0 - Critical | 8 | Offen |
-| P1 - High | 16 | Offen |
-| P2 - Medium | 22 | Offen |
-| P3 - Low | 13 | Offen |
-| **Gesamt** | **59** | - |
+| P0 - Critical | 0 | ✅ Alle erledigt |
+| P1 - High | 12 | Offen |
+| P2 - Medium | 20 | Offen |
+| P3 - Low | 12 | Offen |
+| **Gesamt** | **44** | - |
 
 | Kategorie | Anzahl |
 |-----------|--------|
-| Security | 11 |
-| Bugs | 8 |
-| Error Handling | 6 |
-| Performance | 3 |
+| Security | 6 |
+| Bugs | 6 |
+| Error Handling | 5 |
+| Performance | 1 |
 | File Size (>150) | 8 |
 | Type Safety | 3 |
 | Code-Qualität | 6 |
 | Architektur | 8 |
-| Minor | 5 |
+| Minor | 4 |
+
+---
+
+## ✅ Erledigte Punkte (entfernt am 2026-02-11)
+
+- **SEC-01**: JWT Secret wird in Production erzwungen (throw bei fehlendem `JWT_SECRET`)
+- **SEC-02**: API Client prüft HTTP Status via `handleResponse()` mit `res.ok` Check
+- **SEC-03**: CORS konfigurierbar über `CORS_ORIGINS` env var
+- **SEC-04**: API Key im Seed Script als required env var (throw bei fehlendem `API_KEY`)
+- **SEC-05**: Rate Limiting auf Login (10/15min) und Register (5/15min) Endpoints
+- **BUG-01**: Seed Script enthält `email` Feld
+- **BUG-02**: `clearHistory()` ruft `clearImageCache()` auf
+- **CRASH-01**: `JSON.parse` bei Upload-Response in try-catch gewrappt
+- **CRASH-02**: ThemeSelector Icons type-safe via `keyof typeof Icons`
+- **ERR-01**: API Timeout via `AbortController` in `fetchWithTimeout()` implementiert
+- **PERF-01**: CardSlider `handleScroll` nutzt `useRef` für `currentPage`, nicht in deps
+- **PERF-02**: PrismaClient als Singleton in `itemService.ts` exportiert und von anderen Services importiert
+- **MINOR-03**: Skeleton `width` korrekt conditional gesetzt

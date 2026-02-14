@@ -1,16 +1,14 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, Image, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { router } from 'expo-router';
 import { MotiView } from 'moti';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore, HistoryItem } from '../../features/history/store/historyStore';
-import { formatPrice } from '../../features/market/services/ebay';
-import { StaggeredItem } from '../../shared/components/Animated';
 import { Icons } from '../../shared/components/Icons';
 import { useLibraryFilters } from '../../features/history/hooks/useLibraryFilters';
 import { LibrarySearchBar, ViewMode } from '../../features/history/components/LibrarySearchBar';
-import { SwipeableLibraryItem } from '../../features/history/components/SwipeableLibraryItem';
+import { LibraryListCard } from '../../features/history/components/LibraryListCard';
+import { LibraryGridCard } from '../../features/history/components/LibraryGridCard';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
 const PAGE_SIZE = 20;
@@ -55,96 +53,13 @@ export default function LibraryTab() {
     }
   }, [hasMore]);
 
-  const getDisplayPrice = (item: HistoryItem): string | null => {
-    if (item.finalPrice != null) {
-      return formatPrice(item.finalPrice);
-    }
-    return null;
-  };
+  const renderListItem = ({ item, index }: { item: HistoryItem; index: number }) => (
+    <LibraryListCard item={item} index={index} onDelete={() => removeItem(item.id)} />
+  );
 
-  const renderListItem = ({ item, index }: { item: HistoryItem; index: number }) => {
-    const displayPrice = getDisplayPrice(item);
-
-    return (
-      <StaggeredItem index={index}>
-        <SwipeableLibraryItem
-          itemName={item.productName}
-          onDelete={() => removeItem(item.id)}
-        >
-          <Pressable
-            className="bg-background-card rounded-2xl mb-3 flex-row items-center overflow-hidden border border-border active:opacity-70"
-            onPress={() => router.push(`/history/${item.id}`)}
-            style={{ minHeight: 80 }}
-          >
-            <Image
-              source={{ uri: item.cachedImageUri || item.imageUri }}
-              className="w-20 h-20"
-              resizeMode="cover"
-            />
-
-            <View className="flex-1 px-4 py-3">
-              <Text className="text-foreground font-semibold text-[16px] leading-[22px]" numberOfLines={1}>
-                {item.productName}
-              </Text>
-              {item.condition ? (
-                <Text className="text-foreground-secondary text-[13px] mt-1">
-                  {item.condition}
-                </Text>
-              ) : null}
-            </View>
-
-            <View className="pr-5 items-end">
-              {displayPrice ? (
-                <Text className="text-foreground font-bold text-[17px]">
-                  {displayPrice}
-                </Text>
-              ) : (
-                <Text className="text-foreground-secondary text-[13px] italic">
-                  Kein Preis
-                </Text>
-              )}
-            </View>
-          </Pressable>
-        </SwipeableLibraryItem>
-      </StaggeredItem>
-    );
-  };
-
-  const renderGridItem = ({ item, index }: { item: HistoryItem; index: number }) => {
-    const displayPrice = getDisplayPrice(item);
-    const isLeft = index % 2 === 0;
-
-    return (
-      <StaggeredItem index={index}>
-        <Pressable
-          className={`flex-1 bg-background-card rounded-2xl mb-3.5 overflow-hidden border border-border active:opacity-70 ${
-            isLeft ? 'mr-1.5' : 'ml-1.5'
-          }`}
-          onPress={() => router.push(`/history/${item.id}`)}
-        >
-          <Image
-            source={{ uri: item.cachedImageUri || item.imageUri }}
-            className="w-full aspect-square"
-            resizeMode="cover"
-          />
-          <View className="px-3 pt-2.5 pb-3">
-            <Text className="text-foreground font-semibold text-[14px] leading-[19px]" numberOfLines={2}>
-              {item.productName}
-            </Text>
-            {displayPrice ? (
-              <Text className="text-foreground font-bold text-[15px] mt-1.5">
-                {displayPrice}
-              </Text>
-            ) : (
-              <Text className="text-foreground-secondary text-[13px] italic mt-1.5">
-                Kein Preis
-              </Text>
-            )}
-          </View>
-        </Pressable>
-      </StaggeredItem>
-    );
-  };
+  const renderGridItem = ({ item, index }: { item: HistoryItem; index: number }) => (
+    <LibraryGridCard item={item} index={index} />
+  );
 
   const toggleViewMode = useCallback(() => {
     setViewMode((prev) => (prev === 'list' ? 'grid' : 'list'));
@@ -192,7 +107,7 @@ export default function LibraryTab() {
             numColumns={viewMode === 'grid' ? 2 : 1}
             contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 120 }}
             renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
-            estimatedItemSize={viewMode === 'grid' ? 240 : 88}
+            estimatedItemSize={viewMode === 'grid' ? 240 : 135}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             refreshControl={

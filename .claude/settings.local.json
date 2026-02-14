@@ -61,7 +61,8 @@
       "WebFetch(domain:www.youtube.com)",
       "WebFetch(domain:www.nativewind.dev)",
       "WebFetch(domain:medium.com)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(find:*)"
     ]
   }
 }
