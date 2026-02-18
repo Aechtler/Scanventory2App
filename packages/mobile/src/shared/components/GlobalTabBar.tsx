@@ -11,8 +11,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
-  withSpring,
+  useSharedValue,
   withTiming,
+  interpolate,
+  Easing,
 } from 'react-native-reanimated';
 import { Icons } from './Icons';
 import { useUIStore } from '../store/uiStore';
@@ -67,15 +69,23 @@ function GlobalTabItem({
   inactiveColor: string;
 }) {
   const color = isFocused ? activeColor : inactiveColor;
+  const pressed = useSharedValue(0);
 
   const animatedIcon = useAnimatedStyle(() => ({
     transform: [
-      { scale: withSpring(isFocused ? 1.1 : 1, { damping: 20, stiffness: 300 }) },
+      { scale: interpolate(pressed.value, [0, 1], [1, 0.80]) },
     ],
+    opacity: interpolate(pressed.value, [0, 1], [1, 0.5]),
   }));
 
   return (
     <Pressable
+      onPressIn={() => {
+        pressed.value = withTiming(1, { duration: 70, easing: Easing.out(Easing.quad) });
+      }}
+      onPressOut={() => {
+        pressed.value = withTiming(0, { duration: 220, easing: Easing.out(Easing.quad) });
+      }}
       onPress={onPress}
       style={styles.tabItem}
       accessibilityRole="button"

@@ -1,6 +1,7 @@
 /**
  * useThemeColors - Theme-abhängige Farben für programmatische Verwendung
  * (StyleSheet, inline styles, Icon-Props etc.)
+ * Palette: iOS Human Interface Guidelines System Colors
  */
 
 import { useResolvedColorScheme } from '../store/themeStore';
@@ -20,32 +21,34 @@ export interface ThemeColors {
   tabBarBackground: string;
 }
 
+/** iOS Light Mode – systemGroupedBackground + Apple Blue */
 const LIGHT_COLORS: ThemeColors = {
-  background: '#f8f8fc',
-  backgroundCard: '#ffffff',
-  backgroundElevated: '#f0f0f8',
-  textPrimary: '#1a1a2e',
-  textSecondary: '#6b6b8a',
-  border: '#e2e2ef',
-  primary: '#6366f1',
-  primaryLight: '#818cf8',
-  accent: '#e94560',
-  surfaceOverlay: 'rgba(248, 248, 252, 0.85)',
-  tabBarBackground: 'rgba(255, 255, 255, 0.85)',
+  background: '#F2F2F7',          // iOS systemGroupedBackground
+  backgroundCard: '#FFFFFF',      // iOS secondarySystemGroupedBackground
+  backgroundElevated: '#E5E5EA',  // iOS systemGray5
+  textPrimary: '#000000',
+  textSecondary: '#8E8E93',       // iOS systemGray
+  border: '#C6C6C8',              // iOS separator
+  primary: '#007AFF',             // iOS systemBlue
+  primaryLight: '#409CFF',
+  accent: '#FF2D55',              // iOS systemPink
+  surfaceOverlay: 'rgba(242, 242, 247, 0.92)',
+  tabBarBackground: 'rgba(255, 255, 255, 0.88)',
 };
 
+/** iOS Dark Mode – True Black (OLED) + Apple Blue */
 const DARK_COLORS: ThemeColors = {
-  background: '#0f0f1a',
-  backgroundCard: '#1a1a2e',
-  backgroundElevated: '#252547',
-  textPrimary: '#f0f0f5',
-  textSecondary: '#8b8ba3',
-  border: '#2a2a45',
-  primary: '#818cf8',
-  primaryLight: '#a5b4fc',
-  accent: '#e94560',
-  surfaceOverlay: 'rgba(26, 26, 46, 0.85)',
-  tabBarBackground: 'rgba(26, 26, 46, 0.85)',
+  background: '#000000',          // iOS true black
+  backgroundCard: '#1C1C1E',      // iOS systemGray6 dark
+  backgroundElevated: '#2C2C2E',  // iOS systemGray5 dark
+  textPrimary: '#FFFFFF',
+  textSecondary: '#8E8E93',       // iOS systemGray
+  border: '#38383A',              // iOS separator dark
+  primary: '#0A84FF',             // iOS systemBlue dark
+  primaryLight: '#409CFF',
+  accent: '#FF375F',              // iOS systemPink dark
+  surfaceOverlay: 'rgba(28, 28, 30, 0.92)',
+  tabBarBackground: 'rgba(28, 28, 30, 0.92)',
 };
 
 export function useThemeColors(): ThemeColors {

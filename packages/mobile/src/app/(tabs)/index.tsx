@@ -65,11 +65,6 @@ export default function ScanTab() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-6 pt-8">
-        <Text className="text-3xl font-bold text-foreground mb-2">Scannen</Text>
-        <Text className="text-foreground-secondary mb-8">
-          Wähle eine Option um einen Gegenstand zu scannen
-        </Text>
-
         <View className="gap-4">
           <Pressable
             onPress={openCamera}
@@ -106,15 +101,6 @@ export default function ScanTab() {
           </Pressable>
         </View>
 
-        <View className="mt-auto mb-24 bg-background-card rounded-xl p-4 border border-border">
-          <View className="flex-row items-center mb-2">
-            <Icons.Lightbulb size={20} color="#fbbf24" strokeWidth={2.5} />
-            <Text className="text-foreground font-semibold ml-2">Tipps für beste Ergebnisse:</Text>
-          </View>
-          <Text className="text-foreground-secondary">• Gute Beleuchtung verwenden</Text>
-          <Text className="text-foreground-secondary">• Gegenstand mittig platzieren</Text>
-          <Text className="text-foreground-secondary">• Hintergrund sollte einfarbig sein</Text>
-        </View>
       </View>
     </SafeAreaView>
   );
