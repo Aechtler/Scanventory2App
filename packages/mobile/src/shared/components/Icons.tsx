@@ -54,6 +54,8 @@ import {
   SunMoon,
   LayoutGrid,
   List,
+  Plus,
+  MessageCircle,
 } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -141,6 +143,8 @@ export const Icons = {
   SunMoon: (props: IconProps) => <SunMoon {...defaultProps} {...props} />,
   Grid: (props: IconProps) => <LayoutGrid {...defaultProps} {...props} />,
   List: (props: IconProps) => <List {...defaultProps} {...props} />,
+  Plus: (props: IconProps) => <Plus {...defaultProps} {...props} />,
+  MessageCircle: (props: IconProps) => <MessageCircle {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper
