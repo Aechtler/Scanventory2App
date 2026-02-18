@@ -144,7 +144,7 @@ export default function HistoryDetailScreen() {
       <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 96 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
           {/* Hero Header — Preis-Badge oben rechts, Tap auf Bild → Edit */}
@@ -163,6 +163,8 @@ export default function HistoryDetailScreen() {
               ebayListings={ebayListings}
               ebayLoading={ebayLoading}
               onRefreshEbay={() => loadEbayData(item.searchQueries?.generic || item.productName)}
+              finalPrice={item.finalPrice}
+              onPricePress={() => setPriceSheetVisible(true)}
             />
           </FadeInView>
 

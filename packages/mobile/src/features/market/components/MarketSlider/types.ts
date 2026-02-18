@@ -17,6 +17,10 @@ export interface MarketSliderProps {
   onRefreshEbay?: () => void;
   /** Callback wenn eBay Listings sich aendern (Selektion) */
   onEbayListingsChange?: (listings: MarketListing[]) => void;
+  /** Gesetzter Verkaufspreis */
+  finalPrice?: number;
+  /** Callback wenn Preis-Feld getippt wird */
+  onPricePress?: () => void;
 }
 
 export interface SummarySlideProps {
