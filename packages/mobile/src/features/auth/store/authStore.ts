@@ -58,15 +58,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (!response.ok) {
-        // Invalid token, clear it
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        // 401 = ungültiges/abgelaufenes Token → ausloggen
+        if (response.status === 401) {
+          await SecureStore.deleteItemAsync(TOKEN_KEY);
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        } else {
+          // Server-Fehler (5xx) → Token behalten, als nicht authentifiziert markieren
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        }
         return;
       }
 
       const user = await response.json();
       set({ user, token, isAuthenticated: true, isLoading: false });
     } catch (error) {
+      // Netzwerkfehler → Token behalten, User wird zum Login weitergeleitet
       console.error('Load user error:', error);
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
@@ -83,8 +89,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!response.ok) {
         let message = 'Login failed';
         try {
-          const error = await response.json();
-          message = error.error || message;
+          const errorBody = await response.json();
+          message = errorBody.error || message;
         } catch { /* non-JSON response */ }
         throw new Error(message);
       }
@@ -95,7 +101,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error('Invalid server response');
       }
 
-      // Save token to secure storage
       await SecureStore.setItemAsync(TOKEN_KEY, data.token);
 
       set({
@@ -104,7 +109,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
       });
     } catch (error) {
-      console.error('Login error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: failed to fetch');
+      }
       throw error;
     }
   },
@@ -120,8 +127,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (!response.ok) {
         let message = 'Registration failed';
         try {
-          const error = await response.json();
-          message = error.error || message;
+          const errorBody = await response.json();
+          message = errorBody.error || message;
         } catch { /* non-JSON response */ }
         throw new Error(message);
       }
@@ -132,7 +139,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error('Invalid server response');
       }
 
-      // Save token to secure storage
       await SecureStore.setItemAsync(TOKEN_KEY, data.token);
 
       set({
@@ -141,7 +147,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
       });
     } catch (error) {
-      console.error('Register error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: failed to fetch');
+      }
       throw error;
     }
   },
