@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
@@ -7,26 +7,65 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { AuthLayout, AuthInput, AuthButton } from '@/features/auth/components';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 
+interface FormErrors {
+  email?: string;
+  password?: string;
+  general?: string;
+}
+
+function translateLoginError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes('invalid email or password') || lower.includes('invalid credentials')) {
+    return 'E-Mail oder Passwort ist falsch.';
+  }
+  if (lower.includes('too many') || lower.includes('rate limit')) {
+    return 'Zu viele Versuche. Bitte warte 15 Minuten und versuche es erneut.';
+  }
+  if (lower.includes('network') || lower.includes('fetch') || lower.includes('failed to fetch')) {
+    return 'Keine Verbindung zum Server. Bitte überprüfe deine Internetverbindung.';
+  }
+  if (lower.includes('invalid server response')) {
+    return 'Fehler beim Verbinden mit dem Server. Bitte versuche es erneut.';
+  }
+  return 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.';
+}
+
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const login = useAuthStore((state) => state.login);
   const colors = useThemeColors();
 
-  const handleLogin = async () => {
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
     const trimmedEmail = email.trim();
 
-    if (!trimmedEmail || !password) {
-      Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben');
-      return;
+    if (!trimmedEmail) {
+      newErrors.email = 'Bitte E-Mail eingeben';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      newErrors.email = 'Keine gültige E-Mail-Adresse';
     }
 
+    if (!password) {
+      newErrors.password = 'Bitte Passwort eingeben';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLogin = async () => {
+    if (!validate()) return;
+
+    setErrors({});
     setIsLoading(true);
     try {
-      await login(trimmedEmail, password);
+      await login(email.trim(), password);
     } catch (error) {
-      Alert.alert('Login fehlgeschlagen', error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten');
+      const message = error instanceof Error ? error.message : '';
+      setErrors({ general: translateLoginError(message) });
     } finally {
       setIsLoading(false);
     }
@@ -42,7 +81,7 @@ export default function LoginScreen() {
       >
         <Icons.Search size={48} color={colors.primaryLight} />
       </MotiView>
-      
+
       <Text className="text-5xl font-bold text-foreground mb-2 tracking-tight">
         Scan<Text className="text-primary-400">App</Text>
       </Text>
@@ -53,9 +92,9 @@ export default function LoginScreen() {
   );
 
   const footer = (
-    <MotiView 
-      from={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
+    <MotiView
+      from={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ delay: 600 }}
       className="flex-row justify-center mt-8"
     >
@@ -70,15 +109,26 @@ export default function LoginScreen() {
 
   return (
     <AuthLayout header={header} footer={footer}>
+      {errors.general && (
+        <View className="bg-red-500/15 border border-red-500/40 rounded-xl px-4 py-3 flex-row items-center gap-2">
+          <Icons.Warning size={16} color="#f87171" />
+          <Text className="text-red-400 text-sm flex-1">{errors.general}</Text>
+        </View>
+      )}
+
       <AuthInput
         label="E-MAIL"
         icon="mail"
         placeholder="name@example.com"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          if (errors.email) setErrors((e) => ({ ...e, email: undefined }));
+        }}
         keyboardType="email-address"
         autoCapitalize="none"
         disabled={isLoading}
+        error={errors.email}
       />
 
       <AuthInput
@@ -86,9 +136,13 @@ export default function LoginScreen() {
         icon="lock"
         placeholder="••••••••"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          setPassword(text);
+          if (errors.password) setErrors((e) => ({ ...e, password: undefined }));
+        }}
         secureTextEntry
         disabled={isLoading}
+        error={errors.password}
       />
 
       <AuthButton

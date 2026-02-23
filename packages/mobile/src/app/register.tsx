@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Icons } from '@/shared/components/Icons';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -7,38 +7,67 @@ import { AuthLayout, AuthInput, AuthButton } from '@/features/auth/components';
 
 const MIN_PASSWORD_LENGTH = 6;
 
+interface FormErrors {
+  email?: string;
+  password?: string;
+  general?: string;
+}
+
+function translateRegisterError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes('already exists')) {
+    return 'Diese E-Mail-Adresse ist bereits registriert.';
+  }
+  if (lower.includes('too many') || lower.includes('rate limit')) {
+    return 'Zu viele Versuche. Bitte warte 15 Minuten und versuche es erneut.';
+  }
+  if (lower.includes('network') || lower.includes('fetch') || lower.includes('failed to fetch')) {
+    return 'Keine Verbindung zum Server. Bitte überprüfe deine Internetverbindung.';
+  }
+  if (lower.includes('invalid server response')) {
+    return 'Fehler beim Verbinden mit dem Server. Bitte versuche es erneut.';
+  }
+  return 'Registrierung fehlgeschlagen. Bitte versuche es erneut.';
+}
+
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const register = useAuthStore((state) => state.register);
 
-  const handleRegister = async () => {
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
     const trimmedEmail = email.trim();
-    const trimmedName = name.trim() || undefined;
 
-    if (!trimmedEmail || !password) {
-      Alert.alert('Fehler', 'Bitte E-Mail und Passwort eingeben');
-      return;
+    if (!trimmedEmail) {
+      newErrors.email = 'Bitte E-Mail eingeben';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      newErrors.email = 'Keine gültige E-Mail-Adresse';
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      Alert.alert('Fehler', 'Bitte eine gültige E-Mail-Adresse eingeben');
-      return;
+    if (!password) {
+      newErrors.password = 'Bitte Passwort eingeben';
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      newErrors.password = `Mindestens ${MIN_PASSWORD_LENGTH} Zeichen erforderlich`;
     }
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      Alert.alert('Fehler', `Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen lang sein`);
-      return;
-    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
+  const handleRegister = async () => {
+    if (!validate()) return;
+
+    setErrors({});
     setIsLoading(true);
     try {
-      await register(trimmedEmail, password, trimmedName);
+      await register(email.trim(), password, name.trim() || undefined);
     } catch (error) {
-      Alert.alert('Registrierung fehlgeschlagen', error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten');
+      const message = error instanceof Error ? error.message : '';
+      setErrors({ general: translateRegisterError(message) });
     } finally {
       setIsLoading(false);
     }
@@ -46,13 +75,13 @@ export default function RegisterScreen() {
 
   const header = (
     <View className="mb-8">
-      <Pressable 
-        onPress={() => router.replace('/login')} 
+      <Pressable
+        onPress={() => router.replace('/login')}
         className="w-10 h-10 bg-white/10 rounded-full items-center justify-center mb-6"
       >
         <Icons.ArrowLeft size={24} color="white" />
       </Pressable>
-      
+
       <Text className="text-4xl font-bold text-white mb-2">
         Account erstellen
       </Text>
@@ -75,6 +104,13 @@ export default function RegisterScreen() {
 
   return (
     <AuthLayout header={header} footer={footer}>
+      {errors.general && (
+        <View className="bg-red-500/15 border border-red-500/40 rounded-xl px-4 py-3 flex-row items-center gap-2">
+          <Icons.Warning size={16} color="#f87171" />
+          <Text className="text-red-400 text-sm flex-1">{errors.general}</Text>
+        </View>
+      )}
+
       <AuthInput
         label="NAME (OPTIONAL)"
         icon="user"
@@ -89,10 +125,14 @@ export default function RegisterScreen() {
         icon="mail"
         placeholder="name@example.com"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text);
+          if (errors.email) setErrors((e) => ({ ...e, email: undefined }));
+        }}
         keyboardType="email-address"
         autoCapitalize="none"
         disabled={isLoading}
+        error={errors.email}
       />
 
       <AuthInput
@@ -100,9 +140,13 @@ export default function RegisterScreen() {
         icon="lock"
         placeholder={`Mind. ${MIN_PASSWORD_LENGTH} Zeichen`}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          setPassword(text);
+          if (errors.password) setErrors((e) => ({ ...e, password: undefined }));
+        }}
         secureTextEntry
         disabled={isLoading}
+        error={errors.password}
       />
 
       <AuthButton

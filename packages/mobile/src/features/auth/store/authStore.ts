@@ -130,8 +130,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       if (!response.ok) {
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        // 401 = ungültiges/abgelaufenes Token → ausloggen
+        if (response.status === 401) {
+          await SecureStore.deleteItemAsync(TOKEN_KEY);
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        } else {
+          // Server-Fehler (5xx) → Token behalten, als nicht authentifiziert markieren
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        }
         return;
       }
 
@@ -139,6 +145,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = unwrapEnvelope<User>(payload);
       set({ user, token, isAuthenticated: true, isLoading: false });
     } catch (error) {
+      // Netzwerkfehler → Token behalten, User wird zum Login weitergeleitet
       console.error('Load user error:', error);
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
@@ -148,7 +155,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authenticate('/api/auth/login', { email, password }, 'Login failed', set);
     } catch (error) {
-      console.error('Login error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: failed to fetch');
+      }
       throw error;
     }
   },
@@ -157,7 +166,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authenticate('/api/auth/register', { email, password, name }, 'Registration failed', set);
     } catch (error) {
-      console.error('Register error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: failed to fetch');
+      }
       throw error;
     }
   },
