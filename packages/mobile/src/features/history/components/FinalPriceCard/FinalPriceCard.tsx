@@ -8,6 +8,7 @@ import { View, Text, TextInput, Pressable } from 'react-native';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
+import { parseLocalizedPriceInput } from '@/features/history/utils/historyPricing';
 import { FinalPriceCardProps } from './types';
 
 export function FinalPriceCard({
@@ -34,9 +35,8 @@ export function FinalPriceCard({
 
   const handlePriceSave = () => {
     setEditingPrice(false);
-    const cleaned = priceDraft.replace(/\./g, '').replace(',', '.');
-    const parsed = parseFloat(cleaned);
-    if (!isNaN(parsed) && parsed >= 0) {
+    const parsed = parseLocalizedPriceInput(priceDraft);
+    if (parsed !== undefined) {
       onSavePrice(parsed);
     } else if (priceDraft.trim() === '') {
       onSavePrice(undefined);
@@ -58,7 +58,7 @@ export function FinalPriceCard({
   };
 
   const hasComparison =
-    comparison?.aiPrice || comparison?.ebayAvg;
+    comparison?.aiPrice !== undefined || comparison?.ebayAvg !== undefined;
 
   return (
     <MotiView

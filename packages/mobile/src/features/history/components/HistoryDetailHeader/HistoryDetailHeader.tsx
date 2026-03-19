@@ -12,6 +12,7 @@ import { MotiView } from 'moti';
 import { FadeInView } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
 import { HistoryItem } from '@/features/history/store/historyStore';
+import { isManualSearchResult } from '@/shared/utils/analysisSource';
 
 interface HistoryDetailHeaderProps {
   item: HistoryItem;
@@ -73,7 +74,7 @@ export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHe
               </View>
               <View className="bg-primary-500/30 px-3 py-1.5 rounded-full">
                 <Text className="text-primary-300 text-sm font-semibold">
-                  {Math.round(item.confidence * 100)}%
+                  {isManual ? 'Manuelle Suche' : `${Math.round(item.confidence * 100)}%`}
                 </Text>
               </View>
             </View>
@@ -119,5 +120,8 @@ export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHe
         </Pressable>
       </MotiView>
     </FadeInView>
+  );
+}
+iew>
   );
 }

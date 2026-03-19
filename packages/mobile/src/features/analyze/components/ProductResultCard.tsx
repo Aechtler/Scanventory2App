@@ -10,6 +10,7 @@ import { FadeInView, StaggeredItem } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
 import { VisionMatch } from '@/features/scan/services/visionService';
 import { useThemeColors } from '@/shared/hooks';
+import { isManualSearchResult } from '@/shared/utils/analysisSource';
 
 interface ProductResultCardProps {
   match: VisionMatch;
@@ -17,6 +18,8 @@ interface ProductResultCardProps {
 
 export function ProductResultCard({ match }: ProductResultCardProps) {
   const colors = useThemeColors();
+  const isManual = isManualSearchResult(match);
+
   return (
     <FadeInView delay={50}>
       <View className="bg-background-card rounded-xl p-4 mb-4 border border-border">
@@ -31,7 +34,7 @@ export function ProductResultCard({ match }: ProductResultCardProps) {
             className="bg-primary-500/20 px-3 py-1 rounded-lg"
           >
             <Text className="text-primary-400 font-bold">
-              {Math.round(match.confidence * 100)}%
+              {isManual ? 'Manuelle Suche' : `${Math.round(match.confidence * 100)}%`}
             </Text>
           </MotiView>
         </View>

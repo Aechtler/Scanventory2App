@@ -118,7 +118,7 @@ export const useHistoryStore = create<HistoryState>()(
       removeItem: (id) => {
         const item = get().items.find(i => i.id === id);
         if (item?.cachedImageUri) {
-          removeCachedImage(item.imageUri);
+          removeCachedImage(item.cachedImageUri);
         }
         // Fire-and-forget: Backend sync
         if (item?.serverId) {

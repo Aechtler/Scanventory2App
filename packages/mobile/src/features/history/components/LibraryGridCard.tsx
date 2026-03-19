@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { StaggeredItem } from '@/shared/components/Animated';
 import { HistoryItem } from '@/features/history/store/historyStore';
 import { formatPrice } from '@/features/market/services/ebay';
+import { getLibraryDisplayPrice, hasLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
 
 interface LibraryGridCardProps {
   item: HistoryItem;
@@ -23,8 +24,8 @@ function formatDate(isoDate: string): string {
 export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
   const isLeft = index % 2 === 0;
   const hasFinal = item.finalPrice != null;
-  const price = hasFinal ? item.finalPrice! : item.priceStats?.avgPrice;
-  const hasPrice = price != null && price > 0;
+  const price = getLibraryDisplayPrice(item);
+  const hasPrice = hasLibraryDisplayPrice(item);
 
   return (
     <StaggeredItem index={index}>

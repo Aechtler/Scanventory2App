@@ -76,14 +76,11 @@ export async function getCachedImage(originalUri: string): Promise<string | null
 /**
  * Löscht ein Bild aus dem Cache
  */
-export async function removeCachedImage(originalUri: string): Promise<void> {
+export async function removeCachedImage(cachedImageUri: string): Promise<void> {
   try {
-    const filename = getCacheFilename(originalUri);
-    const cacheUri = CACHE_DIR + filename;
-    
-    const info = await FileSystem.getInfoAsync(cacheUri);
+    const info = await FileSystem.getInfoAsync(cachedImageUri);
     if (info.exists) {
-      await FileSystem.deleteAsync(cacheUri);
+      await FileSystem.deleteAsync(cachedImageUri);
     }
   } catch (error) {
     console.warn('Failed to remove cached image:', error);

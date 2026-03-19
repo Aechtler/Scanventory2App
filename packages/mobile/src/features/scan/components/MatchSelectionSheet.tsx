@@ -6,6 +6,7 @@ import { Icons } from '@/shared/components/Icons';
 import { TextInput } from 'react-native';
 import { AnimatedButton } from '@/shared/components/Animated';
 import { useThemeColors } from '@/shared/hooks';
+import { isManualSearchResult } from '@/shared/utils/analysisSource';
 
 interface MatchSelectionSheetProps {
   visible: boolean;
@@ -154,11 +155,19 @@ export function MatchSelectionSheet({
                         <Text className="text-foreground font-semibold text-base flex-1" numberOfLines={2}>
                           {match.productName}
                         </Text>
-                        <View className={`items-center px-2 py-1 rounded-lg ml-2 ${getConfidenceBg(match.confidence)}`}>
-                          <Text className={`font-bold text-sm ${getConfidenceColor(match.confidence)}`}>
-                            {Math.round(match.confidence * 100)}%
-                          </Text>
-                        </View>
+                        {isManualSearchResult(match) ? (
+                          <View className="items-center px-2 py-1 rounded-lg ml-2 bg-primary-500/20">
+                            <Text className="font-bold text-xs text-primary-400">
+                              Manuell
+                            </Text>
+                          </View>
+                        ) : (
+                          <View className={`items-center px-2 py-1 rounded-lg ml-2 ${getConfidenceBg(match.confidence)}`}>
+                            <Text className={`font-bold text-sm ${getConfidenceColor(match.confidence)}`}>
+                              {Math.round(match.confidence * 100)}%
+                            </Text>
+                          </View>
+                        )}
                       </View>
                       <Text className="text-foreground-secondary text-xs" numberOfLines={2}>
                         {match.description}

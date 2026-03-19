@@ -8,6 +8,7 @@ import { View, Text, TextInput, Pressable, Modal, KeyboardAvoidingView, Platform
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
+import { parseLocalizedPriceInput } from '@/features/history/utils/historyPricing';
 import { PriceEditSheetProps } from './types';
 
 export function PriceEditSheet({
@@ -31,8 +32,7 @@ export function PriceEditSheet({
   }, [visible]);
 
   const handleSave = () => {
-    const parsed = parseFloat(priceDraft.replace(',', '.'));
-    const price = !isNaN(parsed) && parsed >= 0 ? parsed : undefined;
+    const price = parseLocalizedPriceInput(priceDraft);
     onSave(price, noteDraft.trim());
     onClose();
   };

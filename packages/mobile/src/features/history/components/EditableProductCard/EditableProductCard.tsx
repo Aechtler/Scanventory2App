@@ -10,6 +10,7 @@ import { EditableField } from './EditableField';
 import { EditableTag } from './EditableTag';
 import { SearchQueriesSection } from './SearchQueriesSection';
 import { EditableProductCardProps } from './types';
+import { isManualSearchResult } from '@/shared/utils/analysisSource';
 
 const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 
@@ -47,7 +48,7 @@ export function EditableProductCard({
         </View>
         <View className="bg-primary-500/20 px-3 py-1 rounded-lg">
           <Text className="text-primary-400 font-bold">
-            {Math.round(confidence * 100)}%
+            {isManual ? 'Manuelle Suche' : `${Math.round(confidence * 100)}%`}
           </Text>
         </View>
       </View>
@@ -98,6 +99,10 @@ export function EditableProductCard({
       <Text className="text-foreground-secondary text-sm mt-3">
         Gescannt: {formatDate(scannedAt)}
       </Text>
+    </View>
+  );
+}
+>
     </View>
   );
 }

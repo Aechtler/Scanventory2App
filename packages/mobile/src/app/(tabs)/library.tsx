@@ -13,6 +13,31 @@ import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
 const PAGE_SIZE = 20;
 
+type LibraryRow =
+  | { type: 'list'; id: string; item: HistoryItem }
+  | { type: 'grid'; id: string; items: [HistoryItem, HistoryItem?] };
+
+function buildLibraryRows(items: HistoryItem[], viewMode: ViewMode): LibraryRow[] {
+  if (viewMode === 'list') {
+    return items.map((item) => ({ type: 'list', id: item.id, item }));
+  }
+
+  const rows: LibraryRow[] = [];
+
+  for (let index = 0; index < items.length; index += 2) {
+    const leftItem = items[index];
+    const rightItem = items[index + 1];
+
+    rows.push({
+      type: 'grid',
+      id: `${leftItem.id}-${rightItem?.id ?? 'empty'}`,
+      items: [leftItem, rightItem],
+    });
+  }
+
+  return rows;
+}
+
 /**
  * Bibliothek Tab - Gescannte Gegenstände
  */
@@ -53,13 +78,38 @@ export default function LibraryTab() {
     }
   }, [hasMore]);
 
-  const renderListItem = ({ item, index }: { item: HistoryItem; index: number }) => (
-    <LibraryListCard item={item} index={index} onDelete={() => removeItem(item.id)} />
+  const libraryRows = useMemo(
+    () => buildLibraryRows(paginatedItems, viewMode),
+    [paginatedItems, viewMode]
   );
 
-  const renderGridItem = ({ item, index }: { item: HistoryItem; index: number }) => (
-    <LibraryGridCard item={item} index={index} />
-  );
+  const renderItem = useCallback(({ item, index }: { item: LibraryRow; index: number }) => {
+    if (item.type === 'list') {
+      return (
+        <LibraryListCard
+          item={item.item}
+          index={index}
+          onDelete={() => removeItem(item.item.id)}
+        />
+      );
+    }
+
+    const [leftItem, rightItem] = item.items;
+    const leftIndex = index * 2;
+
+    return (
+      <View className="flex-row gap-4 mb-4">
+        <View style={{ flex: 1 }}>
+          <LibraryGridCard item={leftItem} index={leftIndex} />
+        </View>
+        <View style={{ flex: 1 }}>
+          {rightItem ? (
+            <LibraryGridCard item={rightItem} index={leftIndex + 1} />
+          ) : null}
+        </View>
+      </View>
+    );
+  }, [removeItem]);
 
   const toggleViewMode = useCallback(() => {
     setViewMode((prev) => (prev === 'list' ? 'grid' : 'list'));
@@ -101,12 +151,10 @@ export default function LibraryTab() {
           />
 
           <FlashList
-            key={viewMode}
-            data={paginatedItems}
-            keyExtractor={(item: HistoryItem) => item.id}
-            numColumns={viewMode === 'grid' ? 2 : 1}
+            data={libraryRows}
+            keyExtractor={(item: LibraryRow) => item.id}
             contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 120 }}
-            renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
+            renderItem={renderItem}
             estimatedItemSize={viewMode === 'grid' ? 240 : 135}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}

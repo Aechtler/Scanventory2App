@@ -155,6 +155,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
       condition: 'Gut',
       description: `Manuelle Suche nach: ${query}`,
       confidence: 0,
+      isManual: true,
       searchQuery: query,
       searchQueries: {
         ebay: query,

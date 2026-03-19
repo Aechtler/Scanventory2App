@@ -15,6 +15,7 @@ export interface VisionMatch {
   condition: string;
   description: string;
   confidence: number;
+  isManual?: boolean;
   searchQuery: string; // Allgemeiner Suchbegriff
   searchQueries?: {
     ebay?: string;        // Optimiert für eBay (präzise mit Modell)

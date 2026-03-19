@@ -10,6 +10,7 @@ import { StaggeredItem } from '@/shared/components/Animated';
 import { SwipeableLibraryItem } from './SwipeableLibraryItem';
 import { HistoryItem } from '@/features/history/store/historyStore';
 import { formatPrice } from '@/features/market/services/ebay';
+import { getLibraryDisplayPrice, hasLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
 
 interface LibraryListCardProps {
   item: HistoryItem;
@@ -34,11 +35,11 @@ function TagPill({ label, accent }: { label: string; accent?: boolean }) {
 
 function PriceSection({ item }: { item: HistoryItem }) {
   const hasFinal = item.finalPrice != null;
-  const displayPrice = hasFinal ? item.finalPrice! : item.priceStats?.avgPrice;
+  const displayPrice = getLibraryDisplayPrice(item);
   const hasRange = item.priceStats?.minPrice > 0 && item.priceStats?.maxPrice > 0
     && item.priceStats.minPrice !== item.priceStats.maxPrice;
 
-  if (!displayPrice || displayPrice === 0) {
+  if (!hasLibraryDisplayPrice(item)) {
     return (
       <Text className="text-foreground-secondary text-xs italic">Kein Preis</Text>
     );
@@ -48,7 +49,7 @@ function PriceSection({ item }: { item: HistoryItem }) {
     <View className="items-end">
       <View className={`px-2.5 py-1 rounded-lg ${hasFinal ? 'bg-emerald-500/15' : 'bg-primary-500/10'}`}>
         <Text className={`font-bold text-[15px] ${hasFinal ? 'text-emerald-500' : 'text-primary-400'}`}>
-          {formatPrice(displayPrice)}
+          {formatPrice(displayPrice!)}
         </Text>
       </View>
       {!hasFinal && hasRange && (

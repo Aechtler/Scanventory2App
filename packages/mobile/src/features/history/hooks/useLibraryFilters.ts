@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import type { HistoryItem } from '../store/historyStore';
+import { getLibraryDisplayPrice } from '../utils/historyPricing';
 
 export type SortBy = 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name';
 
@@ -69,13 +70,13 @@ export function useLibraryFilters(items: HistoryItem[]) {
         case 'oldest':
           return new Date(a.scannedAt).getTime() - new Date(b.scannedAt).getTime();
         case 'price_asc': {
-          const priceA = (a.finalPrice != null && a.finalPrice > 0) ? a.finalPrice : (a.priceStats.avgPrice ?? 0);
-          const priceB = (b.finalPrice != null && b.finalPrice > 0) ? b.finalPrice : (b.priceStats.avgPrice ?? 0);
+          const priceA = getLibraryDisplayPrice(a) ?? 0;
+          const priceB = getLibraryDisplayPrice(b) ?? 0;
           return priceA - priceB;
         }
         case 'price_desc': {
-          const priceA = (a.finalPrice != null && a.finalPrice > 0) ? a.finalPrice : (a.priceStats.avgPrice ?? 0);
-          const priceB = (b.finalPrice != null && b.finalPrice > 0) ? b.finalPrice : (b.priceStats.avgPrice ?? 0);
+          const priceA = getLibraryDisplayPrice(a) ?? 0;
+          const priceB = getLibraryDisplayPrice(b) ?? 0;
           return priceB - priceA;
         }
         case 'name':
