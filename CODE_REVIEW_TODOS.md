@@ -82,8 +82,8 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 ### Projektregeln-Verletzungen (>150 Zeilen)
 
-- [ ] **SIZE-01**: `packages/mobile/src/app/(tabs)/library.tsx` — 235 Zeilen
-  - Aufteilen in: LibraryListItem, LibraryGridItem, Pagination-Hook
+- [x] **SIZE-01**: `packages/mobile/src/app/(tabs)/library.tsx` — 235 Zeilen
+  - Behoben: Screen auf 136 Zeilen reduziert; Row-Wrapper (`LibraryListItem`, `LibraryGridItem`) sowie `libraryRows.ts` und `LibraryEmptyStates.tsx` extrahiert, Verhalten beibehalten
 
 - [ ] **SIZE-02**: `packages/mobile/src/shared/components/Animated.tsx` — 232 Zeilen
   - Aufteilen in: AnimatedButton.tsx, FadeInView.tsx, etc.

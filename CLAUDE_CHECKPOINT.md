@@ -8,6 +8,7 @@ Batch 3 is implemented in code and pending runnable-environment validation.
 Batch 4 is implemented in code and pending runnable-environment validation.
 Batch 5 is implemented in code on `scanapp2`, including backend payload typing, delete-consistency hardening, normalized auth response envelopes, and auth-store deduplication.
 Batch 6 has started on `scanapp2` with a runnable manual regression checklist and a lightweight targeted node-test entrypoint for extracted helpers.
+The first Batch 7 size-rule refactor is implemented on `scanapp2` for `packages/mobile/src/app/(tabs)/library.tsx`, extracting screen-local row helpers, empty states, and row-building pagination constants into the history feature.
 A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, covering centralized tab-bar colors, centralized animation presets, and missing shared-component barrel exports.
 
 ## Analyzed
@@ -27,6 +28,7 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - Batch 4 trust-boundary targets in backend upload/auth routes, JWT request typing, backend HTTPS enforcement, and mobile API URL/upload validation
 - Batch 5 contract/consistency targets in backend types, auth envelopes, delete flow, and auth-store duplication
 - Remaining small P2 cleanup targets in shared UI constants, animation presets, barrel exports, and size-rule candidates
+- Batch 7 first size-rule target in `library.tsx`, including row rendering, empty states, and row-building extraction boundaries
 
 ## Created
 
@@ -44,6 +46,10 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - `packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
 - `docs/manual-regression-checklist.md`
 - shared `TAB_BAR_COLORS` and `ANIMATION_PRESETS` in `packages/mobile/src/shared/constants/index.ts`
+- `packages/mobile/src/features/history/utils/libraryRows.ts`
+- `packages/mobile/src/features/history/components/LibraryListItem.tsx`
+- `packages/mobile/src/features/history/components/LibraryGridItem.tsx`
+- `packages/mobile/src/features/history/components/LibraryEmptyStates.tsx`
 
 ## Implemented
 
@@ -96,6 +102,12 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - Centralized repeated animation spring/timing/offset values into shared `ANIMATION_PRESETS` and updated `Animated.tsx` to use the named presets instead of scattered magic numbers
 - Expanded `packages/mobile/src/shared/components/index.ts` so Animated helpers, Skeleton variants, Icons, Global/Custom tab bars, and ThemeSelector are exported through the shared barrel
 
+### Batch 7 first size-rule refactor
+- Reduced `packages/mobile/src/app/(tabs)/library.tsx` from 198 lines to 136 lines by moving row-shaping into `packages/mobile/src/features/history/utils/libraryRows.ts`
+- Extracted list-row and grid-row wrappers into `packages/mobile/src/features/history/components/LibraryListItem.tsx` and `packages/mobile/src/features/history/components/LibraryGridItem.tsx`
+- Extracted the empty-state and filtered-empty-state UI into `packages/mobile/src/features/history/components/LibraryEmptyStates.tsx`
+- Kept the tab screen responsible only for store access, filter state, view-mode toggle, pagination state, and list wiring
+
 ## Validated
 
 - `git diff --check`
@@ -119,8 +131,8 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
-- Start the first Batch 7 size-rule refactor once runnable validation and Trello sync are available again
+- Continue the remaining Batch 7 size-rule refactors (`Animated.tsx`, `search.ts`, `historyStore.ts`, `useAnalysis.ts`, `items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
 
 ## Exact Next Step
 
-Execute `docs/manual-regression-checklist.md` plus typecheck/lint in a runnable dependency-installed environment; if that is still unavailable, begin the first Batch 7 size-rule refactor (`library.tsx` or `Animated.tsx`) while Trello credentials remain unavailable.
+Pick the next Batch 7 size-rule target (`Animated.tsx` is the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the refactored library screen.
