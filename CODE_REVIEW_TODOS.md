@@ -100,8 +100,8 @@ _Keine offenen P0-Issues mehr! 🎉_
 - [x] **SIZE-06**: `packages/backend/src/routes/items.ts` — 210 Zeilen
   - Behoben: `items.ts` ist jetzt ein 27-zeiliger Router-Entry; CRUD-/Preis-Handler wurden nach `packages/backend/src/routes/items/` in fokussierte Dateien ausgelagert, abgesichert durch einen gezielten Node-Test fuer Pagination- und Create-Validation-Helper
 
-- [ ] **SIZE-07**: `packages/mobile/src/app/history/[id].tsx` — 191 Zeilen
-  - MarketSlider und HeaderActions als separate Komponenten
+- [x] **SIZE-07**: `packages/mobile/src/app/history/[id].tsx` — 191 Zeilen
+  - Behoben: Screen auf 143 Zeilen reduziert; Header-Actions, Market-/Quicklink-Section, Not-Found-State und Detail-State-Helper in fokussierte Dateien extrahiert, Verhalten beibehalten
 
 - [ ] **SIZE-08**: `packages/backend/src/services/itemService.ts` — 163 Zeilen
   - Validation-Layer separieren

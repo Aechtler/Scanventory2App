@@ -28,6 +28,7 @@ function formatPrice(price: number): string {
 
 export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHeaderProps) {
   const hasPrice = item.finalPrice !== undefined && item.finalPrice !== null;
+  const isManual = isManualSearchResult(item);
 
   return (
     <FadeInView delay={0}>
@@ -120,8 +121,5 @@ export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHe
         </Pressable>
       </MotiView>
     </FadeInView>
-  );
-}
-iew>
   );
 }

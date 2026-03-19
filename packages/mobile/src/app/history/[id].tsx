@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl, Pressable, Alert } from 'react-native';
+import { ScrollView, RefreshControl, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore } from '../../features/history/store/historyStore';
-import { generatePlatformLinks, PlatformLink } from '../../features/market/services/quicklinks';
+import { generatePlatformLinks, type PlatformLink } from '../../features/market/services/quicklinks';
 import { useMarketData } from '../../features/market/hooks';
-import { PlatformQuicklinks } from '../../features/market/components/PlatformQuicklinks';
-import { MarketSlider } from '../../features/market/components/MarketSlider';
 import { HistoryDetailHeader } from '../../features/history/components/HistoryDetailHeader';
+import { HistoryDetailNotFound } from '../../features/history/components/HistoryDetailNotFound';
 import { PriceEditSheet } from '../../features/history/components/PriceEditSheet';
-import { FadeInView, AnimatedButton } from '../../shared/components/Animated';
-import { Icons } from '../../shared/components/Icons';
+import { HistoryDetailHeaderActions } from '../../features/history/components/HistoryDetailHeaderActions';
+import { HistoryDetailMarketSection } from '../../features/history/components/HistoryDetailMarketSection';
+import { buildHistoryDetailState } from '../../features/history/utils/historyDetail';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 
 /**
@@ -27,8 +27,8 @@ export default function HistoryDetailScreen() {
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [priceSheetVisible, setPriceSheetVisible] = useState(false);
+  const detailState = item ? buildHistoryDetailState(item) : null;
 
-  // Use shared market data hook with persistence callbacks
   const {
     ebayPriceStats,
     ebayListings,
@@ -53,46 +53,32 @@ export default function HistoryDetailScreen() {
     },
   });
 
-  // Load cached data on mount
   useEffect(() => {
-    if (item) {
-      // Generate quicklinks mit plattformspezifischen Queries
-      const fallback = item.searchQuery || `${item.brand || ''} ${item.productName}`.trim();
-      setPlatformLinks(generatePlatformLinks({
-        ebay: item.searchQueries?.ebay || fallback,
-        amazon: item.searchQueries?.amazon || fallback,
-        idealo: item.searchQueries?.idealo || fallback,
-        generic: item.searchQueries?.generic || fallback,
-      }));
-      
-      // Load cached data
+    if (item && detailState) {
+      setPlatformLinks(generatePlatformLinks(detailState.platformQueries));
       if (item.marketValue) setMarketValue(item.marketValue);
       if (item.priceStats) setEbayData(item.priceStats, item.ebayListings);
-
-      // Auto-load market data if not yet fetched
-      const searchQuery = item.searchQueries?.generic || item.productName;
-      if (!item.marketValue) {
+      if (detailState.shouldLoadMarketValue) {
         loadMarketValue(item.productName, item.category);
       }
-      if (!item.ebayListings?.length) {
-        loadEbayData(searchQuery, item.gtin || undefined);
+      if (detailState.shouldLoadEbayData) {
+        loadEbayData(detailState.searchQuery, item.gtin || undefined);
       }
     }
-  }, [item?.id]);
+  }, [detailState, item, loadEbayData, loadMarketValue, setEbayData, setMarketValue]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    if (item) {
-      const searchQuery = item.searchQueries?.generic || item.productName;
+    if (item && detailState) {
       await loadAllData({
-        searchQuery,
+        searchQuery: detailState.searchQuery,
         productName: item.productName,
         category: item.category,
         forceRefresh: true,
       });
     }
     setRefreshing(false);
-  }, [item, loadAllData]);
+  }, [detailState, item, loadAllData]);
 
   const handleDelete = () => {
     if (!id) return;
@@ -110,81 +96,45 @@ export default function HistoryDetailScreen() {
     );
   };
 
+  const handlePriceSave = useCallback((price?: number, note?: string) => {
+    if (id) {
+      updateItem(id, { finalPrice: price, finalPriceNote: note || undefined });
+    }
+  }, [id, updateItem]);
+
   if (!item) {
     return (
       <>
         <Stack.Screen options={{ title: 'Nicht gefunden' }} />
-        <SafeAreaView className="flex-1 bg-background items-center justify-center">
-          <Text className="text-foreground text-lg">Item nicht gefunden</Text>
-          <AnimatedButton onPress={() => router.back()} className="mt-4 bg-primary-500 px-6 py-3 rounded-xl">
-            <Text className="text-foreground font-semibold">Zurück</Text>
-          </AnimatedButton>
-        </SafeAreaView>
+        <HistoryDetailNotFound />
       </>
     );
   }
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: 'Details',
-          headerBackTitle: 'Verlauf',
-          headerRight: () => (
-            <Pressable
-              onPress={handleDelete}
-              className="p-2 rounded-full active:bg-red-500/20"
-              hitSlop={8}
-            >
-              <Icons.Close size={20} color="#ef4444" />
-            </Pressable>
-          ),
-        }}
-      />
+      <Stack.Screen options={{ title: 'Details', headerBackTitle: 'Verlauf', headerRight: () => <HistoryDetailHeaderActions onDelete={handleDelete} /> }} />
       <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 16, paddingBottom: 96 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-        >
-          {/* Hero Header — Preis-Badge oben rechts, Tap auf Bild → Edit */}
-          <HistoryDetailHeader
-            item={item}
-            onPriceBadgePress={() => setPriceSheetVisible(true)}
+        <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 96 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
+          <HistoryDetailHeader item={item} onPriceBadgePress={() => setPriceSheetVisible(true)} />
+          <HistoryDetailMarketSection
+            links={platformLinks}
+            marketValue={marketValue}
+            marketValueLoading={marketValueLoading}
+            onRefreshMarketValue={() => loadMarketValue(item.productName, item.category, true)}
+            ebayPriceStats={ebayPriceStats}
+            ebayListings={ebayListings}
+            ebayLoading={ebayLoading}
+            onRefreshEbay={() => detailState && loadEbayData(detailState.searchQuery, item.gtin || undefined)}
+            finalPrice={item.finalPrice}
+            onPricePress={() => setPriceSheetVisible(true)}
           />
-
-          {/* Market Slider */}
-          <FadeInView delay={75} className="mb-4">
-            <MarketSlider
-              marketValue={marketValue}
-              marketValueLoading={marketValueLoading}
-              onRefreshMarketValue={() => item && loadMarketValue(item.productName, item.category, true)}
-              ebayPriceStats={ebayPriceStats}
-              ebayListings={ebayListings}
-              ebayLoading={ebayLoading}
-              onRefreshEbay={() => loadEbayData(item.searchQueries?.generic || item.productName)}
-              finalPrice={item.finalPrice}
-              onPricePress={() => setPriceSheetVisible(true)}
-            />
-          </FadeInView>
-
-          {/* Platform Quicklinks */}
-          <FadeInView delay={125}>
-            <PlatformQuicklinks links={platformLinks} />
-          </FadeInView>
-
         </ScrollView>
-
-        {/* Preis-Sheet */}
         <PriceEditSheet
           visible={priceSheetVisible}
           currentPrice={item.finalPrice}
           currentNote={item.finalPriceNote}
-          onSave={(price, note) => {
-            if (id) {
-              updateItem(id, { finalPrice: price, finalPriceNote: note || undefined });
-            }
-          }}
+          onSave={handlePriceSave}
           onClose={() => setPriceSheetVisible(false)}
         />
       </SafeAreaView>
