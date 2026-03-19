@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../services/authService';
+import { ApiResponse } from '../types';
 
 type RequestParams = Record<string, string>;
 
@@ -19,24 +20,29 @@ export function jwtAuthMiddleware(
   next: NextFunction
 ): void {
   try {
-    // Get token from Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'No token provided' });
+      const response: ApiResponse<never> = {
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'No token provided' },
+      };
+
+      res.status(401).json(response);
       return;
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-    // Verify token
+    const token = authHeader.substring(7);
     const payload = verifyToken(token);
 
-    // Add user to request
     req.user = payload;
-
     next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (_error) {
+    const response: ApiResponse<never> = {
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' },
+    };
+
+    res.status(401).json(response);
   }
 }
 
@@ -45,7 +51,7 @@ export function jwtAuthMiddleware(
  */
 export function optionalJwtAuthMiddleware(
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void {
   try {
@@ -55,7 +61,7 @@ export function optionalJwtAuthMiddleware(
       const payload = verifyToken(token);
       req.user = payload;
     }
-  } catch (error) {
+  } catch (_error) {
     // Token invalid, but that's okay for optional auth
   }
 

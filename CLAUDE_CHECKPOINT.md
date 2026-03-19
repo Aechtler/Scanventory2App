@@ -6,7 +6,7 @@ Batch 1 is complete on `scanapp2`.
 Batch 2 is implemented in code and pending runnable-environment validation.
 Batch 3 is implemented in code and pending runnable-environment validation.
 Batch 4 is implemented in code and pending runnable-environment validation.
-Batch 5 has started with backend payload-typing and delete-consistency hardening on `scanapp2`.
+Batch 5 is implemented in code on `scanapp2`, including backend payload typing, delete-consistency hardening, normalized auth response envelopes, and auth-store deduplication.
 
 ## Analyzed
 
@@ -19,10 +19,11 @@ Batch 5 has started with backend payload-typing and delete-consistency hardening
 - Local persistence, image caching, and backend sync path
 - Pricing/value pipeline via eBay and Perplexity
 - Existing review TODOs and current verification surface
-- Verification reality: no existing test files found in `packages/mobile` or `packages/backend` before targeted helpers were added
+- Verification reality: no installed workspace dependencies are currently available for lint/typecheck runs
 - Batch 1 bug targets in history store, library pricing UI, and final-price parsing
 - Batch 2 resilience targets in `useAnalysis.ts`, `visionService.ts`, and `apiClient.ts`
 - Batch 4 trust-boundary targets in backend upload/auth routes, JWT request typing, backend HTTPS enforcement, and mobile API URL/upload validation
+- Batch 5 contract/consistency targets in backend types, auth envelopes, delete flow, and auth-store duplication
 
 ## Created
 
@@ -50,7 +51,7 @@ Batch 5 has started with backend payload-typing and delete-consistency hardening
 - Fixed `FinalPriceCard` comparison-row visibility so `0` comparison values are still treated as present
 - Cleaned up manual-search confidence semantics and removed the forced `FlashList` remount on library view-mode toggle
 
-### Batch 2 (current slice)
+### Batch 2
 - Added timeout-bounded per-match product-image loading so slow eBay image lookups no longer stall the entire analysis result set
 - Extracted image-loading resilience into `productImageLoading.ts` with focused node tests
 - Added explicit image file-read error handling in `visionService.ts` with a user-facing unreadable-image message
@@ -63,7 +64,7 @@ Batch 5 has started with backend payload-typing and delete-consistency hardening
 - Updated `DELETE /api/items/:id` to return `imageDeleted` so the API no longer implies file cleanup definitely succeeded when only the DB delete did
 - Strengthened `GET /api/images/:filename` sendFile callback logging and explicit fallback JSON error response
 
-### Batch 4 (current slice)
+### Batch 4
 - Added backend upload filtering for allowed MIME types/extensions and mapped upload validation errors to explicit 400 responses
 - Added request-side UUID validation for item IDs and auth-derived user IDs before backend item service calls
 - Strengthened auth route validation with email checks and higher password requirements (8+ chars, upper/lowercase, number)
@@ -73,31 +74,32 @@ Batch 5 has started with backend payload-typing and delete-consistency hardening
 - Added client-side upload validation for local URI scheme, file existence, file size, and supported image types before multipart upload
 - Narrowed mobile upload payload typing from `Record<string, unknown>` to an explicit `UploadItemPayload`
 
-### Batch 5 (current slice)
+### Batch 5
 - Replaced loose backend JSON boundary types with explicit `SearchQueries`, `PriceStats`, `MarketListing`, and `MarketValueResult` interfaces
 - Updated backend item-service signatures to use the explicit pricing/listing/value contracts instead of generic records
 - Tightened delete consistency by moving backend item deletion into a Prisma transaction with `P2025` fallback handling for concurrent deletes
+- Normalized auth success/error envelopes in `packages/backend/src/routes/auth.ts` and `packages/backend/src/middleware/jwtAuth.ts` to consistent `ApiResponse` shapes
+- Updated the mobile auth store to unwrap the normalized auth envelopes
+- Extracted a shared `authenticate()` helper to remove login/register duplication in the mobile auth store
 
 ## Validated
 
-- `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
-  - Passed
 - `git diff --check`
   - Passed
 - `npm run typecheck:mobile`
-  - Could not run successfully in this workspace because `tsc` is not installed locally (`sh: 1: tsc: not found`)
+  - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
 - `npm run lint:mobile`
-  - Could not run successfully in this workspace because `eslint` is not installed locally (`sh: 1: eslint: not found`)
+  - Could not run successfully in this workspace because dependencies are not installed locally (`eslint` not found)
 - `npm run typecheck:backend`
-  - Could not run successfully in this workspace because `tsc` is not installed locally (`sh: 1: tsc: not found`)
+  - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
 
 ## What Remains
 
-- Normalize backend success/error response envelopes where practical without broad endpoint churn
-- Run mobile/backend typecheck and mobile lint once workspace dev dependencies are available
-- Run the Batch 1, Batch 2, Batch 3, Batch 4, and current Batch 5 manual regression items in a runnable device/backend environment
+- Install workspace dependencies or otherwise provide a runnable toolchain for lint/typecheck
+- Run the Batch 1-5 manual regression items in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
+- Decide whether to continue with Batch 6 verification scaffolding or another small P2 item before Batch 7 size refactors
 
 ## Exact Next Step
 
-Continue Batch 5 by normalizing backend response envelopes without broad endpoint churn, then re-run verification once dependencies are available.
+Re-run verification once dependencies are available; if the environment remains non-runnable, continue with Batch 6 verification scaffolding or another small P2 item that does not depend on installed toolchains.

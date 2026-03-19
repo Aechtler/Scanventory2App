@@ -122,9 +122,9 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 ### Code-Qualität
 
-- [ ] **QUAL-01**: Login/Register Code-Duplizierung
-  - `packages/mobile/src/features/auth/store/authStore.ts:75-147`
-  - Zwei fast identische Funktionen → shared Helper extrahieren
+- [x] **QUAL-01**: Login/Register Code-Duplizierung
+  - `packages/mobile/src/features/auth/store/authStore.ts`
+  - Behoben: Login/Register teilen sich jetzt einen gemeinsamen `authenticate()`-Helper für Request-, Envelope- und Token-Handling
 
 - [ ] **QUAL-02**: Hardcoded Colors dupliziert
   - `packages/mobile/src/shared/components/GlobalTabBar.tsx:22-23`
@@ -139,9 +139,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/mobile/src/shared/components/index.ts`
   - Animated, Skeleton, Icons, GlobalTabBar, ThemeSelector fehlen
 
-- [ ] **QUAL-05**: Inkonsistentes Response-Format im Backend
-  - Manche: `{ success: true, data }`, andere: `{ error }`, `{ message }`
-  - **Fix**: Einheitliches ApiResponse-Format
+- [x] **QUAL-05**: Inkonsistentes Response-Format im Backend
+  - `packages/backend/src/routes/auth.ts`, `packages/backend/src/middleware/jwtAuth.ts`
+  - Behoben: Auth-Routen und JWT-Middleware liefern jetzt konsistente `ApiResponse`-Envelopes; der mobile Auth-Store unterstützt die normalisierte Struktur
 
 - [x] **QUAL-06**: Race Condition in deleteItem
   - `packages/backend/src/services/itemService.ts`
@@ -230,9 +230,9 @@ _Keine offenen P0-Issues mehr! 🎉_
 |-----------|--------|--------|
 | P0 - Critical | 0 | ✅ Alle erledigt |
 | P1 - High | 0 | ✅ Alle aktuell erfassten P1-Punkte erledigt |
-| P2 - Medium | 13 | Offen |
+| P2 - Medium | 11 | Offen |
 | P3 - Low | 12 | Offen |
-| **Gesamt** | **25** | - |
+| **Gesamt** | **23** | - |
 
 | Kategorie | Anzahl |
 |-----------|--------|
@@ -242,7 +242,7 @@ _Keine offenen P0-Issues mehr! 🎉_
 | Performance | 0 |
 | File Size (>150) | 8 |
 | Type Safety | 0 |
-| Code-Qualität | 5 |
+| Code-Qualität | 3 |
 | Architektur | 8 |
 | Minor | 4 |
 

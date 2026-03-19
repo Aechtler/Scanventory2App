@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
   registerUser,
@@ -6,19 +6,32 @@ import {
   getUserById,
 } from '../services/authService';
 import { jwtAuthMiddleware, AuthRequest } from '../middleware/jwtAuth';
+import { ApiResponse } from '../types';
 
 const router = Router();
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: { error: 'Too many login attempts, please try again later' },
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many login attempts, please try again later',
+    },
+  },
 });
 
 const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: { error: 'Too many registration attempts, please try again later' },
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMITED',
+      message: 'Too many registration attempts, please try again later',
+    },
+  },
 });
 
 function isValidEmail(email: string): boolean {
@@ -45,6 +58,15 @@ function validatePassword(password: string): string | null {
   return null;
 }
 
+function sendError(res: Response, status: number, code: string, message: string): void {
+  const response: ApiResponse<never> = {
+    success: false,
+    error: { code, message },
+  };
+
+  res.status(status).json(response);
+}
+
 /**
  * POST /auth/register
  * Register a new user
@@ -53,36 +75,35 @@ router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
-    // Validation
     if (typeof email !== 'string' || typeof password !== 'string') {
-      res.status(400).json({ error: 'Email and password are required' });
+      sendError(res, 400, 'BAD_REQUEST', 'Email and password are required');
       return;
     }
 
     if (!isValidEmail(email)) {
-      res.status(400).json({ error: 'Please provide a valid email address' });
+      sendError(res, 400, 'BAD_REQUEST', 'Please provide a valid email address');
       return;
     }
 
     const passwordValidationError = validatePassword(password);
     if (passwordValidationError) {
-      res.status(400).json({ error: passwordValidationError });
+      sendError(res, 400, 'BAD_REQUEST', passwordValidationError);
       return;
     }
 
     const sanitizedName = typeof name === 'string' && name.trim() ? name.trim() : undefined;
-
     const result = await registerUser(email.trim().toLowerCase(), password, sanitizedName);
-    res.status(201).json(result);
+    const response: ApiResponse<typeof result> = { success: true, data: result };
+
+    res.status(201).json(response);
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('already exists')) {
-        res.status(409).json({ error: error.message });
-        return;
-      }
+    if (error instanceof Error && error.message.includes('already exists')) {
+      sendError(res, 409, 'CONFLICT', error.message);
+      return;
     }
+
     console.error('Register error:', error);
-    res.status(500).json({ error: 'Failed to register user' });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to register user');
   }
 });
 
@@ -94,28 +115,28 @@ router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
     if (typeof email !== 'string' || typeof password !== 'string') {
-      res.status(400).json({ error: 'Email and password are required' });
+      sendError(res, 400, 'BAD_REQUEST', 'Email and password are required');
       return;
     }
 
     if (!isValidEmail(email)) {
-      res.status(400).json({ error: 'Please provide a valid email address' });
+      sendError(res, 400, 'BAD_REQUEST', 'Please provide a valid email address');
       return;
     }
 
     const result = await loginUser(email.trim().toLowerCase(), password);
-    res.json(result);
+    const response: ApiResponse<typeof result> = { success: true, data: result };
+
+    res.json(response);
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('Invalid')) {
-        res.status(401).json({ error: error.message });
-        return;
-      }
+    if (error instanceof Error && error.message.includes('Invalid')) {
+      sendError(res, 401, 'UNAUTHORIZED', error.message);
+      return;
     }
+
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Failed to login' });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to login');
   }
 });
 
@@ -126,15 +147,22 @@ router.post('/login', loginLimiter, async (req, res) => {
 router.get('/me', jwtAuthMiddleware, async (req: AuthRequest, res) => {
   try {
     if (!req.user) {
-      res.status(401).json({ error: 'Not authenticated' });
+      sendError(res, 401, 'UNAUTHORIZED', 'Not authenticated');
       return;
     }
 
     const user = await getUserById(req.user.userId);
-    res.json(user);
+    const response: ApiResponse<typeof user> = { success: true, data: user };
+
+    res.json(response);
   } catch (error) {
+    if (error instanceof Error && error.message === 'User not found') {
+      sendError(res, 404, 'NOT_FOUND', error.message);
+      return;
+    }
+
     console.error('Get user error:', error);
-    res.status(500).json({ error: 'Failed to get user' });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to get user');
   }
 });
 
@@ -142,9 +170,13 @@ router.get('/me', jwtAuthMiddleware, async (req: AuthRequest, res) => {
  * POST /auth/logout
  * Logout user (client-side token removal)
  */
-router.post('/logout', (req, res) => {
-  // For JWT, logout is handled client-side by removing the token
-  res.json({ message: 'Logged out successfully' });
+router.post('/logout', (_req, res) => {
+  const response: ApiResponse<{ message: string }> = {
+    success: true,
+    data: { message: 'Logged out successfully' },
+  };
+
+  res.json(response);
 });
 
 export default router;
