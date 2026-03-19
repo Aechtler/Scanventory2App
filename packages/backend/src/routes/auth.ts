@@ -21,6 +21,30 @@ const registerLimiter = rateLimit({
   message: { error: 'Too many registration attempts, please try again later' },
 });
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validatePassword(password: string): string | null {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return 'Password must include at least one lowercase letter';
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must include at least one uppercase letter';
+  }
+
+  if (!/\d/.test(password)) {
+    return 'Password must include at least one number';
+  }
+
+  return null;
+}
+
 /**
  * POST /auth/register
  * Register a new user
@@ -30,17 +54,25 @@ router.post('/register', registerLimiter, async (req, res) => {
     const { email, password, name } = req.body;
 
     // Validation
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string') {
       res.status(400).json({ error: 'Email and password are required' });
       return;
     }
 
-    if (password.length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (!isValidEmail(email)) {
+      res.status(400).json({ error: 'Please provide a valid email address' });
       return;
     }
 
-    const result = await registerUser(email, password, name);
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      res.status(400).json({ error: passwordValidationError });
+      return;
+    }
+
+    const sanitizedName = typeof name === 'string' && name.trim() ? name.trim() : undefined;
+
+    const result = await registerUser(email.trim().toLowerCase(), password, sanitizedName);
     res.status(201).json(result);
   } catch (error) {
     if (error instanceof Error) {
@@ -63,12 +95,17 @@ router.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     // Validation
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string') {
       res.status(400).json({ error: 'Email and password are required' });
       return;
     }
 
-    const result = await loginUser(email, password);
+    if (!isValidEmail(email)) {
+      res.status(400).json({ error: 'Please provide a valid email address' });
+      return;
+    }
+
+    const result = await loginUser(email.trim().toLowerCase(), password);
     res.json(result);
   } catch (error) {
     if (error instanceof Error) {

@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../services/authService';
 
-export interface AuthRequest<P = any> extends Request<P> {
+type RequestParams = Record<string, string>;
+
+export interface AuthRequest<P = RequestParams> extends Request<P> {
   user?: {
     userId: string;
     email: string;

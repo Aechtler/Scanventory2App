@@ -123,6 +123,17 @@
 
 **Goal:** Tighten the most exposed trust boundaries before broader refactors.
 
+**Progress notes (2026-03-19):**
+- Added backend upload filtering for JPG/PNG/WEBP MIME types/extensions in `packages/backend/src/routes/items.ts`
+- Mapped multer upload validation failures to explicit 400 responses in `packages/backend/src/middleware/errorHandler.ts`
+- Added UUID validation for item route params and auth-derived user IDs before backend item service calls
+- Strengthened auth input validation with email checks and stronger password rules in `packages/backend/src/routes/auth.ts`
+- Replaced `AuthRequest<P = any>` with `AuthRequest<P = Record<string, string>>`
+- Made non-dev mobile builds fail fast unless `EXPO_PUBLIC_API_URL` is a valid absolute HTTPS URL
+- Added client-side upload validation for URI scheme, file existence, file size, and supported image types before multipart upload
+- Narrowed the mobile upload contract from `Record<string, unknown>` to an explicit `UploadItemPayload`
+- Remaining Batch 4 work: backend-side production HTTPS enforcement plus runnable-environment/manual validation
+
 **Files:**
 - Modify: `packages/backend/src/routes/items.ts`
 - Modify: `packages/backend/src/routes/auth.ts`

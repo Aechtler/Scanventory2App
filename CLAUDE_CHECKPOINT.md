@@ -3,7 +3,9 @@
 ## Status
 
 Batch 1 is complete on `scanapp2`.
-Batch 2 has started with the first resilience slice implemented on `scanapp2`.
+Batch 2 is implemented in code and pending runnable-environment validation.
+Batch 3 is implemented in code and pending runnable-environment validation.
+Batch 4 has started with a first security/type-boundary hardening slice implemented on `scanapp2`.
 
 ## Analyzed
 
@@ -19,6 +21,7 @@ Batch 2 has started with the first resilience slice implemented on `scanapp2`.
 - Verification reality: no existing test files found in `packages/mobile` or `packages/backend` before targeted helpers were added
 - Batch 1 bug targets in history store, library pricing UI, and final-price parsing
 - Batch 2 resilience targets in `useAnalysis.ts`, `visionService.ts`, and `apiClient.ts`
+- Batch 4 trust-boundary targets in backend upload/auth routes, JWT request typing, and mobile API URL/upload validation
 
 ## Created
 
@@ -53,11 +56,20 @@ Batch 2 has started with the first resilience slice implemented on `scanapp2`.
 - Kept GTIN lookup resilient by falling back to text-only identifier lookup when the optional image read fails
 - Stopped silently swallowing `SecureStore` token-read failures in `apiClient.ts` and now emit actionable warnings without exposing secrets
 
-### Batch 3 (current slice)
+### Batch 3
 - Hardened `POST /api/items` cleanup so invalid multipart JSON and image-save failures do not leave temp upload files behind
 - Kept image cleanup on `createItem` failure, but now log cleanup failures explicitly instead of letting them hide the original error path
 - Updated `DELETE /api/items/:id` to return `imageDeleted` so the API no longer implies file cleanup definitely succeeded when only the DB delete did
 - Strengthened `GET /api/images/:filename` sendFile callback logging and explicit fallback JSON error response
+
+### Batch 4 (current slice)
+- Added backend upload filtering for allowed MIME types/extensions and mapped upload validation errors to explicit 400 responses
+- Added request-side UUID validation for item IDs and auth-derived user IDs before backend item service calls
+- Strengthened auth route validation with email checks and higher password requirements (8+ chars, upper/lowercase, number)
+- Replaced the loose `AuthRequest<P = any>` default with `Record<string, string>`
+- Added mobile API base URL hard-fail behavior for non-dev builds without a valid absolute HTTPS URL
+- Added client-side upload validation for local URI scheme, file existence, file size, and supported image types before multipart upload
+- Narrowed mobile upload payload typing from `Record<string, unknown>` to an explicit `UploadItemPayload`
 
 ## Validated
 
@@ -69,14 +81,17 @@ Batch 2 has started with the first resilience slice implemented on `scanapp2`.
   - Could not run successfully in this workspace because `tsc` is not installed locally (`sh: 1: tsc: not found`)
 - `npm run lint:mobile`
   - Could not run successfully in this workspace because `eslint` is not installed locally (`sh: 1: eslint: not found`)
+- `npm run typecheck:backend`
+  - Could not run successfully in this workspace because `tsc` is not installed locally (`sh: 1: tsc: not found`)
 
 ## What Remains
 
-- Run mobile typecheck/lint once workspace dev dependencies are available
-- Run the Batch 1 and Batch 2 manual regression items on a device/simulator
-- Continue Batch 2 with authenticated/unauthenticated startup-path checks and any remaining analyze/scan degradation edge cases
-- Continue Batch 3 with backend validation in a runnable environment and then move into Batch 4 security-boundary hardening
+- Run mobile/backend typecheck and mobile lint once workspace dev dependencies are available
+- Run the Batch 1, Batch 2, Batch 3, and current Batch 4 manual regression items in a runnable device/backend environment
+- Finish the remaining Batch 4 backend-side production HTTPS enforcement work
+- Continue Batch 5 by replacing loose backend JSON boundary types and addressing delete-flow consistency/race handling
+- Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 
 ## Exact Next Step
 
-Validate the new Batch 3 backend cleanup behavior in a runnable backend environment, then continue Batch 4 by tightening upload validation and production URL/auth boundaries.
+Finish the remaining Batch 4 backend HTTPS enforcement slice, then move into Batch 5 by introducing concrete backend item/market payload types and tightening delete-flow consistency.

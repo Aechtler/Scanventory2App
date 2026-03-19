@@ -90,10 +90,10 @@ export const useHistoryStore = create<HistoryState>()(
           gtin: item.gtin,
           searchQuery: item.searchQuery,
           searchQueries: item.searchQueries,
-          priceStats: item.priceStats as unknown as Record<string, unknown>,
+          priceStats: item.priceStats,
           ebayListings: item.ebayListings,
           ebayListingsFetchedAt: item.ebayListingsFetchedAt,
-          marketValue: item.marketValue as unknown as Record<string, unknown>,
+          marketValue: item.marketValue,
           marketValueFetchedAt: item.marketValueFetchedAt,
           scannedAt: newItem.scannedAt,
         }).then((serverId) => {
@@ -160,7 +160,7 @@ export const useHistoryStore = create<HistoryState>()(
         if (item?.serverId) {
           syncPrices(
             item.serverId,
-            priceStats as unknown as Record<string, unknown>,
+            priceStats,
             listings
           );
         }
@@ -179,7 +179,7 @@ export const useHistoryStore = create<HistoryState>()(
         if (item?.serverId) {
           syncMarketValue(
             item.serverId,
-            marketValue as unknown as Record<string, unknown>
+            marketValue
           );
         }
       },

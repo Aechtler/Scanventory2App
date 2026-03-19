@@ -6,3 +6,5 @@ export {
   apiDelete,
   apiUploadItem,
 } from './apiClient';
+
+export type { UploadItemPayload } from './apiClient';

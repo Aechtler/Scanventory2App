@@ -1,7 +1,7 @@
 # ScanApp - Code Review TODO Liste
 
 > Erstellt: 2026-02-11 | Reviewer: Claude Code (Senior Engineer Review)
-> Aktualisiert: 2026-02-11 | Erledigte Punkte entfernt
+> Aktualisiert: 2026-03-19 | Erledigte Punkte entfernt
 
 ---
 
@@ -113,13 +113,13 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `priceStats`, `marketValue`, `ebayListings` ohne Struktur
   - **Fix**: Strikte Interfaces definieren (PriceStats, MarketListing, etc.)
 
-- [ ] **TYPE-02**: `any` in JWT Middleware
-  - `packages/backend/src/middleware/jwtAuth.ts:4`
-  - `AuthRequest<P = any>` → `AuthRequest<P = Record<string, string>>`
+- [x] **TYPE-02**: `any` in JWT Middleware
+  - `packages/backend/src/middleware/jwtAuth.ts`
+  - Behoben: `AuthRequest` nutzt jetzt standardmäßig `Record<string, string>` statt `any`
 
-- [ ] **TYPE-03**: `apiUploadItem` data-Parameter zu permissiv
-  - `packages/mobile/src/shared/services/apiClient.ts:92`
-  - `Record<string, unknown>` akzeptiert beliebige Daten
+- [x] **TYPE-03**: `apiUploadItem` data-Parameter zu permissiv
+  - `packages/mobile/src/shared/services/apiClient.ts`
+  - Behoben: Upload nutzt jetzt einen expliziten `UploadItemPayload`-Vertrag statt `Record<string, unknown>`
 
 ### Code-Qualität
 
@@ -154,28 +154,25 @@ _Keine offenen P0-Issues mehr! 🎉_
 - [ ] **SEC-06**: Kein HTTPS Enforcement im Backend
   - Kein Redirect-Middleware für Production
 
-- [ ] **SEC-07**: Image Upload ohne MIME-Type Validierung
-  - `packages/backend/src/routes/items.ts:14`
-  - Multer akzeptiert alle Dateitypen
-  - **Fix**: `fileFilter` mit Whitelist (.jpg, .png, .webp)
+- [x] **SEC-07**: Image Upload ohne MIME-Type Validierung
+  - `packages/backend/src/routes/items.ts`
+  - Behoben: Multer filtert jetzt MIME-Type und Dateiendung auf JPG/PNG/WEBP; Upload-Fehler liefern eine 400-Antwort
 
-- [ ] **SEC-08**: Image Upload Frontend ohne Validierung
-  - `packages/mobile/src/shared/services/apiClient.ts:90-111`
-  - Keine Prüfung auf: gültige URI, Dateigröße, MIME-Type
+- [x] **SEC-08**: Image Upload Frontend ohne Validierung
+  - `packages/mobile/src/shared/services/apiClient.ts`
+  - Behoben: Client validiert jetzt URI, Dateiexistenz, Dateigröße und unterstützte Dateitypen vor dem Upload
 
-- [ ] **SEC-09**: Kein HTTPS Enforcement im Frontend
-  - `packages/mobile/src/shared/constants/index.ts:7`
-  - Fallback auf `http://localhost:3000` in Production
-  - **Fix**: In Production HTTPS erzwingen
+- [x] **SEC-09**: Kein HTTPS Enforcement im Frontend
+  - `packages/mobile/src/shared/constants/index.ts`
+  - Behoben: Production-Builds verlangen jetzt eine gültige absolute HTTPS-API-URL statt still auf localhost zurückzufallen
 
-- [ ] **SEC-10**: Password-Validierung zu schwach
-  - `packages/backend/src/routes/auth.ts:15-42`
-  - Nur Mindestlänge 6, keine Komplexitätsprüfung
-  - **Fix**: zod/joi Validierung mit Komplexitätsregeln
+- [x] **SEC-10**: Password-Validierung zu schwach
+  - `packages/backend/src/routes/auth.ts`
+  - Behoben: Registrierung verlangt jetzt mindestens 8 Zeichen plus Groß-/Kleinbuchstaben und Zahl
 
-- [ ] **SEC-11**: Keine Input Validation auf Route-Params
-  - `packages/backend/src/routes/items.ts:20`
-  - `req.user!.userId` ohne UUID-Format-Validierung
+- [x] **SEC-11**: Keine Input Validation auf Route-Params
+  - `packages/backend/src/routes/items.ts`
+  - Behoben: Item-IDs und auth-abgeleitete User-IDs werden vor Service-Zugriffen auf UUID-Format geprüft
 
 ---
 
@@ -234,18 +231,18 @@ _Keine offenen P0-Issues mehr! 🎉_
 |-----------|--------|--------|
 | P0 - Critical | 0 | ✅ Alle erledigt |
 | P1 - High | 0 | ✅ Alle aktuell erfassten P1-Punkte erledigt |
-| P2 - Medium | 20 | Offen |
+| P2 - Medium | 14 | Offen |
 | P3 - Low | 12 | Offen |
-| **Gesamt** | **32** | - |
+| **Gesamt** | **26** | - |
 
 | Kategorie | Anzahl |
 |-----------|--------|
-| Security | 6 |
+| Security | 1 |
 | Bugs | 6 |
 | Error Handling | 5 |
 | Performance | 1 |
 | File Size (>150) | 8 |
-| Type Safety | 3 |
+| Type Safety | 1 |
 | Code-Qualität | 6 |
 | Architektur | 8 |
 | Minor | 4 |

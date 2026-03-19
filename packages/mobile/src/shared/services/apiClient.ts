@@ -5,12 +5,102 @@
 
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SecureStore from 'expo-secure-store';
-import { API_CONFIG } from '@/shared/constants';
+import { PriceStats, MarketListing } from '@/features/market/services/ebay';
+import { MarketValueResult } from '@/features/market/services/perplexity';
+import { API_CONFIG, UPLOAD_CONFIG } from '@/shared/constants';
 
 const TOKEN_KEY = 'auth_token';
 
+type SearchQueries = {
+  ebay?: string;
+  amazon?: string;
+  idealo?: string;
+  generic?: string;
+};
+
+export interface UploadItemPayload {
+  productName: string;
+  category: string;
+  brand: string | null;
+  condition: string;
+  confidence: number;
+  gtin?: string | null;
+  searchQuery: string;
+  searchQueries?: SearchQueries;
+  originalUri?: string;
+  priceStats?: PriceStats;
+  ebayListings?: MarketListing[];
+  ebayListingsFetchedAt?: string;
+  marketValue?: MarketValueResult;
+  marketValueFetchedAt?: string;
+  scannedAt: string;
+}
+
 function warnSecureStoreFailure(operation: string, error: unknown): void {
   console.warn(`[apiClient] SecureStore ${operation} failed. Continuing without persisted auth token.`, error);
+}
+
+function getFileExtension(uri: string): string {
+  const sanitizedUri = uri.split('?')[0];
+  const lastDotIndex = sanitizedUri.lastIndexOf('.');
+  const lastSlashIndex = Math.max(sanitizedUri.lastIndexOf('/'), sanitizedUri.lastIndexOf('\\'));
+
+  if (lastDotIndex === -1 || lastDotIndex < lastSlashIndex) {
+    return '';
+  }
+
+  return sanitizedUri.slice(lastDotIndex).toLowerCase();
+}
+
+function inferMimeTypeFromUri(uri: string): string | null {
+  const extension = getFileExtension(uri);
+
+  switch (extension) {
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.png':
+      return 'image/png';
+    case '.webp':
+      return 'image/webp';
+    default:
+      return null;
+  }
+}
+
+async function validateUploadImage(imageUri: string): Promise<void> {
+  if (!imageUri || typeof imageUri !== 'string') {
+    throw new Error('Image URI is required for upload.');
+  }
+
+  const normalizedUri = imageUri.trim();
+  if (!normalizedUri) {
+    throw new Error('Image URI is empty.');
+  }
+
+  const hasSupportedScheme = /^(file|content|ph):/i.test(normalizedUri);
+  if (!hasSupportedScheme) {
+    throw new Error('Unsupported image URI. Expected a local file URI.');
+  }
+
+  const fileInfo = await FileSystem.getInfoAsync(normalizedUri, { size: true });
+  if (!fileInfo.exists) {
+    throw new Error('Selected image file does not exist anymore.');
+  }
+
+  if (typeof fileInfo.size === 'number' && fileInfo.size > UPLOAD_CONFIG.MAX_FILE_SIZE_BYTES) {
+    throw new Error(`Selected image is too large. Maximum upload size is ${Math.round(UPLOAD_CONFIG.MAX_FILE_SIZE_BYTES / (1024 * 1024))} MB.`);
+  }
+
+  const extension = getFileExtension(normalizedUri);
+  if (extension && !UPLOAD_CONFIG.ALLOWED_EXTENSIONS.includes(extension as typeof UPLOAD_CONFIG.ALLOWED_EXTENSIONS[number])) {
+    throw new Error('Unsupported image file type. Please use JPG, PNG, or WEBP.');
+  }
+
+  const inferredMimeType = inferMimeTypeFromUri(normalizedUri);
+  if (inferredMimeType && !UPLOAD_CONFIG.ALLOWED_MIME_TYPES.includes(inferredMimeType as typeof UPLOAD_CONFIG.ALLOWED_MIME_TYPES[number])) {
+    throw new Error('Unsupported image MIME type. Please use JPG, PNG, or WEBP.');
+  }
 }
 
 /** Get auth token from secure storage */
@@ -123,9 +213,12 @@ export async function apiDelete<T>(path: string): Promise<ApiResponse<T>> {
  */
 export async function apiUploadItem(
   imageUri: string,
-  data: Record<string, unknown>
+  data: UploadItemPayload
 ): Promise<ApiResponse<{ id: string }>> {
+  await validateUploadImage(imageUri);
+
   const token = await getAuthToken();
+  const mimeType = inferMimeTypeFromUri(imageUri) || 'image/jpeg';
 
   const uploadResult = await FileSystem.uploadAsync(
     `${API_CONFIG.BASE_URL}/api/items`,
@@ -134,6 +227,7 @@ export async function apiUploadItem(
       httpMethod: 'POST',
       uploadType: FileSystem.FileSystemUploadType.MULTIPART,
       fieldName: 'image',
+      mimeType,
       parameters: {
         data: JSON.stringify(data),
       },

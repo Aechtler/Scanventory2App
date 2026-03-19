@@ -3,24 +3,11 @@
  * Fehler werden still gefangen, Items bleiben lokal erhalten
  */
 
-import { apiUploadItem, apiPatch, apiPut, apiDelete } from '@/shared/services';
+import { apiUploadItem, apiPatch, apiPut, apiDelete, UploadItemPayload } from '@/shared/services';
+import { PriceStats, MarketListing } from '@/features/market/services/ebay';
+import { MarketValueResult } from '@/features/market/services/perplexity';
 
-interface SyncItemData {
-  productName: string;
-  category: string;
-  brand: string | null;
-  condition: string;
-  confidence: number;
-  gtin?: string | null;
-  searchQuery: string;
-  searchQueries?: Record<string, string>;
-  priceStats: Record<string, unknown>;
-  ebayListings?: unknown[];
-  ebayListingsFetchedAt?: string;
-  marketValue?: Record<string, unknown>;
-  marketValueFetchedAt?: string;
-  scannedAt: string;
-}
+interface SyncItemData extends UploadItemPayload {}
 
 /** Neues Item zum Backend hochladen (Bild + Metadaten) */
 export async function syncNewItem(
@@ -28,7 +15,7 @@ export async function syncNewItem(
   data: SyncItemData
 ): Promise<string | null> {
   try {
-    const result = await apiUploadItem(imageUri, { ...data });
+    const result = await apiUploadItem(imageUri, data);
     if (result.success && result.data) {
       return result.data.id;
     }
@@ -43,8 +30,8 @@ export async function syncNewItem(
 /** Preisdaten zum Backend pushen */
 export async function syncPrices(
   serverId: string,
-  priceStats: Record<string, unknown>,
-  ebayListings?: unknown[]
+  priceStats: PriceStats,
+  ebayListings?: MarketListing[]
 ): Promise<boolean> {
   try {
     const result = await apiPatch(`/api/items/${serverId}/prices`, {
@@ -61,7 +48,7 @@ export async function syncPrices(
 /** Marktwert zum Backend pushen */
 export async function syncMarketValue(
   serverId: string,
-  marketValue: Record<string, unknown>
+  marketValue: MarketValueResult
 ): Promise<boolean> {
   try {
     const result = await apiPatch(`/api/items/${serverId}/market-value`, {

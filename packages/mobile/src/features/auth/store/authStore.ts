@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { API_CONFIG } from '@/shared/constants';
 
 export interface User {
   id: string;
@@ -23,13 +24,9 @@ interface AuthState {
 }
 
 const TOKEN_KEY = 'auth_token';
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = API_CONFIG.BASE_URL;
 
-if (!process.env.EXPO_PUBLIC_API_URL && !__DEV__) {
-  console.warn('EXPO_PUBLIC_API_URL is not set — falling back to localhost. This will not work in production.');
-}
-
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   isAuthenticated: false,
