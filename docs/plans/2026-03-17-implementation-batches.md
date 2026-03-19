@@ -163,6 +163,12 @@
 
 **Goal:** Replace broad JSON blobs at the app boundary with explicit contracts before large refactors.
 
+**Progress notes (2026-03-19):**
+- Replaced loose backend JSON boundary types in `packages/backend/src/types/index.ts` with explicit `SearchQueries`, `PriceStats`, `MarketListing`, and `MarketValueResult` interfaces
+- Updated backend item-service signatures to use the explicit pricing/listing/value contracts instead of generic records
+- Tightened delete consistency in `packages/backend/src/services/itemService.ts` by moving delete into a Prisma transaction with `P2025` fallback handling for concurrent deletes
+- Remaining Batch 5 work: normalize backend response envelopes where practical and validate in a runnable environment once dependencies are available
+
 **Files:**
 - Modify: `packages/backend/src/types/index.ts`
 - Modify: `packages/backend/src/services/itemService.ts`

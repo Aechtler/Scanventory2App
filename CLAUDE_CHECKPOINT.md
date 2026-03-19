@@ -6,6 +6,7 @@ Batch 1 is complete on `scanapp2`.
 Batch 2 is implemented in code and pending runnable-environment validation.
 Batch 3 is implemented in code and pending runnable-environment validation.
 Batch 4 is implemented in code and pending runnable-environment validation.
+Batch 5 has started with backend payload-typing and delete-consistency hardening on `scanapp2`.
 
 ## Analyzed
 
@@ -72,6 +73,11 @@ Batch 4 is implemented in code and pending runnable-environment validation.
 - Added client-side upload validation for local URI scheme, file existence, file size, and supported image types before multipart upload
 - Narrowed mobile upload payload typing from `Record<string, unknown>` to an explicit `UploadItemPayload`
 
+### Batch 5 (current slice)
+- Replaced loose backend JSON boundary types with explicit `SearchQueries`, `PriceStats`, `MarketListing`, and `MarketValueResult` interfaces
+- Updated backend item-service signatures to use the explicit pricing/listing/value contracts instead of generic records
+- Tightened delete consistency by moving backend item deletion into a Prisma transaction with `P2025` fallback handling for concurrent deletes
+
 ## Validated
 
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
@@ -87,11 +93,11 @@ Batch 4 is implemented in code and pending runnable-environment validation.
 
 ## What Remains
 
+- Normalize backend success/error response envelopes where practical without broad endpoint churn
 - Run mobile/backend typecheck and mobile lint once workspace dev dependencies are available
-- Run the Batch 1, Batch 2, Batch 3, and current Batch 4 manual regression items in a runnable device/backend environment
-- Continue Batch 5 by replacing loose backend JSON boundary types and addressing delete-flow consistency/race handling
+- Run the Batch 1, Batch 2, Batch 3, Batch 4, and current Batch 5 manual regression items in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 
 ## Exact Next Step
 
-Start Batch 5 by introducing concrete backend item/market payload types and tightening delete-flow consistency.
+Continue Batch 5 by normalizing backend response envelopes without broad endpoint churn, then re-run verification once dependencies are available.

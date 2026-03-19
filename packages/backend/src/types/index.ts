@@ -21,6 +21,47 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface SearchQueries {
+  ebay?: string;
+  kleinanzeigen?: string;
+  amazon?: string;
+  idealo?: string;
+  generic?: string;
+}
+
+export interface MarketListing {
+  id: string;
+  title: string;
+  price: number;
+  currency: string;
+  condition: string;
+  imageUrl: string;
+  itemUrl: string;
+  sold: boolean;
+  marketplace?: string;
+  selected?: boolean;
+}
+
+export interface PriceStats {
+  minPrice: number;
+  maxPrice: number;
+  avgPrice: number;
+  medianPrice: number;
+  totalListings: number;
+  soldListings: number;
+}
+
+export type MarketValueConfidence = 'hoch' | 'mittel' | 'niedrig';
+
+export interface MarketValueResult {
+  estimatedPrice: string;
+  priceRange: string;
+  confidence: MarketValueConfidence;
+  sources: string[];
+  summary: string;
+  rawResponse: string;
+}
+
 /** Body beim Erstellen eines neuen Items (Multipart: JSON als `data` Feld) */
 export interface CreateItemBody {
   productName: string;
@@ -30,14 +71,14 @@ export interface CreateItemBody {
   confidence: number;
   gtin?: string | null;
   searchQuery: string;
-  searchQueries?: Record<string, string>;
+  searchQueries?: SearchQueries;
   originalUri?: string;
-  priceStats?: Record<string, unknown>;
-  ebayListings?: unknown[];
+  priceStats?: PriceStats;
+  ebayListings?: MarketListing[];
   ebayListingsFetchedAt?: string;
-  kleinanzeigenListings?: unknown[];
+  kleinanzeigenListings?: MarketListing[];
   kleinanzeigenListingsFetchedAt?: string;
-  marketValue?: Record<string, unknown>;
+  marketValue?: MarketValueResult;
   marketValueFetchedAt?: string;
   finalPrice?: number | null;
   finalPriceNote?: string | null;
@@ -46,16 +87,16 @@ export interface CreateItemBody {
 
 /** Body beim Aktualisieren der Preisdaten */
 export interface UpdatePricesBody {
-  priceStats: Record<string, unknown>;
-  ebayListings?: unknown[];
+  priceStats: PriceStats;
+  ebayListings?: MarketListing[];
 }
 
 /** Body beim Aktualisieren der Kleinanzeigen-Preisdaten */
 export interface UpdateKleinanzeigenPricesBody {
-  kleinanzeigenListings: unknown[];
+  kleinanzeigenListings: MarketListing[];
 }
 
 /** Body beim Aktualisieren des Marktwerts */
 export interface UpdateMarketValueBody {
-  marketValue: Record<string, unknown>;
+  marketValue: MarketValueResult;
 }

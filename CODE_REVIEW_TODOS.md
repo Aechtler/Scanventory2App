@@ -108,10 +108,9 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 ### Type Safety
 
-- [ ] **TYPE-01**: Backend-Types zu lose (`Record<string, unknown>`)
-  - `packages/backend/src/types/index.ts:25-61`
-  - `priceStats`, `marketValue`, `ebayListings` ohne Struktur
-  - **Fix**: Strikte Interfaces definieren (PriceStats, MarketListing, etc.)
+- [x] **TYPE-01**: Backend-Types zu lose (`Record<string, unknown>`)
+  - `packages/backend/src/types/index.ts`, `packages/backend/src/services/itemService.ts`
+  - Behoben: Strikte Backend-Interfaces für `PriceStats`, `MarketListing`, `MarketValueResult` und `SearchQueries` ersetzen die losen JSON-Randtypen
 
 - [x] **TYPE-02**: `any` in JWT Middleware
   - `packages/backend/src/middleware/jwtAuth.ts`
@@ -144,10 +143,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - Manche: `{ success: true, data }`, andere: `{ error }`, `{ message }`
   - **Fix**: Einheitliches ApiResponse-Format
 
-- [ ] **QUAL-06**: Race Condition in deleteItem
-  - `packages/backend/src/services/itemService.ts:150-163`
-  - Zwischen findFirst und deleteMany könnte Item gelöscht werden
-  - **Fix**: Single delete mit Transaction
+- [x] **QUAL-06**: Race Condition in deleteItem
+  - `packages/backend/src/services/itemService.ts`
+  - Behoben: Delete läuft jetzt in einer Prisma-Transaction mit `findUnique` + `delete`, inklusive `P2025`-Fallback für konkurrierende Löschungen
 
 ### Security (Medium)
 
@@ -232,19 +230,19 @@ _Keine offenen P0-Issues mehr! 🎉_
 |-----------|--------|--------|
 | P0 - Critical | 0 | ✅ Alle erledigt |
 | P1 - High | 0 | ✅ Alle aktuell erfassten P1-Punkte erledigt |
-| P2 - Medium | 14 | Offen |
+| P2 - Medium | 13 | Offen |
 | P3 - Low | 12 | Offen |
-| **Gesamt** | **26** | - |
+| **Gesamt** | **25** | - |
 
 | Kategorie | Anzahl |
 |-----------|--------|
-| Security | 1 |
-| Bugs | 6 |
-| Error Handling | 5 |
-| Performance | 1 |
+| Security | 0 |
+| Bugs | 0 |
+| Error Handling | 0 |
+| Performance | 0 |
 | File Size (>150) | 8 |
-| Type Safety | 1 |
-| Code-Qualität | 6 |
+| Type Safety | 0 |
+| Code-Qualität | 5 |
 | Architektur | 8 |
 | Minor | 4 |
 

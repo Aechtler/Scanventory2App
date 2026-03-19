@@ -3,7 +3,13 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
-import { CreateItemBody, PaginatedResponse } from '../types';
+import {
+  CreateItemBody,
+  PaginatedResponse,
+  PriceStats,
+  MarketListing,
+  MarketValueResult,
+} from '../types';
 
 const prisma = new PrismaClient();
 
@@ -103,8 +109,8 @@ export async function updateItem(
 export async function updatePrices(
   id: string,
   userId: string,
-  priceStats: Record<string, unknown>,
-  ebayListings?: unknown[]
+  priceStats: PriceStats,
+  ebayListings?: MarketListing[]
 ) {
   return prisma.scannedItem.updateMany({
     where: { id, userId },
@@ -120,7 +126,7 @@ export async function updatePrices(
 export async function updateKleinanzeigenPrices(
   id: string,
   userId: string,
-  kleinanzeigenListings: unknown[]
+  kleinanzeigenListings: MarketListing[]
 ) {
   return prisma.scannedItem.updateMany({
     where: { id, userId },
@@ -135,7 +141,7 @@ export async function updateKleinanzeigenPrices(
 export async function updateMarketValue(
   id: string,
   userId: string,
-  marketValue: Record<string, unknown>
+  marketValue: MarketValueResult
 ) {
   return prisma.scannedItem.updateMany({
     where: { id, userId },
@@ -148,16 +154,28 @@ export async function updateMarketValue(
 
 /** Item loeschen */
 export async function deleteItem(id: string, userId: string) {
-  const item = await prisma.scannedItem.findFirst({
-    where: { id, userId },
-    select: { imageFilename: true },
-  });
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const item = await tx.scannedItem.findUnique({
+        where: { id },
+        select: { imageFilename: true, userId: true },
+      });
 
-  if (!item) return null;
+      if (!item || item.userId !== userId) {
+        return null;
+      }
 
-  await prisma.scannedItem.deleteMany({
-    where: { id, userId },
-  });
+      await tx.scannedItem.delete({
+        where: { id },
+      });
 
-  return item;
+      return { imageFilename: item.imageFilename };
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return null;
+    }
+
+    throw error;
+  }
 }
