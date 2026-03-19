@@ -151,8 +151,9 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 ### Security (Medium)
 
-- [ ] **SEC-06**: Kein HTTPS Enforcement im Backend
-  - Kein Redirect-Middleware für Production
+- [x] **SEC-06**: Kein HTTPS Enforcement im Backend
+  - `packages/backend/src/app.ts`, `packages/backend/src/middleware/https.ts`
+  - Behoben: Production erzwingt jetzt HTTPS via Proxy-aware Middleware, setzt HSTS auf sichere Requests und gibt Redirect/426 für unsichere Zugriffe zurück
 
 - [x] **SEC-07**: Image Upload ohne MIME-Type Validierung
   - `packages/backend/src/routes/items.ts`

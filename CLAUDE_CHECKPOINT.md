@@ -5,7 +5,7 @@
 Batch 1 is complete on `scanapp2`.
 Batch 2 is implemented in code and pending runnable-environment validation.
 Batch 3 is implemented in code and pending runnable-environment validation.
-Batch 4 has started with a first security/type-boundary hardening slice implemented on `scanapp2`.
+Batch 4 is implemented in code and pending runnable-environment validation.
 
 ## Analyzed
 
@@ -21,7 +21,7 @@ Batch 4 has started with a first security/type-boundary hardening slice implemen
 - Verification reality: no existing test files found in `packages/mobile` or `packages/backend` before targeted helpers were added
 - Batch 1 bug targets in history store, library pricing UI, and final-price parsing
 - Batch 2 resilience targets in `useAnalysis.ts`, `visionService.ts`, and `apiClient.ts`
-- Batch 4 trust-boundary targets in backend upload/auth routes, JWT request typing, and mobile API URL/upload validation
+- Batch 4 trust-boundary targets in backend upload/auth routes, JWT request typing, backend HTTPS enforcement, and mobile API URL/upload validation
 
 ## Created
 
@@ -67,6 +67,7 @@ Batch 4 has started with a first security/type-boundary hardening slice implemen
 - Added request-side UUID validation for item IDs and auth-derived user IDs before backend item service calls
 - Strengthened auth route validation with email checks and higher password requirements (8+ chars, upper/lowercase, number)
 - Replaced the loose `AuthRequest<P = any>` default with `Record<string, string>`
+- Added backend production HTTPS enforcement with proxy-aware redirect/426 handling plus HSTS on secure requests
 - Added mobile API base URL hard-fail behavior for non-dev builds without a valid absolute HTTPS URL
 - Added client-side upload validation for local URI scheme, file existence, file size, and supported image types before multipart upload
 - Narrowed mobile upload payload typing from `Record<string, unknown>` to an explicit `UploadItemPayload`
@@ -88,10 +89,9 @@ Batch 4 has started with a first security/type-boundary hardening slice implemen
 
 - Run mobile/backend typecheck and mobile lint once workspace dev dependencies are available
 - Run the Batch 1, Batch 2, Batch 3, and current Batch 4 manual regression items in a runnable device/backend environment
-- Finish the remaining Batch 4 backend-side production HTTPS enforcement work
 - Continue Batch 5 by replacing loose backend JSON boundary types and addressing delete-flow consistency/race handling
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 
 ## Exact Next Step
 
-Finish the remaining Batch 4 backend HTTPS enforcement slice, then move into Batch 5 by introducing concrete backend item/market payload types and tightening delete-flow consistency.
+Start Batch 5 by introducing concrete backend item/market payload types and tightening delete-flow consistency.

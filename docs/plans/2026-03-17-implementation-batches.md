@@ -132,7 +132,8 @@
 - Made non-dev mobile builds fail fast unless `EXPO_PUBLIC_API_URL` is a valid absolute HTTPS URL
 - Added client-side upload validation for URI scheme, file existence, file size, and supported image types before multipart upload
 - Narrowed the mobile upload contract from `Record<string, unknown>` to an explicit `UploadItemPayload`
-- Remaining Batch 4 work: backend-side production HTTPS enforcement plus runnable-environment/manual validation
+- Added backend production HTTPS enforcement with proxy-aware redirect/426 handling and HSTS on secure requests
+- Remaining Batch 4 work: runnable-environment/manual validation
 
 **Files:**
 - Modify: `packages/backend/src/routes/items.ts`
