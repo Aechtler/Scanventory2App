@@ -15,6 +15,7 @@ import {
 } from '@/features/scan/services/visionService';
 import { getProductImage } from '@/features/market/services/ebay/images';
 import { generatePlatformLinks, PlatformLink } from '@/features/market/services/quicklinks';
+import { loadMatchImages } from '@/features/analyze/utils/productImageLoading';
 
 export type AnalysisState = 'idle' | 'analyzing' | 'selecting' | 'complete' | 'error';
 
@@ -60,23 +61,14 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
       setError(null);
       setCurrentImageUri(imageUri);
 
+      const decodedImageUri = decodeURIComponent(imageUri);
       const hasApiKey = !!process.env.EXPO_PUBLIC_GEMINI_API_KEY;
       const vision = hasApiKey
-        ? await analyzeImage(decodeURIComponent(imageUri))
-        : await analyzeImageMock(decodeURIComponent(imageUri));
+        ? await analyzeImage(decodedImageUri)
+        : await analyzeImageMock(decodedImageUri);
 
-      // Load product images for all matches in parallel
       console.log('[useAnalysis] Loading product images for', vision.matches.length, 'matches...');
-      const imageResults = await Promise.allSettled(
-        vision.matches.map(async (match) => {
-          const searchQuery = match.searchQueries?.ebay || match.searchQuery;
-          const imageUrl = await getProductImage(searchQuery);
-          return { ...match, imageUrl };
-        })
-      );
-      const matchesWithImages = imageResults.map((result, i) =>
-        result.status === 'fulfilled' ? result.value : { ...vision.matches[i] }
-      );
+      const matchesWithImages = await loadMatchImages(vision.matches, getProductImage);
 
       const visionWithImages = { ...vision, matches: matchesWithImages };
       setVisionResult(visionWithImages);

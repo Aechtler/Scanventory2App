@@ -9,11 +9,16 @@ import { API_CONFIG } from '@/shared/constants';
 
 const TOKEN_KEY = 'auth_token';
 
+function warnSecureStoreFailure(operation: string, error: unknown): void {
+  console.warn(`[apiClient] SecureStore ${operation} failed. Continuing without persisted auth token.`, error);
+}
+
 /** Get auth token from secure storage */
 async function getAuthToken(): Promise<string | null> {
   try {
     return await SecureStore.getItemAsync(TOKEN_KEY);
-  } catch {
+  } catch (error) {
+    warnSecureStoreFailure('read', error);
     return null;
   }
 }

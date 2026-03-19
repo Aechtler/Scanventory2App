@@ -64,6 +64,14 @@
 
 **Goal:** Make the image-analysis path degrade gracefully instead of failing all-or-nothing.
 
+**Progress notes (2026-03-19):**
+- Added timeout-bounded per-match product-image loading so one slow eBay image lookup no longer blocks the entire result set
+- Extracted the timeout/image-loading behavior into a small tested helper in `packages/mobile/src/features/analyze/utils/productImageLoading.ts`
+- Added explicit unreadable-image handling in `packages/mobile/src/features/scan/services/visionService.ts`
+- Updated `identifyProductIdentifier()` to continue without image context if the optional local file read fails
+- Updated `packages/mobile/src/shared/services/apiClient.ts` to warn on `SecureStore` token-read failures instead of silently swallowing them
+- Remaining Batch 2 work is validation in a runnable mobile environment plus any follow-up fixes from real auth/network/manual regression
+
 **Files:**
 - Modify: `packages/mobile/src/features/analyze/hooks/useAnalysis.ts`
 - Modify: `packages/mobile/src/features/scan/services/visionService.ts`

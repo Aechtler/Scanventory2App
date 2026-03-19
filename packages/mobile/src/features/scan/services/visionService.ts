@@ -7,6 +7,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const IMAGE_READ_ERROR_MESSAGE = 'Bilddatei konnte nicht gelesen werden. Bitte wähle das Bild erneut aus oder nutze ein anderes Bild.';
 
 export interface VisionMatch {
   productName: string;
@@ -37,15 +38,24 @@ export interface VisionError {
   code: string;
 }
 
+async function readImageAsBase64(imageUri: string, context: string): Promise<string> {
+  try {
+    return await FileSystem.readAsStringAsync(imageUri, {
+      encoding: 'base64',
+    });
+  } catch (error) {
+    console.error(`[Vision] Failed to read image for ${context}:`, error);
+    throw new Error(IMAGE_READ_ERROR_MESSAGE);
+  }
+}
+
 /**
  * Analysiert ein Bild mit Gemini Vision API
  * @param imageUri - Lokaler URI des Bildes
  * @returns VisionResult mit bis zu 3 möglichen Treffern
  */
 export async function analyzeImage(imageUri: string): Promise<VisionResult> {
-  const base64Image = await FileSystem.readAsStringAsync(imageUri, {
-    encoding: 'base64',
-  });
+  const base64Image = await readImageAsBase64(imageUri, 'analysis');
 
   const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
@@ -125,8 +135,16 @@ Antworte NUR mit dem JSON, kein anderer Text.`,
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error?.message || 'Fehler bei der Bildanalyse');
+    let message = 'Fehler bei der Bildanalyse';
+
+    try {
+      const error = await response.json();
+      message = error.error?.message || message;
+    } catch (error) {
+      console.error('[Vision] Failed to parse analysis error response:', error);
+    }
+
+    throw new Error(message);
   }
 
   const data = await response.json();
@@ -230,7 +248,7 @@ export async function identifyProductIdentifier(
   imageUri?: string
 ): Promise<string | null> {
   try {
-    const parts: any[] = [
+    const parts: Array<{ text: string } | { inline_data: { mime_type: string; data: string } }> = [
       {
         text: `Du bist ein Experte für Produktkataloge. Deine Aufgabe ist es, die EAN (GTIN) oder ISBN für ein bestimmtes Produkt zu finden.
         
@@ -244,18 +262,21 @@ REGELN:
     ];
 
     if (imageUri && GEMINI_API_KEY) {
-      const base64Image = await FileSystem.readAsStringAsync(imageUri, {
-        encoding: 'base64',
-      });
-      parts.push({
-        inline_data: {
-          mime_type: 'image/jpeg',
-          data: base64Image,
-        },
-      });
-      
-      // Update text to include image context
-      parts[0].text += "\n\nSchau dir auch das Bild an, um Barcodes oder aufgedruckte Nummern zu finden.";
+      try {
+        const base64Image = await readImageAsBase64(imageUri, 'identifier lookup');
+        parts.push({
+          inline_data: {
+            mime_type: 'image/jpeg',
+            data: base64Image,
+          },
+        });
+
+        if ('text' in parts[0]) {
+          parts[0].text += '\n\nSchau dir auch das Bild an, um Barcodes oder aufgedruckte Nummern zu finden.';
+        }
+      } catch (error) {
+        console.warn('[Vision] Identifier lookup continuing without image context:', error);
+      }
     }
 
     if (!GEMINI_API_KEY) return null;
