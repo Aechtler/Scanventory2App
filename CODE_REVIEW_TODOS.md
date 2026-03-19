@@ -85,8 +85,8 @@ _Keine offenen P0-Issues mehr! 🎉_
 - [x] **SIZE-01**: `packages/mobile/src/app/(tabs)/library.tsx` — 235 Zeilen
   - Behoben: Screen auf 136 Zeilen reduziert; Row-Wrapper (`LibraryListItem`, `LibraryGridItem`) sowie `libraryRows.ts` und `LibraryEmptyStates.tsx` extrahiert, Verhalten beibehalten
 
-- [ ] **SIZE-02**: `packages/mobile/src/shared/components/Animated.tsx` — 232 Zeilen
-  - Aufteilen in: AnimatedButton.tsx, FadeInView.tsx, etc.
+- [x] **SIZE-02**: `packages/mobile/src/shared/components/Animated.tsx` — 232 Zeilen
+  - Behoben: `Animated.tsx` ist jetzt ein 7-zeiliges Compatibility-Barrel; konkrete Helper liegen in `packages/mobile/src/shared/components/Animated/`
 
 - [ ] **SIZE-03**: `packages/mobile/src/features/market/services/ebay/search.ts` — 215 Zeilen
   - Aufteilen in: parseListings.ts, calculateStats.ts, search.ts

@@ -10,6 +10,7 @@ Batch 5 is implemented in code on `scanapp2`, including backend payload typing, 
 Batch 6 has started on `scanapp2` with a runnable manual regression checklist and a lightweight targeted node-test entrypoint for extracted helpers.
 The first Batch 7 size-rule refactor is implemented on `scanapp2` for `packages/mobile/src/app/(tabs)/library.tsx`, extracting screen-local row helpers, empty states, and row-building pagination constants into the history feature.
 A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, covering centralized tab-bar colors, centralized animation presets, and missing shared-component barrel exports.
+The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/shared/components/Animated.tsx`, splitting the shared animation helpers into focused component files behind a compatibility barrel.
 
 ## Analyzed
 
@@ -29,6 +30,7 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - Batch 5 contract/consistency targets in backend types, auth envelopes, delete flow, and auth-store duplication
 - Remaining small P2 cleanup targets in shared UI constants, animation presets, barrel exports, and size-rule candidates
 - Batch 7 first size-rule target in `library.tsx`, including row rendering, empty states, and row-building extraction boundaries
+- Batch 7 next size-rule target in `Animated.tsx`, including extraction boundaries for shared animation helpers and keeping import compatibility stable
 
 ## Created
 
@@ -50,6 +52,15 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - `packages/mobile/src/features/history/components/LibraryListItem.tsx`
 - `packages/mobile/src/features/history/components/LibraryGridItem.tsx`
 - `packages/mobile/src/features/history/components/LibraryEmptyStates.tsx`
+- `packages/mobile/src/shared/components/Animated/AnimatedButton.tsx`
+- `packages/mobile/src/shared/components/Animated/FadeInView.tsx`
+- `packages/mobile/src/shared/components/Animated/StaggeredItem.tsx`
+- `packages/mobile/src/shared/components/Animated/PulseView.tsx`
+- `packages/mobile/src/shared/components/Animated/BounceInView.tsx`
+- `packages/mobile/src/shared/components/Animated/SlideUpView.tsx`
+- `packages/mobile/src/shared/components/Animated/AnimatedNumber.tsx`
+- `packages/mobile/src/shared/components/Animated/shared.ts`
+- `packages/mobile/src/shared/components/Animated.test.ts`
 
 ## Implemented
 
@@ -108,6 +119,12 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - Extracted the empty-state and filtered-empty-state UI into `packages/mobile/src/features/history/components/LibraryEmptyStates.tsx`
 - Kept the tab screen responsible only for store access, filter state, view-mode toggle, pagination state, and list wiring
 
+### Batch 7 second size-rule refactor
+- Reduced `packages/mobile/src/shared/components/Animated.tsx` from 232 lines to a 7-line compatibility barrel that preserves existing import paths
+- Extracted each shared animation helper into focused files under `packages/mobile/src/shared/components/Animated/`
+- Centralized the shared animation prop types and animated Pressable creation in `packages/mobile/src/shared/components/Animated/shared.ts`
+- Added a lightweight Node test that guards the split-file structure and compatibility barrel exports without depending on the mobile runtime
+
 ## Validated
 
 - `git diff --check`
@@ -115,6 +132,8 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/shared/components/Animated.test.ts`
   - Passed
 - `npm run typecheck:mobile`
   - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
@@ -131,8 +150,8 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
-- Continue the remaining Batch 7 size-rule refactors (`Animated.tsx`, `search.ts`, `historyStore.ts`, `useAnalysis.ts`, `items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
+- Continue the remaining Batch 7 size-rule refactors (`search.ts`, `historyStore.ts`, `useAnalysis.ts`, `items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
 
 ## Exact Next Step
 
-Pick the next Batch 7 size-rule target (`Animated.tsx` is the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the refactored library screen.
+Pick the next Batch 7 size-rule target (`packages/mobile/src/features/market/services/ebay/search.ts` is the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.

@@ -6,12 +6,13 @@
 import { getEbayAccessToken } from './auth';
 import { 
   EBAY_CONFIG, 
-  MarketListing, 
   MarketResult, 
   EbaySearchResult,
   MarketplaceResult,
   MARKETPLACE_NAMES
 } from './types';
+import { calculatePriceStats, recalculatePriceStats } from './calculateStats';
+import { parseListingsWithMarketplace } from './parseListings';
 import { createSearchVariants } from './utils';
 
 /**
@@ -88,62 +89,6 @@ async function searchMarketplace(
 }
 
 /**
- * Parses eBay item summaries into listings with marketplace info
- */
-function parseListingsWithMarketplace(itemSummaries: any[], marketplaceId: string): MarketListing[] {
-  const listings: MarketListing[] = [];
-
-  for (const item of itemSummaries) {
-    const priceValue = parseFloat(item.price?.value || '0');
-    if (priceValue > 0) {
-      listings.push({
-        id: item.itemId,
-        title: item.title,
-        price: priceValue,
-        currency: item.price?.currency || 'EUR',
-        condition: item.condition || 'Unbekannt',
-        imageUrl: item.thumbnailImages?.[0]?.imageUrl || '',
-        itemUrl: item.itemWebUrl || '',
-        sold: false,
-        marketplace: marketplaceId,
-        selected: false, // Default NOT selected - user picks reference items
-      });
-    }
-  }
-
-  return listings;
-}
-
-/**
- * Calculates price statistics from an array of prices
- */
-function calculatePriceStats(listings: MarketListing[]): {
-  minPrice: number;
-  maxPrice: number;
-  avgPrice: number;
-  medianPrice: number;
-} {
-  const prices = listings.map(l => l.price).sort((a, b) => a - b);
-  
-  if (prices.length === 0) {
-    return { minPrice: 0, maxPrice: 0, avgPrice: 0, medianPrice: 0 };
-  }
-
-  const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-  const mid = Math.floor(prices.length / 2);
-  const medianPrice = prices.length % 2 !== 0
-    ? prices[mid]
-    : (prices[mid - 1] + prices[mid]) / 2;
-
-  return {
-    minPrice: prices[0],
-    maxPrice: prices[prices.length - 1],
-    avgPrice: Math.round(avgPrice * 100) / 100,
-    medianPrice,
-  };
-}
-
-/**
  * Searches eBay across ALL marketplaces in parallel
  */
 export async function searchEbay(query: string, gtin?: string): Promise<MarketResult | null> {
@@ -193,23 +138,4 @@ export async function searchEbay(query: string, gtin?: string): Promise<MarketRe
   }
 }
 
-/**
- * Recalculates price stats based on selected listings only
- */
-export function recalculatePriceStats(listings: MarketListing[]): {
-  minPrice: number;
-  maxPrice: number;
-  avgPrice: number;
-  medianPrice: number;
-  totalListings: number;
-  soldListings: number;
-} {
-  const selectedListings = listings.filter(l => l.selected);
-  const stats = calculatePriceStats(selectedListings);
-  
-  return {
-    ...stats,
-    totalListings: selectedListings.length,
-    soldListings: 0,
-  };
-}
+export { recalculatePriceStats };
