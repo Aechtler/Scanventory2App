@@ -94,6 +94,12 @@
 
 **Goal:** Close backend data-loss/orphan-file gaps in the item/image routes.
 
+**Progress notes (2026-03-19):**
+- Hardened `POST /api/items` so invalid JSON and image-save failures clean up multer temp uploads instead of leaving orphaned temp files behind
+- Preserved create failure image cleanup, but now log cleanup failures explicitly so the original DB failure path is still diagnosable
+- Updated `DELETE /api/items/:id` to return `imageDeleted` and avoid implying filesystem cleanup definitely succeeded when only DB deletion did
+- Strengthened `GET /api/images/:filename` error callback logging and fallback JSON response
+
 **Files:**
 - Modify: `packages/backend/src/routes/items.ts`
 - Modify: `packages/backend/src/routes/images.ts`

@@ -2,6 +2,7 @@
  * Items Routes - CRUD fuer ScannedItems
  */
 
+import fs from 'fs';
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import os from 'os';
@@ -14,6 +15,24 @@ const router = Router();
 const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 type IdParams = { id: string };
+
+function cleanupTempUpload(filePath: string): void {
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (error) {
+    console.error('Failed to clean up temp upload:', error);
+  }
+}
+
+function cleanupSavedImage(imageFilename: string, context: string): void {
+  try {
+    deleteImage(imageFilename);
+  } catch (error) {
+    console.error(`Failed to clean up saved image after ${context}:`, error);
+  }
+}
 
 /** GET /api/items - Alle Items paginiert */
 router.get('/', async (req: AuthRequest, res: Response) => {
@@ -59,6 +78,7 @@ router.post('/', upload.single('image'), async (req: AuthRequest, res: Response)
   try {
     data = JSON.parse(req.body.data);
   } catch {
+    cleanupTempUpload(req.file.path);
     res.status(400).json({
       success: false,
       error: { code: 'BAD_REQUEST', message: 'Invalid JSON in data field' },
@@ -66,13 +86,20 @@ router.post('/', upload.single('image'), async (req: AuthRequest, res: Response)
     return;
   }
 
-  const imageFilename = saveImage(req.file);
+  let imageFilename: string;
+  try {
+    imageFilename = saveImage(req.file);
+  } catch (error) {
+    cleanupTempUpload(req.file.path);
+    throw error;
+  }
+
   let item;
   try {
     item = await itemService.createItem(userId, data, imageFilename);
-  } catch (err) {
-    deleteImage(imageFilename);
-    throw err;
+  } catch (error) {
+    cleanupSavedImage(imageFilename, 'createItem failure');
+    throw error;
   }
 
   const response: ApiResponse<typeof item> = { success: true, data: item };
@@ -108,12 +135,15 @@ router.delete('/:id', async (req: AuthRequest<IdParams>, res: Response) => {
     return;
   }
 
+  let imageDeleted = true;
   try {
     deleteImage(deleted.imageFilename);
-  } catch (err) {
-    console.error('Failed to delete image:', err);
+  } catch (error) {
+    imageDeleted = false;
+    console.error('Failed to delete image after item deletion:', error);
   }
-  res.json({ success: true, data: { deleted: true } });
+
+  res.json({ success: true, data: { deleted: true, imageDeleted } });
 });
 
 /** PATCH /api/items/:id/prices - Preisdaten aktualisieren */

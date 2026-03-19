@@ -53,6 +53,12 @@ Batch 2 has started with the first resilience slice implemented on `scanapp2`.
 - Kept GTIN lookup resilient by falling back to text-only identifier lookup when the optional image read fails
 - Stopped silently swallowing `SecureStore` token-read failures in `apiClient.ts` and now emit actionable warnings without exposing secrets
 
+### Batch 3 (current slice)
+- Hardened `POST /api/items` cleanup so invalid multipart JSON and image-save failures do not leave temp upload files behind
+- Kept image cleanup on `createItem` failure, but now log cleanup failures explicitly instead of letting them hide the original error path
+- Updated `DELETE /api/items/:id` to return `imageDeleted` so the API no longer implies file cleanup definitely succeeded when only the DB delete did
+- Strengthened `GET /api/images/:filename` sendFile callback logging and explicit fallback JSON error response
+
 ## Validated
 
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
@@ -69,8 +75,8 @@ Batch 2 has started with the first resilience slice implemented on `scanapp2`.
 - Run mobile typecheck/lint once workspace dev dependencies are available
 - Run the Batch 1 and Batch 2 manual regression items on a device/simulator
 - Continue Batch 2 with authenticated/unauthenticated startup-path checks and any remaining analyze/scan degradation edge cases
-- Start Batch 3 backend upload/delete safety after Batch 2 acceptance is reached
+- Continue Batch 3 with backend validation in a runnable environment and then move into Batch 4 security-boundary hardening
 
 ## Exact Next Step
 
-Continue Batch 2 by validating the new analyze/scan resilience changes in a runnable mobile environment, then inspect the remaining authenticated startup and API failure-path handling before moving to Batch 3 backend upload/delete safety.
+Validate the new Batch 3 backend cleanup behavior in a runnable backend environment, then continue Batch 4 by tightening upload validation and production URL/auth boundaries.

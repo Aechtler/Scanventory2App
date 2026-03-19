@@ -24,68 +24,57 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 ### Logische Bugs
 
-- [ ] **BUG-03**: `removeCachedImage()` bekommt falschen Parameter
-  - `packages/mobile/src/features/history/store/historyStore.ts:121`
-  - `item.imageUri` statt `item.cachedImageUri` → gecachte Datei bleibt bestehen
-  - **Fix**: `removeCachedImage(item.cachedImageUri)` verwenden
+- [x] **BUG-03**: `removeCachedImage()` bekommt falschen Parameter
+  - `packages/mobile/src/features/history/store/historyStore.ts`
+  - Behoben: Cache-Cleanup nutzt den konkreten `cachedImageUri`-Pfad
 
-- [ ] **BUG-04**: Median-Berechnung fehlerhaft bei gerader Anzahl
-  - `packages/mobile/src/features/market/services/ebay/search.ts:133`
-  - `Math.floor(prices.length / 2)` ist bei gerader Anzahl falsch
-  - **Fix**: Korrekte Median-Formel: `(arr[mid-1] + arr[mid]) / 2`
+- [x] **BUG-04**: Median-Berechnung fehlerhaft bei gerader Anzahl
+  - `packages/mobile/src/features/market/services/ebay/search.ts`
+  - Überprüft: die aktuelle Implementierung verwendet bereits die korrekte Gerade-Anzahl-Formel; kein Code-Change nötig
 
-- [ ] **BUG-05**: Preis €0 wird als "kein Preis" behandelt
-  - `packages/mobile/src/app/(tabs)/library.tsx:97`
-  - `if (displayPrice)` ist falsy bei 0
-  - **Fix**: `if (displayPrice !== null && displayPrice !== undefined)`
+- [x] **BUG-05**: Preis €0 wird als "kein Preis" behandelt
+  - `packages/mobile/src/app/(tabs)/library.tsx`
+  - Behoben: gültige `0`-Preise werden korrekt gerendert und in gemeinsamer Preislogik konsistent behandelt
 
-- [ ] **BUG-06**: Europäische Dezimal-Trennung nicht korrekt geparst
-  - `packages/mobile/src/features/history/components/FinalPriceCard/FinalPriceCard.tsx:37`
-  - `"1.234,56"` (Tausender-Trenner + Komma) wird falsch geparst
-  - **Fix**: Tausender-Trenner zuerst entfernen, dann Komma ersetzen
+- [x] **BUG-06**: Europäische Dezimal-Trennung nicht korrekt geparst
+  - `packages/mobile/src/features/history/components/FinalPriceCard/FinalPriceCard.tsx`
+  - Behoben: lokalisierte Preis-Parsing-Helfer unterstützen Werte wie `1.234,56`
 
-- [ ] **BUG-07**: Manuelle Suche hat `confidence: 1.0` (100%)
-  - `packages/mobile/src/features/analyze/hooks/useAnalysis.ts:161-165`
-  - Irreführend, da keine KI-Erkennung stattfand
-  - **Fix**: `confidence: 0` oder separates Flag `isManual: true`
+- [x] **BUG-07**: Manuelle Suche hat `confidence: 1.0` (100%)
+  - `packages/mobile/src/features/analyze/hooks/useAnalysis.ts`
+  - Behoben: manuelle Suche verwendet keine irreführende KI-Confidence mehr
 
-- [ ] **BUG-08**: Orphaned Image bei fehlgeschlagenem createItem
-  - `packages/backend/src/routes/items.ts:47-74`
-  - Bild wird gespeichert, aber bei DB-Fehler nicht aufgeräumt
-  - **Fix**: try-catch mit `deleteImage(imageFilename)` im catch-Block
+- [x] **BUG-08**: Orphaned Image bei fehlgeschlagenem createItem
+  - `packages/backend/src/routes/items.ts`
+  - Behoben: DB-Create-Fehler räumen gespeicherte Bilder auf; zusätzliche Temp-Upload-Cleanup für ungültiges Multipart-JSON und Save-Fehler ergänzt
 
 ### Fehlende Fehlerbehandlung
 
-- [ ] **ERR-02**: `Promise.all()` statt `Promise.allSettled()` bei Image-Loading
-  - `packages/mobile/src/features/analyze/hooks/useAnalysis.ts:70-76`
-  - Ein hängendes Bild blockiert alle
-  - **Fix**: `Promise.allSettled()` + Timeout pro Request
+- [x] **ERR-02**: `Promise.all()` statt `Promise.allSettled()` bei Image-Loading
+  - `packages/mobile/src/features/analyze/hooks/useAnalysis.ts`
+  - Behoben: Bild-Ladepfad ist timeout-begrenzt und blockiert nicht mehr die komplette Ergebnisliste
 
-- [ ] **ERR-03**: Keine Fehlerbehandlung bei File-Read in visionService
-  - `packages/mobile/src/features/scan/services/visionService.ts:45-46`
-  - `readAsStringAsync` kann fehlschlagen (Datei fehlt, unlesbar)
-  - **Fix**: try-catch mit aussagekräftigem Error
+- [x] **ERR-03**: Keine Fehlerbehandlung bei File-Read in visionService
+  - `packages/mobile/src/features/scan/services/visionService.ts`
+  - Behoben: File-Read-Fehler werden explizit behandelt und liefern eine aussagekräftige Fehlerspur
 
-- [ ] **ERR-04**: `sendFile()` ohne Error Callback
-  - `packages/backend/src/routes/images.ts:12-28`
-  - Async ohne Fehlerbehandlung
-  - **Fix**: Error-Callback hinzufügen
+- [x] **ERR-04**: `sendFile()` ohne Error Callback
+  - `packages/backend/src/routes/images.ts`
+  - Behoben: Error-Callback vorhanden, loggt Fehler explizit und liefert konsistente Fallback-Antwort
 
-- [ ] **ERR-05**: `deleteImage()` in Route ohne try-catch
-  - `packages/backend/src/routes/items.ts:93-107`
-  - Wenn Löschen fehlschlägt, wird Exception verschluckt
+- [x] **ERR-05**: `deleteImage()` in Route ohne try-catch
+  - `packages/backend/src/routes/items.ts`
+  - Behoben: File-Cleanup läuft in try-catch mit Logging; Response enthält jetzt `imageDeleted`
 
-- [ ] **ERR-06**: SecureStore Fehler still verschluckt
-  - `packages/mobile/src/shared/services/apiClient.ts:14-18`
-  - `catch { return null }` → Debugging unmöglich
-  - **Fix**: Mindestens console.warn im catch
+- [x] **ERR-06**: SecureStore Fehler still verschluckt
+  - `packages/mobile/src/shared/services/apiClient.ts`
+  - Behoben: SecureStore-Leseprobleme werden jetzt mit brauchbarer Warnung geloggt, ohne Secrets zu leaken
 
 ### Performance
 
-- [ ] **PERF-03**: FlashList re-rendert komplett bei ViewMode-Toggle
-  - `packages/mobile/src/app/(tabs)/library.tsx:188-210`
-  - `key={viewMode}` zwingt vollständigen Rebuild
-  - **Fix**: Key entfernen, Rendering-Logik anpassen
+- [x] **PERF-03**: FlashList re-rendert komplett bei ViewMode-Toggle
+  - `packages/mobile/src/app/(tabs)/library.tsx`
+  - Behoben: der erzwungene vollständige Remount beim Umschalten wurde entfernt
 
 ---
 
@@ -244,10 +233,10 @@ _Keine offenen P0-Issues mehr! 🎉_
 | Priorität | Anzahl | Status |
 |-----------|--------|--------|
 | P0 - Critical | 0 | ✅ Alle erledigt |
-| P1 - High | 12 | Offen |
+| P1 - High | 0 | ✅ Alle aktuell erfassten P1-Punkte erledigt |
 | P2 - Medium | 20 | Offen |
 | P3 - Low | 12 | Offen |
-| **Gesamt** | **44** | - |
+| **Gesamt** | **32** | - |
 
 | Kategorie | Anzahl |
 |-----------|--------|

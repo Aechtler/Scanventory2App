@@ -25,8 +25,14 @@ router.get('/:filename', (req: Request<{ filename: string }>, res: Response) => 
   }
 
   res.sendFile(getImagePath(safeName), (err) => {
-    if (err && !res.headersSent) {
-      res.status(404).end();
+    if (!err) {
+      return;
+    }
+
+    console.error('Failed to send image file:', err);
+
+    if (!res.headersSent) {
+      res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Image not found' } });
     }
   });
 });
