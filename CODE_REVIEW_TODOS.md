@@ -103,8 +103,8 @@ _Keine offenen P0-Issues mehr! 🎉_
 - [x] **SIZE-07**: `packages/mobile/src/app/history/[id].tsx` — 191 Zeilen
   - Behoben: Screen auf 143 Zeilen reduziert; Header-Actions, Market-/Quicklink-Section, Not-Found-State und Detail-State-Helper in fokussierte Dateien extrahiert, Verhalten beibehalten
 
-- [ ] **SIZE-08**: `packages/backend/src/services/itemService.ts` — 163 Zeilen
-  - Validation-Layer separieren
+- [x] **SIZE-08**: `packages/backend/src/services/itemService.ts` — 163 Zeilen
+  - Behoben: `itemService.ts` auf 138 Zeilen reduziert; Create-/Preis-Update-Normalisierung nach `packages/backend/src/services/itemPayloads.ts` extrahiert und mit einem gezielten Node-Test abgesichert
 
 ### Type Safety
 

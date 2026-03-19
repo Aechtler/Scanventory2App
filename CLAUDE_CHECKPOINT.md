@@ -16,6 +16,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/analyze/hooks/useAnalysis.ts`, keeping the public hook API stable while extracting vision orchestration, product-image loading, and platform-link composition into focused siblings.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/backend/src/routes/items.ts`, keeping the public `/api/items` router stable while moving create/read/delete/update handlers and shared validation helpers into focused sibling files.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/app/history/[id].tsx`, keeping the route screen focused on store/routing wiring while moving header actions, market/quicklink rendering, not-found UI, and detail-state helpers into focused siblings.
+The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, keeping the public service API stable while moving create/update payload normalization into focused helper builders.
 
 ## Analyzed
 
@@ -41,6 +42,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Batch 7 next size-rule target in `useAnalysis.ts`, including extraction boundaries between vision execution, product-image enrichment, quicklink generation, and manual-search helper logic
 - Batch 7 next size-rule target in `items.ts`, including extraction boundaries between router wiring, shared auth/validation helpers, multipart create handling, and update/delete handlers
 - Batch 7 next size-rule target in `history/[id].tsx`, including extraction boundaries between route wiring, header actions, market/quicklink section rendering, and detail-state bootstrap helpers
+- Batch 7 next size-rule target in `itemService.ts`, including extraction boundaries between Prisma CRUD orchestration and payload normalization for create/price update flows
 
 ## Created
 
@@ -89,6 +91,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - `packages/backend/src/routes/items/shared.ts`
 - `packages/backend/src/routes/items/shared.test.ts`
 - `packages/backend/src/routes/items/update.ts`
+- `packages/backend/src/services/itemPayloads.ts`
+- `packages/backend/src/services/itemPayloads.test.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.test.ts`
 - `packages/mobile/src/features/history/components/HistoryDetailHeaderActions.tsx`
@@ -195,6 +199,11 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Extracted detail bootstrap helpers for platform-query fallback and auto-load decisions into `packages/mobile/src/features/history/utils/historyDetail.ts`
 - Added `packages/mobile/src/features/history/utils/historyDetail.test.ts` and extended the targeted Node test entrypoint so the split stays covered without requiring the Expo runtime
 
+### Batch 7 eighth size-rule refactor
+- Reduced `packages/backend/src/services/itemService.ts` from 163 lines to 138 lines by keeping Prisma CRUD orchestration in that file and moving create/update payload shaping out of it
+- Extracted create-item normalization plus price-, Kleinanzeigen-, and market-value update builders into `packages/backend/src/services/itemPayloads.ts`
+- Added `packages/backend/src/services/itemPayloads.test.ts` and extended the targeted Node test entrypoint so the backend service split has runnable coverage without requiring Prisma or installed workspace dependencies
+
 ## Validated
 
 - `git diff --check`
@@ -213,6 +222,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
   - Passed
 - `node --test --experimental-strip-types packages/backend/src/routes/items/shared.test.ts`
   - Passed
+- `node --test --experimental-strip-types packages/backend/src/services/itemPayloads.test.ts`
+  - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyDetail.test.ts`
   - Passed
 - `npm run typecheck:mobile`
@@ -230,8 +241,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
-- Continue the remaining Batch 7 size-rule refactors (`itemService.ts`) once the next slice is chosen
+- Continue with the next highest-value cleanup or runnable-environment validation now that the remaining Batch 7 size-rule target is complete
 
 ## Exact Next Step
 
-Pick the next Batch 7 size-rule target (`packages/backend/src/services/itemService.ts` is now the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.
+Run mobile/backend typecheck plus the manual regression checklist in a dependency-installed environment, or pick the next medium-priority cleanup from `CODE_REVIEW_TODOS.md` now that the Batch 7 size-rule queue is cleared.

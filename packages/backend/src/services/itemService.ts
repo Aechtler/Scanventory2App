@@ -1,19 +1,14 @@
-/**
- * Item Service - Prisma CRUD-Logik fuer ScannedItems
- */
-
 import { PrismaClient, Prisma } from '@prisma/client';
+import { CreateItemBody, PaginatedResponse, PriceStats, MarketListing, MarketValueResult } from '../types';
 import {
-  CreateItemBody,
-  PaginatedResponse,
-  PriceStats,
-  MarketListing,
-  MarketValueResult,
-} from '../types';
+  buildCreateItemData,
+  buildKleinanzeigenPriceUpdateData,
+  buildMarketValueUpdateData,
+  buildPriceUpdateData,
+} from './itemPayloads';
 
 const prisma = new PrismaClient();
 
-/** Konvertiert einen Wert sicher zu Prisma JSON oder DbNull */
 function toJsonOrNull(value: unknown): Prisma.InputJsonValue | typeof Prisma.DbNull {
   if (value === undefined || value === null) return Prisma.DbNull;
   return value as Prisma.InputJsonValue;
@@ -21,7 +16,6 @@ function toJsonOrNull(value: unknown): Prisma.InputJsonValue | typeof Prisma.DbN
 
 export { prisma };
 
-/** Alle Items eines Users paginiert abrufen */
 export async function getItems(
   userId: string,
   page: number = 1,
@@ -47,127 +41,90 @@ export async function getItems(
   };
 }
 
-/** Einzelnes Item abrufen */
 export async function getItemById(id: string, userId: string) {
-  return prisma.scannedItem.findFirst({
-    where: { id, userId },
-  });
+  return prisma.scannedItem.findFirst({ where: { id, userId } });
 }
 
-/** Neues Item anlegen */
-export async function createItem(
-  userId: string,
-  data: CreateItemBody,
-  imageFilename: string
-) {
+export async function createItem(userId: string, data: CreateItemBody, imageFilename: string) {
+  const createData = buildCreateItemData(userId, data, imageFilename);
+
   return prisma.scannedItem.create({
     data: {
-      userId,
-      productName: data.productName,
-      category: data.category,
-      brand: data.brand ?? null,
-      condition: data.condition,
-      confidence: data.confidence,
-      gtin: data.gtin ?? null,
-      searchQuery: data.searchQuery,
-      searchQueries: toJsonOrNull(data.searchQueries),
-      imageFilename,
-      originalUri: data.originalUri ?? null,
-      priceStats: toJsonOrNull(data.priceStats),
-      ebayListings: toJsonOrNull(data.ebayListings),
-      ebayListingsFetchedAt: data.ebayListingsFetchedAt
-        ? new Date(data.ebayListingsFetchedAt)
-        : null,
-      kleinanzeigenListings: toJsonOrNull(data.kleinanzeigenListings),
-      kleinanzeigenListingsFetchedAt: data.kleinanzeigenListingsFetchedAt
-        ? new Date(data.kleinanzeigenListingsFetchedAt)
-        : null,
-      marketValue: toJsonOrNull(data.marketValue),
-      marketValueFetchedAt: data.marketValueFetchedAt
-        ? new Date(data.marketValueFetchedAt)
-        : null,
-      finalPrice: data.finalPrice ?? null,
-      finalPriceNote: data.finalPriceNote ?? null,
-      scannedAt: new Date(data.scannedAt),
+      ...createData,
+      searchQueries: toJsonOrNull(createData.searchQueries),
+      priceStats: toJsonOrNull(createData.priceStats),
+      ebayListings: toJsonOrNull(createData.ebayListings),
+      kleinanzeigenListings: toJsonOrNull(createData.kleinanzeigenListings),
+      marketValue: toJsonOrNull(createData.marketValue),
     },
   });
 }
 
-/** Item aktualisieren */
-export async function updateItem(
-  id: string,
-  userId: string,
-  data: Prisma.ScannedItemUpdateInput
-) {
-  return prisma.scannedItem.updateMany({
-    where: { id, userId },
-    data,
-  });
+export async function updateItem(id: string, userId: string, data: Prisma.ScannedItemUpdateInput) {
+  return prisma.scannedItem.updateMany({ where: { id, userId }, data });
 }
 
-/** Preisdaten aktualisieren */
 export async function updatePrices(
   id: string,
   userId: string,
   priceStats: PriceStats,
   ebayListings?: MarketListing[]
 ) {
+  const updateData = buildPriceUpdateData(priceStats, ebayListings);
+
   return prisma.scannedItem.updateMany({
     where: { id, userId },
     data: {
-      priceStats: toJsonOrNull(priceStats),
-      ebayListings: ebayListings ? toJsonOrNull(ebayListings) : undefined,
-      ebayListingsFetchedAt: new Date(),
+      priceStats: toJsonOrNull(updateData.priceStats),
+      ebayListings:
+        updateData.ebayListings === undefined ? undefined : toJsonOrNull(updateData.ebayListings),
+      ebayListingsFetchedAt: updateData.ebayListingsFetchedAt,
     },
   });
 }
 
-/** Kleinanzeigen-Preisdaten aktualisieren */
 export async function updateKleinanzeigenPrices(
   id: string,
   userId: string,
   kleinanzeigenListings: MarketListing[]
 ) {
+  const updateData = buildKleinanzeigenPriceUpdateData(kleinanzeigenListings);
+
   return prisma.scannedItem.updateMany({
     where: { id, userId },
     data: {
-      kleinanzeigenListings: toJsonOrNull(kleinanzeigenListings),
-      kleinanzeigenListingsFetchedAt: new Date(),
+      kleinanzeigenListings: toJsonOrNull(updateData.kleinanzeigenListings),
+      kleinanzeigenListingsFetchedAt: updateData.kleinanzeigenListingsFetchedAt,
     },
   });
 }
 
-/** Marktwert aktualisieren */
 export async function updateMarketValue(
   id: string,
   userId: string,
   marketValue: MarketValueResult
 ) {
+  const updateData = buildMarketValueUpdateData(marketValue);
+
   return prisma.scannedItem.updateMany({
     where: { id, userId },
     data: {
-      marketValue: toJsonOrNull(marketValue),
-      marketValueFetchedAt: new Date(),
+      marketValue: toJsonOrNull(updateData.marketValue),
+      marketValueFetchedAt: updateData.marketValueFetchedAt,
     },
   });
 }
 
-/** Item loeschen */
 export async function deleteItem(id: string, userId: string) {
   try {
     return await prisma.$transaction(async (tx) => {
-      const item = await tx.scannedItem.findUnique({
-        where: { id },
-        select: { imageFilename: true, userId: true },
-      });
+      const item = await tx.scannedItem.findUnique({ where: { id }, select: { imageFilename: true, userId: true } });
 
       if (!item || item.userId !== userId) {
         return null;
       }
 
-      await tx.scannedItem.delete({
-        where: { id },
-      });
+      await tx.scannedItem.delete({ where: { id } });
 
       return { imageFilename: item.imageFilename };
     });
