@@ -97,8 +97,8 @@ _Keine offenen P0-Issues mehr! 🎉_
 - [x] **SIZE-05**: `packages/mobile/src/features/analyze/hooks/useAnalysis.ts` — 204 Zeilen
   - Behoben: `useAnalysis.ts` auf 141 Zeilen reduziert; Vision-Orchestrierung, Produktbild-Laden und Plattform-Link-Building nach `useVisionAnalysis.ts`, `useProductImages.ts` und `usePlatformLinks.ts` extrahiert, abgesichert durch `analysisHelpers.test.ts`
 
-- [ ] **SIZE-06**: `packages/backend/src/routes/items.ts` — 210 Zeilen
-  - Aufteilen in: separate Handler-Dateien pro Route
+- [x] **SIZE-06**: `packages/backend/src/routes/items.ts` — 210 Zeilen
+  - Behoben: `items.ts` ist jetzt ein 27-zeiliger Router-Entry; CRUD-/Preis-Handler wurden nach `packages/backend/src/routes/items/` in fokussierte Dateien ausgelagert, abgesichert durch einen gezielten Node-Test fuer Pagination- und Create-Validation-Helper
 
 - [ ] **SIZE-07**: `packages/mobile/src/app/history/[id].tsx` — 191 Zeilen
   - MarketSlider und HeaderActions als separate Komponenten

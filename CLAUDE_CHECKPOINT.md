@@ -14,6 +14,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/market/services/ebay/search.ts`, keeping the marketplace search orchestration in place while moving listing parsing and price-stat calculation into focused helper files with targeted Node coverage.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/history/store/historyStore.ts`, moving store transitions, selectors, and types into focused siblings while keeping the Zustand API stable.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/analyze/hooks/useAnalysis.ts`, keeping the public hook API stable while extracting vision orchestration, product-image loading, and platform-link composition into focused siblings.
+The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/backend/src/routes/items.ts`, keeping the public `/api/items` router stable while moving create/read/delete/update handlers and shared validation helpers into focused sibling files.
 
 ## Analyzed
 
@@ -37,6 +38,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Batch 7 next size-rule target in `search.ts`, including extraction boundaries between eBay marketplace orchestration, listing parsing, and price-stat helpers
 - Batch 7 next size-rule target in `historyStore.ts`, including extraction boundaries between Zustand wiring, pure item transitions, selector lookup, and store type definitions
 - Batch 7 next size-rule target in `useAnalysis.ts`, including extraction boundaries between vision execution, product-image enrichment, quicklink generation, and manual-search helper logic
+- Batch 7 next size-rule target in `items.ts`, including extraction boundaries between router wiring, shared auth/validation helpers, multipart create handling, and update/delete handlers
 
 ## Created
 
@@ -79,6 +81,12 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - `packages/mobile/src/features/analyze/hooks/useVisionAnalysis.ts`
 - `packages/mobile/src/features/analyze/hooks/useProductImages.ts`
 - `packages/mobile/src/features/analyze/hooks/usePlatformLinks.ts`
+- `packages/backend/src/routes/items/create.ts`
+- `packages/backend/src/routes/items/delete.ts`
+- `packages/backend/src/routes/items/read.ts`
+- `packages/backend/src/routes/items/shared.ts`
+- `packages/backend/src/routes/items/shared.test.ts`
+- `packages/backend/src/routes/items/update.ts`
 
 ## Implemented
 
@@ -163,6 +171,15 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Extracted manual-match creation, auto-select evaluation, and platform-query fallback logic into `packages/mobile/src/features/analyze/hooks/analysisHelpers.ts`
 - Added `packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts` and extended the targeted Node test entrypoint so the split stays covered without requiring the Expo runtime
 
+### Batch 7 sixth size-rule refactor
+- Reduced `packages/backend/src/routes/items.ts` from 362 lines to 27 lines by keeping only route registration in that file
+- Extracted multipart create handling and upload validation into `packages/backend/src/routes/items/create.ts`
+- Extracted read handlers into `packages/backend/src/routes/items/read.ts`
+- Extracted delete flow into `packages/backend/src/routes/items/delete.ts`
+- Extracted PUT/PATCH handlers into `packages/backend/src/routes/items/update.ts`
+- Extracted shared auth, UUID, pagination, temp-file cleanup, and create-payload parsing helpers into `packages/backend/src/routes/items/shared.ts`
+- Added `packages/backend/src/routes/items/shared.test.ts` and extended the targeted Node test entrypoint so the backend route split has runnable coverage in this dependency-limited workspace
+
 ## Validated
 
 - `git diff --check`
@@ -179,6 +196,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts`
   - Passed
+- `node --test --experimental-strip-types packages/backend/src/routes/items/shared.test.ts`
+  - Passed
 - `npm run typecheck:mobile`
   - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
 - `npm run lint:mobile`
@@ -194,8 +213,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
-- Continue the remaining Batch 7 size-rule refactors (`items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
+- Continue the remaining Batch 7 size-rule refactors (`history/[id].tsx`, `itemService.ts`) once the next slice is chosen
 
 ## Exact Next Step
 
-Pick the next Batch 7 size-rule target (`packages/backend/src/routes/items.ts` is now the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.
+Pick the next Batch 7 size-rule target (`packages/mobile/src/app/history/[id].tsx` is now the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.
