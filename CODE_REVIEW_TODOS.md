@@ -94,8 +94,8 @@ _Keine offenen P0-Issues mehr! 🎉_
 - [x] **SIZE-04**: `packages/mobile/src/features/history/store/historyStore.ts` — 205 Zeilen
   - Behoben: `historyStore.ts` auf 117 Zeilen reduziert; pure Store-Transitions und Sync-Payload-Building nach `actions.ts`, Lookup-Logik nach `selectors.ts`, Typen nach `types.ts` extrahiert und mit einem gezielten Node-Test abgesichert
 
-- [ ] **SIZE-05**: `packages/mobile/src/features/analyze/hooks/useAnalysis.ts` — 204 Zeilen
-  - Aufteilen in: useVisionAnalysis, useProductImages, usePlatformLinks
+- [x] **SIZE-05**: `packages/mobile/src/features/analyze/hooks/useAnalysis.ts` — 204 Zeilen
+  - Behoben: `useAnalysis.ts` auf 141 Zeilen reduziert; Vision-Orchestrierung, Produktbild-Laden und Plattform-Link-Building nach `useVisionAnalysis.ts`, `useProductImages.ts` und `usePlatformLinks.ts` extrahiert, abgesichert durch `analysisHelpers.test.ts`
 
 - [ ] **SIZE-06**: `packages/backend/src/routes/items.ts` — 210 Zeilen
   - Aufteilen in: separate Handler-Dateien pro Route

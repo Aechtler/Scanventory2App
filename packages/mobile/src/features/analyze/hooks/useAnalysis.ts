@@ -1,21 +1,14 @@
-/**
- * useAnalysis Hook
- * 
- * Manages the image analysis flow: vision API, match selection, product identification.
- * Extracted from analyze.tsx for better testability and separation of concerns.
- */
-
 import { useState, useCallback } from 'react';
-import { 
-  analyzeImage, 
-  analyzeImageMock, 
-  VisionResult, 
-  VisionMatch, 
-  identifyProductIdentifier 
+import {
+  type VisionResult,
+  type VisionMatch,
+  identifyProductIdentifier,
 } from '@/features/scan/services/visionService';
-import { getProductImage } from '@/features/market/services/ebay/images';
-import { generatePlatformLinks, PlatformLink } from '@/features/market/services/quicklinks';
-import { loadMatchImages } from '@/features/analyze/utils/productImageLoading';
+import type { PlatformLink } from '@/features/market/services/quicklinks';
+
+import { createManualVisionMatch } from './analysisHelpers';
+import { usePlatformLinks } from './usePlatformLinks';
+import { useVisionAnalysis } from './useVisionAnalysis';
 
 export type AnalysisState = 'idle' | 'analyzing' | 'selecting' | 'complete' | 'error';
 
@@ -48,132 +41,83 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
   const [selectedMatch, setSelectedMatch] = useState<VisionMatch | null>(null);
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
-  // Store imageUri for identifier lookup
   const [currentImageUri, setCurrentImageUri] = useState<string | null>(null);
+  const analyzeVision = useVisionAnalysis();
+  const createPlatformLinks = usePlatformLinks();
 
-  /**
-   * Run vision analysis on an image
-   */
   const runAnalysis = useCallback(async (imageUri: string) => {
     try {
       setState('analyzing');
       setError(null);
       setCurrentImageUri(imageUri);
 
-      const decodedImageUri = decodeURIComponent(imageUri);
-      const hasApiKey = !!process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-      const vision = hasApiKey
-        ? await analyzeImage(decodedImageUri)
-        : await analyzeImageMock(decodedImageUri);
+      const { result, autoSelectIndex } = await analyzeVision(imageUri);
+      setVisionResult(result);
 
-      console.log('[useAnalysis] Loading product images for', vision.matches.length, 'matches...');
-      const matchesWithImages = await loadMatchImages(vision.matches, getProductImage);
-
-      const visionWithImages = { ...vision, matches: matchesWithImages };
-      setVisionResult(visionWithImages);
-
-      // Auto-select if high confidence single match
-      if (visionWithImages.matches.length === 1 && visionWithImages.matches[0].confidence >= 0.95) {
-        handleMatchSelectInternal(0, visionWithImages, imageUri);
-      } else {
-        setState('selecting');
+      if (autoSelectIndex !== null) {
+        handleMatchSelectInternal(autoSelectIndex, result, imageUri);
+        return;
       }
+
+      setState('selecting');
     } catch (err) {
       console.error('[useAnalysis] Analysis error:', err);
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
       setState('error');
     }
-  }, []);
+  }, [analyzeVision]);
 
-  /**
-   * Internal match selection handler
-   */
   const handleMatchSelectInternal = useCallback((
-    index: number, 
-    result: VisionResult, 
-    imageUri: string
+    index: number,
+    result: VisionResult,
+    imageUri: string,
   ) => {
     const match = result.matches[index];
     setSelectedMatch(match);
 
-    // Generate quicklinks mit plattformspezifischen Queries
-    const fallback = match.searchQuery;
-    const links = generatePlatformLinks({
-      ebay: match.searchQueries?.ebay || fallback,
-      amazon: match.searchQueries?.amazon || fallback,
-      idealo: match.searchQueries?.idealo || fallback,
-      generic: match.searchQueries?.generic || fallback,
-    });
+    const links = createPlatformLinks(match);
     setPlatformLinks(links);
-
     setState('complete');
-    
-    // Notify callback
     options?.onMatchSelected?.(match, links);
 
-    // Try to find product identifier if not present
     if (!match.gtin) {
       console.log('[useAnalysis] Attempting to identify product identifier...');
       identifyProductIdentifier(match.productName, decodeURIComponent(imageUri))
-        .then(gtin => {
+        .then((gtin) => {
           if (gtin) {
             console.log('[useAnalysis] Found identifier:', gtin);
-            setSelectedMatch(prev => prev ? { ...prev, gtin } : null);
+            setSelectedMatch((prev) => (prev ? { ...prev, gtin } : null));
             options?.onIdentifierFound?.(gtin);
           }
         });
     }
-  }, [options]);
+  }, [createPlatformLinks, options]);
 
-  /**
-   * Handle user selecting a match
-   */
   const handleMatchSelect = useCallback((index: number, result?: VisionResult) => {
     const vision = result || visionResult;
     if (!vision || !currentImageUri) return;
-    
+
     handleMatchSelectInternal(index, vision, currentImageUri);
   }, [visionResult, currentImageUri, handleMatchSelectInternal]);
 
-  /**
-   * Handle manual search query
-   */
   const handleManualSearch = useCallback((query: string) => {
-    const manualMatch: VisionMatch = {
-      productName: query,
-      category: 'Gefunden via Suche',
-      brand: null,
-      condition: 'Gut',
-      description: `Manuelle Suche nach: ${query}`,
-      confidence: 0,
-      isManual: true,
-      searchQuery: query,
-      searchQueries: {
-        ebay: query,
-        generic: query
-      }
-    };
-    
+    const manualMatch = createManualVisionMatch(query);
     const updatedResult: VisionResult = {
       matches: visionResult ? [...visionResult.matches, manualMatch] : [manualMatch],
-      selectedIndex: visionResult ? visionResult.matches.length : 0
+      selectedIndex: visionResult ? visionResult.matches.length : 0,
     };
-    
+
     setVisionResult(updatedResult);
 
     if (currentImageUri) {
       handleMatchSelectInternal(
-        visionResult?.matches.length || 0, 
-        updatedResult, 
-        currentImageUri
+        visionResult?.matches.length || 0,
+        updatedResult,
+        currentImageUri,
       );
     }
   }, [visionResult, currentImageUri, handleMatchSelectInternal]);
 
-  /**
-   * Reset to initial state
-   */
   const reset = useCallback(() => {
     setState('idle');
     setVisionResult(null);

@@ -13,6 +13,7 @@ A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, cover
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/shared/components/Animated.tsx`, splitting the shared animation helpers into focused component files behind a compatibility barrel.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/market/services/ebay/search.ts`, keeping the marketplace search orchestration in place while moving listing parsing and price-stat calculation into focused helper files with targeted Node coverage.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/history/store/historyStore.ts`, moving store transitions, selectors, and types into focused siblings while keeping the Zustand API stable.
+The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/analyze/hooks/useAnalysis.ts`, keeping the public hook API stable while extracting vision orchestration, product-image loading, and platform-link composition into focused siblings.
 
 ## Analyzed
 
@@ -35,6 +36,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Batch 7 next size-rule target in `Animated.tsx`, including extraction boundaries for shared animation helpers and keeping import compatibility stable
 - Batch 7 next size-rule target in `search.ts`, including extraction boundaries between eBay marketplace orchestration, listing parsing, and price-stat helpers
 - Batch 7 next size-rule target in `historyStore.ts`, including extraction boundaries between Zustand wiring, pure item transitions, selector lookup, and store type definitions
+- Batch 7 next size-rule target in `useAnalysis.ts`, including extraction boundaries between vision execution, product-image enrichment, quicklink generation, and manual-search helper logic
 
 ## Created
 
@@ -72,6 +74,11 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - `packages/mobile/src/features/history/store/selectors.ts`
 - `packages/mobile/src/features/history/store/types.ts`
 - `packages/mobile/src/features/history/store/historyStore.test.ts`
+- `packages/mobile/src/features/analyze/hooks/analysisHelpers.ts`
+- `packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts`
+- `packages/mobile/src/features/analyze/hooks/useVisionAnalysis.ts`
+- `packages/mobile/src/features/analyze/hooks/useProductImages.ts`
+- `packages/mobile/src/features/analyze/hooks/usePlatformLinks.ts`
 
 ## Implemented
 
@@ -148,6 +155,14 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Extracted item lookup into `packages/mobile/src/features/history/store/selectors.ts` and shared store types into `packages/mobile/src/features/history/store/types.ts`
 - Added `packages/mobile/src/features/history/store/historyStore.test.ts` and extended the targeted Node test entrypoint so the split structure and core helper behavior stay covered without the Expo runtime
 
+### Batch 7 fifth size-rule refactor
+- Reduced `packages/mobile/src/features/analyze/hooks/useAnalysis.ts` from 204 lines to 141 lines by keeping only the composed analysis state machine and callback wiring in that file
+- Extracted the vision analysis and image-enrichment path into `packages/mobile/src/features/analyze/hooks/useVisionAnalysis.ts`
+- Extracted product-image loading into `packages/mobile/src/features/analyze/hooks/useProductImages.ts`
+- Extracted platform-link composition into `packages/mobile/src/features/analyze/hooks/usePlatformLinks.ts`
+- Extracted manual-match creation, auto-select evaluation, and platform-query fallback logic into `packages/mobile/src/features/analyze/hooks/analysisHelpers.ts`
+- Added `packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts` and extended the targeted Node test entrypoint so the split stays covered without requiring the Expo runtime
+
 ## Validated
 
 - `git diff --check`
@@ -161,6 +176,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - `node --test --experimental-strip-types packages/mobile/src/features/market/services/ebay/search.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/store/historyStore.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts`
   - Passed
 - `npm run typecheck:mobile`
   - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
@@ -177,8 +194,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
-- Continue the remaining Batch 7 size-rule refactors (`useAnalysis.ts`, `items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
+- Continue the remaining Batch 7 size-rule refactors (`items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
 
 ## Exact Next Step
 
-Pick the next Batch 7 size-rule target (`packages/mobile/src/features/analyze/hooks/useAnalysis.ts` is the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.
+Pick the next Batch 7 size-rule target (`packages/backend/src/routes/items.ts` is now the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.
