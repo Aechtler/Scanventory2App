@@ -126,18 +126,18 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/mobile/src/features/auth/store/authStore.ts`
   - Behoben: Login/Register teilen sich jetzt einen gemeinsamen `authenticate()`-Helper für Request-, Envelope- und Token-Handling
 
-- [ ] **QUAL-02**: Hardcoded Colors dupliziert
+- [x] **QUAL-02**: Hardcoded Colors dupliziert
   - `packages/mobile/src/shared/components/GlobalTabBar.tsx:22-23`
   - `packages/mobile/src/shared/components/CustomTabBar.tsx:19-20`
-  - **Fix**: In Theme-Store/Constants zentralisieren
+  - Behoben: gemeinsame Tab-Bar-Inactive-Farben leben jetzt zentral in `packages/mobile/src/shared/constants/index.ts`
 
-- [ ] **QUAL-03**: Magic Numbers in Animationen
+- [x] **QUAL-03**: Magic Numbers in Animationen
   - `packages/mobile/src/shared/components/Animated.tsx:40-41, 50, 84, 118, 173`
-  - `damping: 20, stiffness: 300` → benannte Konstanten
+  - Behoben: wiederverwendete Spring-/Timing-/Offset-Werte wurden in `ANIMATION_PRESETS` zentralisiert
 
-- [ ] **QUAL-04**: Fehlende Barrel Exports in shared/components
+- [x] **QUAL-04**: Fehlende Barrel Exports in shared/components
   - `packages/mobile/src/shared/components/index.ts`
-  - Animated, Skeleton, Icons, GlobalTabBar, ThemeSelector fehlen
+  - Behoben: Animated-, Skeleton-, Icons-, GlobalTabBar-, CustomTabBar- und ThemeSelector-Exporte sind jetzt Teil der Public API
 
 - [x] **QUAL-05**: Inkonsistentes Response-Format im Backend
   - `packages/backend/src/routes/auth.ts`, `packages/backend/src/middleware/jwtAuth.ts`
@@ -230,9 +230,9 @@ _Keine offenen P0-Issues mehr! 🎉_
 |-----------|--------|--------|
 | P0 - Critical | 0 | ✅ Alle erledigt |
 | P1 - High | 0 | ✅ Alle aktuell erfassten P1-Punkte erledigt |
-| P2 - Medium | 11 | Offen |
+| P2 - Medium | 8 | Offen |
 | P3 - Low | 12 | Offen |
-| **Gesamt** | **23** | - |
+| **Gesamt** | **20** | - |
 
 | Kategorie | Anzahl |
 |-----------|--------|
@@ -242,7 +242,7 @@ _Keine offenen P0-Issues mehr! 🎉_
 | Performance | 0 |
 | File Size (>150) | 8 |
 | Type Safety | 0 |
-| Code-Qualität | 3 |
+| Code-Qualität | 0 |
 | Architektur | 8 |
 | Minor | 4 |
 

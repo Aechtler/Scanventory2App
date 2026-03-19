@@ -77,3 +77,47 @@ export const COLORS = {
   textPrimary: '#ffffff',
   textSecondary: '#9ca3af',
 } as const;
+
+/**
+ * Geteilte Tab-Bar-Farben
+ */
+export const TAB_BAR_COLORS = {
+  inactiveLight: '#9ca3af',
+  inactiveDark: '#6b7280',
+} as const;
+
+/**
+ * Geteilte Animations-Konstanten
+ */
+export const ANIMATION_PRESETS = {
+  spring: {
+    damping: 20,
+    stiffness: 300,
+  },
+  fadeIn: {
+    translateY: 6,
+    duration: 150,
+  },
+  staggeredItem: {
+    translateX: -10,
+    duration: 300,
+    delayStep: 30,
+  },
+  pulse: {
+    scale: 1.02,
+    duration: 800,
+  },
+  bounceIn: {
+    initialScale: 0.9,
+    damping: 25,
+    stiffness: 300,
+  },
+  slideUp: {
+    translateY: 50,
+    damping: 25,
+    stiffness: 300,
+  },
+  animatedNumber: {
+    duration: 300,
+  },
+} as const;

@@ -8,6 +8,7 @@ Batch 3 is implemented in code and pending runnable-environment validation.
 Batch 4 is implemented in code and pending runnable-environment validation.
 Batch 5 is implemented in code on `scanapp2`, including backend payload typing, delete-consistency hardening, normalized auth response envelopes, and auth-store deduplication.
 Batch 6 has started on `scanapp2` with a runnable manual regression checklist and a lightweight targeted node-test entrypoint for extracted helpers.
+A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, covering centralized tab-bar colors, centralized animation presets, and missing shared-component barrel exports.
 
 ## Analyzed
 
@@ -25,6 +26,7 @@ Batch 6 has started on `scanapp2` with a runnable manual regression checklist an
 - Batch 2 resilience targets in `useAnalysis.ts`, `visionService.ts`, and `apiClient.ts`
 - Batch 4 trust-boundary targets in backend upload/auth routes, JWT request typing, backend HTTPS enforcement, and mobile API URL/upload validation
 - Batch 5 contract/consistency targets in backend types, auth envelopes, delete flow, and auth-store duplication
+- Remaining small P2 cleanup targets in shared UI constants, animation presets, barrel exports, and size-rule candidates
 
 ## Created
 
@@ -41,6 +43,7 @@ Batch 6 has started on `scanapp2` with a runnable manual regression checklist an
 - `packages/mobile/src/features/analyze/utils/productImageLoading.ts`
 - `packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
 - `docs/manual-regression-checklist.md`
+- shared `TAB_BAR_COLORS` and `ANIMATION_PRESETS` in `packages/mobile/src/shared/constants/index.ts`
 
 ## Implemented
 
@@ -88,6 +91,11 @@ Batch 6 has started on `scanapp2` with a runnable manual regression checklist an
 - Added `docs/manual-regression-checklist.md` as the minimum repeatable auth/scan/analyze/save/upload/sync/delete verification pass before the larger size refactors
 - Added root script `npm run test:targeted` to run the extracted helper tests directly via Node's built-in test runner with TypeScript strip mode
 
+### Shared UI cleanup checkpoint
+- Centralized duplicate tab-bar inactive colors into shared `TAB_BAR_COLORS` constants and updated both tab-bar implementations to consume them
+- Centralized repeated animation spring/timing/offset values into shared `ANIMATION_PRESETS` and updated `Animated.tsx` to use the named presets instead of scattered magic numbers
+- Expanded `packages/mobile/src/shared/components/index.ts` so Animated helpers, Skeleton variants, Icons, Global/Custom tab bars, and ThemeSelector are exported through the shared barrel
+
 ## Validated
 
 - `git diff --check`
@@ -102,14 +110,17 @@ Batch 6 has started on `scanapp2` with a runnable manual regression checklist an
   - Could not run successfully in this workspace because dependencies are not installed locally (`eslint` not found)
 - `npm run typecheck:backend`
   - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
+- `npm run test:targeted`
+  - Passed
 
 ## What Remains
 
 - Install workspace dependencies or otherwise provide a runnable toolchain for lint/typecheck
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
-- Decide whether to continue expanding verification scaffolding or start the first small P2 item before Batch 7 size refactors
+- Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
+- Start the first Batch 7 size-rule refactor once runnable validation and Trello sync are available again
 
 ## Exact Next Step
 
-Run `npm run test:targeted` and execute `docs/manual-regression-checklist.md` in a runnable device/backend environment; if the environment remains non-runnable, continue with another small P2 item that does not depend on installed toolchains.
+Execute `docs/manual-regression-checklist.md` plus typecheck/lint in a runnable dependency-installed environment; if that is still unavailable, begin the first Batch 7 size-rule refactor (`library.tsx` or `Animated.tsx`) while Trello credentials remain unavailable.

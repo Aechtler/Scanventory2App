@@ -20,9 +20,7 @@ import { Icons } from './Icons';
 import { useUIStore } from '../store/uiStore';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useResolvedColorScheme } from '../store/themeStore';
-
-const INACTIVE_COLOR_LIGHT = '#9ca3af';
-const INACTIVE_COLOR_DARK = '#6b7280';
+import { TAB_BAR_COLORS } from '../constants';
 
 interface TabDef {
   route: string;
@@ -113,7 +111,9 @@ export function GlobalTabBar() {
   // Auf Auth-Screens ausblenden
   if (HIDDEN_SEGMENTS.includes(firstSegment)) return null;
 
-  const inactiveColor = scheme === 'dark' ? INACTIVE_COLOR_DARK : INACTIVE_COLOR_LIGHT;
+  const inactiveColor = scheme === 'dark'
+    ? TAB_BAR_COLORS.inactiveDark
+    : TAB_BAR_COLORS.inactiveLight;
 
   const getIsActive = (tab: TabDef): boolean => {
     if (firstSegment === 'history' && tab.matchSegments.includes('history')) {

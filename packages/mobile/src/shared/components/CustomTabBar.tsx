@@ -15,9 +15,7 @@ import Animated, {
 import { Icons } from './Icons';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useResolvedColorScheme } from '../store/themeStore';
-
-const INACTIVE_COLOR_LIGHT = '#9ca3af';
-const INACTIVE_COLOR_DARK = '#6b7280';
+import { TAB_BAR_COLORS } from '../constants';
 
 interface TabConfig {
   icon: (props: { size: number; color: string }) => React.ReactNode;
@@ -93,7 +91,9 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   const colors = useThemeColors();
   const scheme = useResolvedColorScheme();
   const bottomPadding = Math.max(insets.bottom - 8, 8);
-  const inactiveColor = scheme === 'dark' ? INACTIVE_COLOR_DARK : INACTIVE_COLOR_LIGHT;
+  const inactiveColor = scheme === 'dark'
+    ? TAB_BAR_COLORS.inactiveDark
+    : TAB_BAR_COLORS.inactiveLight;
 
   return (
     <View
