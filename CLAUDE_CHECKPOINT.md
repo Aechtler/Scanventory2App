@@ -7,6 +7,7 @@ Batch 2 is implemented in code and pending runnable-environment validation.
 Batch 3 is implemented in code and pending runnable-environment validation.
 Batch 4 is implemented in code and pending runnable-environment validation.
 Batch 5 is implemented in code on `scanapp2`, including backend payload typing, delete-consistency hardening, normalized auth response envelopes, and auth-store deduplication.
+Batch 6 has started on `scanapp2` with a runnable manual regression checklist and a lightweight targeted node-test entrypoint for extracted helpers.
 
 ## Analyzed
 
@@ -39,6 +40,7 @@ Batch 5 is implemented in code on `scanapp2`, including backend payload typing, 
 - `packages/mobile/src/features/history/utils/historyPricing.test.ts`
 - `packages/mobile/src/features/analyze/utils/productImageLoading.ts`
 - `packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
+- `docs/manual-regression-checklist.md`
 
 ## Implemented
 
@@ -82,9 +84,17 @@ Batch 5 is implemented in code on `scanapp2`, including backend payload typing, 
 - Updated the mobile auth store to unwrap the normalized auth envelopes
 - Extracted a shared `authenticate()` helper to remove login/register duplication in the mobile auth store
 
+### Batch 6
+- Added `docs/manual-regression-checklist.md` as the minimum repeatable auth/scan/analyze/save/upload/sync/delete verification pass before the larger size refactors
+- Added root script `npm run test:targeted` to run the extracted helper tests directly via Node's built-in test runner with TypeScript strip mode
+
 ## Validated
 
 - `git diff --check`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
   - Passed
 - `npm run typecheck:mobile`
   - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
@@ -96,10 +106,10 @@ Batch 5 is implemented in code on `scanapp2`, including backend payload typing, 
 ## What Remains
 
 - Install workspace dependencies or otherwise provide a runnable toolchain for lint/typecheck
-- Run the Batch 1-5 manual regression items in a runnable device/backend environment
+- Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
-- Decide whether to continue with Batch 6 verification scaffolding or another small P2 item before Batch 7 size refactors
+- Decide whether to continue expanding verification scaffolding or start the first small P2 item before Batch 7 size refactors
 
 ## Exact Next Step
 
-Re-run verification once dependencies are available; if the environment remains non-runnable, continue with Batch 6 verification scaffolding or another small P2 item that does not depend on installed toolchains.
+Run `npm run test:targeted` and execute `docs/manual-regression-checklist.md` in a runnable device/backend environment; if the environment remains non-runnable, continue with another small P2 item that does not depend on installed toolchains.

@@ -195,6 +195,12 @@
 
 **Goal:** Add the smallest useful safety net before splitting large files.
 
+**Progress notes (2026-03-19):**
+- Added `docs/manual-regression-checklist.md` as the minimum repeatable verification pass for auth, scan, analyze, save, upload, sync, and delete flows
+- Added root script `npm run test:targeted` to run the currently extracted helper tests directly with Node's built-in test runner and TypeScript strip mode
+- Verified the existing helper tests for `historyPricing` and `productImageLoading` pass in this workspace without requiring the missing full mobile toolchain
+- Remaining Batch 6 work is executing the checklist in a runnable device/backend environment and deciding whether to add one more cheap pure-function test before starting size refactors
+
 **Files:**
 - Create: `docs/manual-regression-checklist.md` or reuse existing project skill material as a repo doc
 - Create: targeted test scaffolding in the workspace chosen for the first extracted pure functions
