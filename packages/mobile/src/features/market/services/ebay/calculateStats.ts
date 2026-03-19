@@ -1,4 +1,4 @@
-import { MarketListing, PriceStats } from './types';
+import type { MarketListing, PriceStats } from './types';
 
 type SearchPriceStats = Omit<PriceStats, 'totalListings' | 'soldListings'>;
 

@@ -88,11 +88,11 @@ _Keine offenen P0-Issues mehr! 🎉_
 - [x] **SIZE-02**: `packages/mobile/src/shared/components/Animated.tsx` — 232 Zeilen
   - Behoben: `Animated.tsx` ist jetzt ein 7-zeiliges Compatibility-Barrel; konkrete Helper liegen in `packages/mobile/src/shared/components/Animated/`
 
-- [ ] **SIZE-03**: `packages/mobile/src/features/market/services/ebay/search.ts` — 215 Zeilen
-  - Aufteilen in: parseListings.ts, calculateStats.ts, search.ts
+- [x] **SIZE-03**: `packages/mobile/src/features/market/services/ebay/search.ts` — 215 Zeilen
+  - Behoben: `search.ts` auf 141 Zeilen reduziert; Listing-Parsing und Preisstatistik leben jetzt in `parseListings.ts` und `calculateStats.ts`, abgesichert durch einen gezielten Node-Test
 
-- [ ] **SIZE-04**: `packages/mobile/src/features/history/store/historyStore.ts` — 205 Zeilen
-  - Aufteilen in: actions.ts, selectors.ts
+- [x] **SIZE-04**: `packages/mobile/src/features/history/store/historyStore.ts` — 205 Zeilen
+  - Behoben: `historyStore.ts` auf 117 Zeilen reduziert; pure Store-Transitions und Sync-Payload-Building nach `actions.ts`, Lookup-Logik nach `selectors.ts`, Typen nach `types.ts` extrahiert und mit einem gezielten Node-Test abgesichert
 
 - [ ] **SIZE-05**: `packages/mobile/src/features/analyze/hooks/useAnalysis.ts` — 204 Zeilen
   - Aufteilen in: useVisionAnalysis, useProductImages, usePlatformLinks

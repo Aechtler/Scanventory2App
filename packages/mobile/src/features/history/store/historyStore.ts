@@ -5,56 +5,22 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type { HistoryState } from './types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PriceStats, MarketListing } from '@/features/market/services/ebay';
-import { MarketValueResult } from '@/features/market/services/perplexity';
 import { cacheImage, removeCachedImage, clearImageCache } from '../services/imageCacheService';
 import { syncNewItem, syncPrices, syncMarketValue, syncDeleteItem, syncItemUpdate } from '../services/syncService';
-
-export interface HistoryItem {
-  id: string;
-  imageUri: string;
-  cachedImageUri?: string; // Lokaler Cache-Pfad für Offline-Zugriff
-  productName: string;
-  category: string;
-  brand: string | null;
-  condition: string;
-  confidence: number;
-  searchQuery: string; // Allgemeiner Suchbegriff für Quicklinks
-  searchQueries?: {    // Plattformspezifische Suchbegriffe
-    ebay?: string;
-    amazon?: string;
-    idealo?: string;
-    generic?: string;
-  };
-  gtin?: string | null;  // EAN, GTIN oder ISBN
-  priceStats: PriceStats;
-  ebayListings?: MarketListing[];    // Cached eBay listings for detail view
-  ebayListingsFetchedAt?: string;    // When listings were last fetched
-  marketValue?: MarketValueResult;   // Cached Perplexity AI market analysis
-  marketValueFetchedAt?: string;     // When market value was last fetched
-  finalPrice?: number;               // Manuell gesetzter Verkaufspreis
-  finalPriceNote?: string;           // Notiz zum finalen Preis
-  scannedAt: string; // ISO Date string
-  serverId?: string;                 // Backend DB ID (nach erfolgreichem Sync)
-  syncStatus?: 'synced' | 'pending' | 'failed'; // Sync-Status
-}
-
-interface HistoryState {
-  items: HistoryItem[];
-  isOffline: boolean;
-  addItem: (item: Omit<HistoryItem, 'id' | 'scannedAt' | 'cachedImageUri' | 'serverId' | 'syncStatus'>) => Promise<string>;
-  removeItem: (id: string) => void;
-  clearHistory: () => void;
-  getItemById: (id: string) => HistoryItem | undefined;
-  setOffline: (offline: boolean) => void;
-  updateItemPrices: (id: string, priceStats: PriceStats, listings?: MarketListing[]) => void;
-  updateMarketValue: (id: string, marketValue: MarketValueResult) => void;
-  updateItem: (id: string, fields: Partial<Pick<HistoryItem,
-    'productName' | 'category' | 'brand' | 'condition' | 'gtin' |
-    'searchQuery' | 'searchQueries' | 'finalPrice' | 'finalPriceNote'
-  >>) => void;
-}
+import {
+  buildHistorySyncPayload,
+  createHistoryItem,
+  markHistoryItemSyncFailed,
+  markHistoryItemSynced,
+  removeHistoryItemById,
+  updateHistoryItemFields,
+  updateHistoryItemMarketValue,
+  updateHistoryItemPrices,
+} from './actions';
+import { getHistoryItemById } from './selectors';
+export type { HistoryItem, HistoryItemDraft, HistoryItemUpdateFields } from './types';
 
 /**
  * History Store mit AsyncStorage Persistenz
@@ -66,48 +32,20 @@ export const useHistoryStore = create<HistoryState>()(
       isOffline: false,
 
       addItem: async (item) => {
-        // Cache das Bild für Offline-Zugriff
         const cachedImageUri = await cacheImage(item.imageUri);
-
-        const newItem: HistoryItem = {
-          ...item,
-          id: `scan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          cachedImageUri,
-          syncStatus: 'pending',
-          scannedAt: new Date().toISOString(),
-        };
+        const newItem = createHistoryItem(item, { cachedImageUri });
         set((state) => ({
           items: [newItem, ...state.items],
         }));
 
-        // Fire-and-forget: Sync zum Backend
-        syncNewItem(item.imageUri, {
-          productName: item.productName,
-          category: item.category,
-          brand: item.brand,
-          condition: item.condition,
-          confidence: item.confidence,
-          gtin: item.gtin,
-          searchQuery: item.searchQuery,
-          searchQueries: item.searchQueries,
-          priceStats: item.priceStats,
-          ebayListings: item.ebayListings,
-          ebayListingsFetchedAt: item.ebayListingsFetchedAt,
-          marketValue: item.marketValue,
-          marketValueFetchedAt: item.marketValueFetchedAt,
-          scannedAt: newItem.scannedAt,
-        }).then((serverId) => {
+        syncNewItem(item.imageUri, buildHistorySyncPayload(item, newItem.scannedAt)).then((serverId) => {
           if (serverId) {
             set((state) => ({
-              items: state.items.map((i) =>
-                i.id === newItem.id ? { ...i, serverId, syncStatus: 'synced' as const } : i
-              ),
+              items: markHistoryItemSynced(state.items, newItem.id, serverId),
             }));
           } else {
             set((state) => ({
-              items: state.items.map((i) =>
-                i.id === newItem.id ? { ...i, syncStatus: 'failed' as const } : i
-              ),
+              items: markHistoryItemSyncFailed(state.items, newItem.id),
             }));
           }
         });
@@ -116,16 +54,15 @@ export const useHistoryStore = create<HistoryState>()(
       },
 
       removeItem: (id) => {
-        const item = get().items.find(i => i.id === id);
+        const item = getHistoryItemById(get().items, id);
         if (item?.cachedImageUri) {
           removeCachedImage(item.cachedImageUri);
         }
-        // Fire-and-forget: Backend sync
         if (item?.serverId) {
           syncDeleteItem(item.serverId);
         }
         set((state) => ({
-          items: state.items.filter((item) => item.id !== id),
+          items: removeHistoryItemById(state.items, id),
         }));
       },
 
@@ -135,7 +72,7 @@ export const useHistoryStore = create<HistoryState>()(
       },
 
       getItemById: (id) => {
-        return get().items.find((item) => item.id === id);
+        return getHistoryItemById(get().items, id);
       },
 
       setOffline: (offline) => {
@@ -144,54 +81,29 @@ export const useHistoryStore = create<HistoryState>()(
 
       updateItemPrices: (id, priceStats, listings) => {
         set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  priceStats,
-                  ebayListings: listings,
-                  ebayListingsFetchedAt: new Date().toISOString()
-                }
-              : item
-          ),
+          items: updateHistoryItemPrices(state.items, id, priceStats, listings),
         }));
-        // Fire-and-forget: Backend sync
-        const item = get().items.find(i => i.id === id);
+        const item = getHistoryItemById(get().items, id);
         if (item?.serverId) {
-          syncPrices(
-            item.serverId,
-            priceStats,
-            listings
-          );
+          syncPrices(item.serverId, priceStats, listings);
         }
       },
 
       updateMarketValue: (id, marketValue) => {
         set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id
-              ? { ...item, marketValue, marketValueFetchedAt: new Date().toISOString() }
-              : item
-          ),
+          items: updateHistoryItemMarketValue(state.items, id, marketValue),
         }));
-        // Fire-and-forget: Backend sync
-        const item = get().items.find(i => i.id === id);
+        const item = getHistoryItemById(get().items, id);
         if (item?.serverId) {
-          syncMarketValue(
-            item.serverId,
-            marketValue
-          );
+          syncMarketValue(item.serverId, marketValue);
         }
       },
 
       updateItem: (id, fields) => {
         set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id ? { ...item, ...fields } : item
-          ),
+          items: updateHistoryItemFields(state.items, id, fields),
         }));
-        // Fire-and-forget: Backend sync
-        const item = get().items.find(i => i.id === id);
+        const item = getHistoryItemById(get().items, id);
         if (item?.serverId) {
           syncItemUpdate(item.serverId, { ...fields });
         }

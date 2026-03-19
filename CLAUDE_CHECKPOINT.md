@@ -11,6 +11,8 @@ Batch 6 has started on `scanapp2` with a runnable manual regression checklist an
 The first Batch 7 size-rule refactor is implemented on `scanapp2` for `packages/mobile/src/app/(tabs)/library.tsx`, extracting screen-local row helpers, empty states, and row-building pagination constants into the history feature.
 A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, covering centralized tab-bar colors, centralized animation presets, and missing shared-component barrel exports.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/shared/components/Animated.tsx`, splitting the shared animation helpers into focused component files behind a compatibility barrel.
+The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/market/services/ebay/search.ts`, keeping the marketplace search orchestration in place while moving listing parsing and price-stat calculation into focused helper files with targeted Node coverage.
+The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/features/history/store/historyStore.ts`, moving store transitions, selectors, and types into focused siblings while keeping the Zustand API stable.
 
 ## Analyzed
 
@@ -31,6 +33,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Remaining small P2 cleanup targets in shared UI constants, animation presets, barrel exports, and size-rule candidates
 - Batch 7 first size-rule target in `library.tsx`, including row rendering, empty states, and row-building extraction boundaries
 - Batch 7 next size-rule target in `Animated.tsx`, including extraction boundaries for shared animation helpers and keeping import compatibility stable
+- Batch 7 next size-rule target in `search.ts`, including extraction boundaries between eBay marketplace orchestration, listing parsing, and price-stat helpers
+- Batch 7 next size-rule target in `historyStore.ts`, including extraction boundaries between Zustand wiring, pure item transitions, selector lookup, and store type definitions
 
 ## Created
 
@@ -61,6 +65,13 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - `packages/mobile/src/shared/components/Animated/AnimatedNumber.tsx`
 - `packages/mobile/src/shared/components/Animated/shared.ts`
 - `packages/mobile/src/shared/components/Animated.test.ts`
+- `packages/mobile/src/features/market/services/ebay/parseListings.ts`
+- `packages/mobile/src/features/market/services/ebay/calculateStats.ts`
+- `packages/mobile/src/features/market/services/ebay/search.test.ts`
+- `packages/mobile/src/features/history/store/actions.ts`
+- `packages/mobile/src/features/history/store/selectors.ts`
+- `packages/mobile/src/features/history/store/types.ts`
+- `packages/mobile/src/features/history/store/historyStore.test.ts`
 
 ## Implemented
 
@@ -125,6 +136,18 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Centralized the shared animation prop types and animated Pressable creation in `packages/mobile/src/shared/components/Animated/shared.ts`
 - Added a lightweight Node test that guards the split-file structure and compatibility barrel exports without depending on the mobile runtime
 
+### Batch 7 third size-rule refactor
+- Reduced `packages/mobile/src/features/market/services/ebay/search.ts` from 215 lines to 141 lines by keeping only the eBay query and marketplace orchestration in that file
+- Extracted listing parsing into `packages/mobile/src/features/market/services/ebay/parseListings.ts`
+- Extracted price-stat calculation and selection-based stat recomputation into `packages/mobile/src/features/market/services/ebay/calculateStats.ts`
+- Added `packages/mobile/src/features/market/services/ebay/search.test.ts` and kept the helper modules Node-testable via type-only imports so the extracted structure can be validated without the Expo runtime
+
+### Batch 7 fourth size-rule refactor
+- Reduced `packages/mobile/src/features/history/store/historyStore.ts` from 205 lines to 117 lines by keeping only Zustand persistence and side-effect wiring in that file
+- Extracted pure item-creation, item-update, removal, and sync-payload helpers into `packages/mobile/src/features/history/store/actions.ts`
+- Extracted item lookup into `packages/mobile/src/features/history/store/selectors.ts` and shared store types into `packages/mobile/src/features/history/store/types.ts`
+- Added `packages/mobile/src/features/history/store/historyStore.test.ts` and extended the targeted Node test entrypoint so the split structure and core helper behavior stay covered without the Expo runtime
+
 ## Validated
 
 - `git diff --check`
@@ -134,6 +157,10 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - `node --test --experimental-strip-types packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/shared/components/Animated.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/features/market/services/ebay/search.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/features/history/store/historyStore.test.ts`
   - Passed
 - `npm run typecheck:mobile`
   - Could not run successfully in this workspace because dependencies are not installed locally (`tsc` not found)
@@ -150,8 +177,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
-- Continue the remaining Batch 7 size-rule refactors (`search.ts`, `historyStore.ts`, `useAnalysis.ts`, `items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
+- Continue the remaining Batch 7 size-rule refactors (`useAnalysis.ts`, `items.ts`, `history/[id].tsx`, `itemService.ts`) once the next slice is chosen
 
 ## Exact Next Step
 
-Pick the next Batch 7 size-rule target (`packages/mobile/src/features/market/services/ebay/search.ts` is the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.
+Pick the next Batch 7 size-rule target (`packages/mobile/src/features/analyze/hooks/useAnalysis.ts` is the next obvious slice) or, if a runnable environment becomes available first, run mobile typecheck/lint plus the manual regression checklist against the recent Batch 7 refactors.

@@ -1,4 +1,4 @@
-import { MarketListing } from './types';
+import type { MarketListing } from './types';
 
 interface EbayItemSummary {
   itemId?: string;
