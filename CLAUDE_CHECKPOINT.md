@@ -48,6 +48,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, preflighting unresolved lockfile-backed cache misses so doomed offline installs stop before they expand `node_modules` into hundreds of additional hollow transitive package directories.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root mobile lint entrypoint, routing `npm run lint:mobile` through the existing workspace-setup guard so missing local TypeScript/toolchain packages now fail with actionable setup diagnostics before raw `Cannot find module 'typescript'` errors.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, treating unreadable cached tarballs as real offline cache misses so workspace bootstrap now short-circuits before a doomed offline install when the remaining blockers are entirely uncached or cache-corrupt.
+The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding an opt-in `SCANAPP_ALLOW_NETWORK_INSTALL=1` fallback so known uncached or offline-failed workspace packages can retry through a normal `npm install` instead of stopping at offline-cache diagnostics when network access is available.
 
 ## Analyzed
 
@@ -427,9 +428,9 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
-- Restore the uncached tarballs or repopulate the hollow package directories that `npm run setup:workspace` now reports explicitly, including the mobile `expo` / `nativewind` toolchain packages, backend-blocking direct `@types/*` packages, and the cache-corrupt `typescript` / `tailwindcss` / `tsx` entries before retrying mobile/backend typecheck
+- Restore the uncached tarballs or repopulate the hollow package directories that `npm run setup:workspace` now reports explicitly, including the mobile `expo` / `nativewind` toolchain packages and backend-blocking direct `@types/*` packages before retrying mobile/backend typecheck; environments with network access can now use `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`
 - Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step
 
-Restore the remaining missing workspace packages so `npm run typecheck:mobile` and `npm run typecheck:backend` can finish cleanly, prioritizing the uncached mobile `expo` / `nativewind` toolchain tarballs, the backend `@types/*` packages, and the unreadable `typescript` / `tailwindcss` / `tsx` cache entries now called out by `npm run setup:workspace`, then run the Batch 6 manual regression checklist in a runnable device/backend environment.
+Run `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` in a network-enabled environment to restore the remaining uncached mobile/backend workspace packages, then rerun `npm run typecheck:mobile` and `npm run typecheck:backend` and continue with the Batch 6 manual regression checklist in a runnable device/backend environment.

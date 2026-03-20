@@ -405,10 +405,137 @@ test('runSetupWorkspaceToolchain retries cache restoration for newly hollow pack
     'offline:node_modules/expo',
     'log:Installing workspace dependencies for lint/typecheck...',
     'restore:node_modules/expo,node_modules/react',
-    'log:Restored cached workspace packages after offline install failure: react',
+    'log:Restored cached workspace packages after offline npm install failure: react',
     'offline:node_modules/expo',
     'error:Offline npm install failed with exit code 1.',
     'format:node_modules/expo',
     'error:post-install restore result',
+  ]);
+});
+
+test('runSetupWorkspaceToolchain falls back to online npm install when cache misses are known and network installs are allowed', async () => {
+  const observed: string[] = [];
+  let collectCount = 0;
+
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    allowNetworkInstall: true,
+    collectWorkspaceDependencyOwners: () => ({
+      expo: ['@scanapp/mobile'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => {
+      collectCount += 1;
+      return collectCount === 1
+        ? [
+            {
+              moduleDirectory: 'node_modules/expo',
+              missingFiles: ['package.json'],
+            },
+          ]
+        : [];
+    },
+    collectMissingWorkspaceDependencyRequirements: () => [],
+    collectMissingInstalledPackageRequirements: () => [],
+    restoreMissingToolchainRequirementsFromCache: async () => ({
+      restoredPackages: [],
+      unresolvedRequirements: [
+        {
+          moduleDirectory: 'node_modules/expo',
+          missingFiles: ['package.json'],
+        },
+      ],
+    }),
+    collectOfflineCacheMissesFromLockfile: async () => [
+      {
+        packageName: 'expo',
+        tarballUrl: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
+      },
+    ],
+    runNpmInstall: ({ offline }: { offline: boolean }) => {
+      observed.push(`install:${offline ? 'offline' : 'online'}`);
+      return { status: 0, stdout: '', stderr: '' };
+    },
+    console: {
+      log: (message: string) => observed.push(`log:${message}`),
+      error: (message: string) => observed.push(`error:${message}`),
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(observed, [
+    'log:Offline cache misses detected for unresolved workspace packages; retrying with network install...',
+    'log:Installing workspace dependencies for lint/typecheck...',
+    'install:online',
+    'log:Workspace lint/typecheck toolchain is ready.',
+  ]);
+});
+
+test('runSetupWorkspaceToolchain retries with online npm install after offline install cache miss failure when allowed', async () => {
+  const observed: string[] = [];
+  let collectCount = 0;
+
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    allowNetworkInstall: true,
+    collectWorkspaceDependencyOwners: () => ({
+      expo: ['@scanapp/mobile'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => {
+      collectCount += 1;
+      return collectCount === 1
+        ? [
+            {
+              moduleDirectory: 'node_modules/expo',
+              missingFiles: ['package.json'],
+            },
+          ]
+        : [];
+    },
+    collectMissingWorkspaceDependencyRequirements: () => [],
+    collectMissingInstalledPackageRequirements: () => [],
+    restoreMissingToolchainRequirementsFromCache: async () => ({
+      restoredPackages: [],
+      unresolvedRequirements: [
+        {
+          moduleDirectory: 'node_modules/expo',
+          missingFiles: ['package.json'],
+        },
+      ],
+    }),
+    collectOfflineCacheMissesFromLockfile: async () => [],
+    extractOfflineInstallCacheMisses: () => [
+      {
+        packageName: 'expo',
+        tarballUrl: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
+      },
+    ],
+    runNpmInstall: ({ offline }: { offline: boolean }) => {
+      observed.push(`install:${offline ? 'offline' : 'online'}`);
+      return offline
+        ? { status: 1, stdout: '', stderr: 'npm error missing: https://registry.npmjs.org/expo/-/expo-54.0.32.tgz' }
+        : { status: 0, stdout: '', stderr: '' };
+    },
+    console: {
+      log: (message: string) => observed.push(`log:${message}`),
+      error: (message: string) => observed.push(`error:${message}`),
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(observed, [
+    'log:Installing workspace dependencies for lint/typecheck...',
+    'install:offline',
+    'log:Offline npm install hit cache misses; retrying with network install...',
+    'log:Installing workspace dependencies for lint/typecheck...',
+    'install:online',
+    'log:Workspace lint/typecheck toolchain is ready.',
   ]);
 });

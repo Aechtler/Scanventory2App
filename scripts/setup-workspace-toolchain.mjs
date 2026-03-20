@@ -15,10 +15,16 @@ import {
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
-function defaultRunNpmInstall() {
+function defaultRunNpmInstall({ offline = true } = {}) {
+  const installArgs = ['install', '--no-audit', '--no-fund', '--loglevel=notice'];
+
+  if (offline) {
+    installArgs.splice(1, 0, '--offline');
+  }
+
   return spawnSync(
     'npm',
-    ['install', '--offline', '--no-audit', '--no-fund', '--loglevel=notice'],
+    installArgs,
     {
       cwd: repoRoot,
       encoding: 'utf8',
@@ -117,6 +123,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
     formatMissingToolchainRequirements: formatMissingToolchainRequirementsImpl =
       formatMissingToolchainRequirements,
     runNpmInstall: runNpmInstallImpl = defaultRunNpmInstall,
+    allowNetworkInstall = process.env.SCANAPP_ALLOW_NETWORK_INSTALL === '1',
     console: consoleImpl = console,
     writeStdout = (output) => process.stdout.write(output),
     writeStderr = (output) => process.stderr.write(output),
@@ -167,24 +174,57 @@ export async function runSetupWorkspaceToolchain(options = {}) {
         packageLock,
       },
     );
-
-    if (
+    const knownOfflineCacheMisses =
       shouldSkipOfflineInstallForKnownCacheMisses(
         unresolvedRequirements,
         preinstallOfflineCacheMisses,
-      )
-    ) {
-      consoleImpl.error(
-        formatMissingToolchainRequirementsImpl(unresolvedRequirements, {
-          offlineCacheMisses: preinstallOfflineCacheMisses,
-          workspaceDependencyOwners,
-        }),
       );
-      return { exitCode: 1 };
+
+    if (knownOfflineCacheMisses) {
+      if (allowNetworkInstall) {
+        consoleImpl.log(
+          'Offline cache misses detected for unresolved workspace packages; retrying with network install...',
+        );
+      } else {
+        consoleImpl.error(
+          formatMissingToolchainRequirementsImpl(unresolvedRequirements, {
+            offlineCacheMisses: preinstallOfflineCacheMisses,
+            workspaceDependencyOwners,
+          }),
+        );
+        return { exitCode: 1 };
+      }
     }
 
     consoleImpl.log('Installing workspace dependencies for lint/typecheck...');
-    const installResult = runNpmInstallImpl();
+    let installMode = knownOfflineCacheMisses && allowNetworkInstall ? 'online' : 'offline';
+    let installResult = runNpmInstallImpl({ offline: installMode === 'offline' });
+
+    if (
+      installMode === 'offline' &&
+      (installResult.status ?? 1) !== 0 &&
+      allowNetworkInstall
+    ) {
+      const offlineCacheMisses = extractOfflineInstallCacheMissesImpl(
+        `${installResult.stdout ?? ''}\n${installResult.stderr ?? ''}`,
+      );
+
+      if (offlineCacheMisses.length > 0) {
+        if (installResult.stdout) {
+          writeStdout(installResult.stdout);
+        }
+
+        if (installResult.stderr) {
+          writeStderr(installResult.stderr);
+        }
+
+        consoleImpl.log('Offline npm install hit cache misses; retrying with network install...');
+        consoleImpl.log('Installing workspace dependencies for lint/typecheck...');
+        installMode = 'online';
+        installResult = runNpmInstallImpl({ offline: false });
+      }
+    }
+
     const installStatus = installResult.status ?? 1;
 
     if (installResult.stdout) {
@@ -213,7 +253,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
 
       if (postFailureRestoreResult.restoredPackages.length > 0) {
         consoleImpl.log(
-          `Restored cached workspace packages after offline install failure: ${postFailureRestoreResult.restoredPackages.join(', ')}`,
+          `Restored cached workspace packages after ${installMode} npm install failure: ${postFailureRestoreResult.restoredPackages.join(', ')}`,
         );
       }
 
@@ -230,7 +270,9 @@ export async function runSetupWorkspaceToolchain(options = {}) {
         ),
       );
 
-      consoleImpl.error(`Offline npm install failed with exit code ${installStatus}.`);
+      consoleImpl.error(
+        `${installMode === 'offline' ? 'Offline' : 'Network'} npm install failed with exit code ${installStatus}.`,
+      );
       consoleImpl.error(
         formatMissingToolchainRequirementsImpl(finalUnresolvedRequirements, {
           offlineCacheMisses,

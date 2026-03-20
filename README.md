@@ -191,6 +191,7 @@ npm run setup:workspace
 ```
 
 Wenn `npm run setup:workspace` fehlschlaegt, listet der Befehl jetzt die konkret betroffenen Pakete, ihre direkten Workspace-Owner und zusaetzliche hohle transitive Installationen getrennt auf. In einer eingeschraenkten Offline-Umgebung muss der fehlende npm-Cache zuerst wiederhergestellt oder einmal mit Netzwerkzugriff `npm install` ausgefuehrt werden.
+Wenn Netzwerkzugriff verfuegbar ist, kann der Setup-Guard die verbleibenden uncached Workspace-Pakete jetzt selbst nachziehen: `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`.
 Fehlt die Root-`package-lock.json` oder ist sie defekt, meldet der Setup-Befehl das jetzt ebenfalls explizit und fordert zur Wiederherstellung bzw. Regenerierung der Lockfile auf, bevor weitere Offline-Restore-Schritte sinnvoll sind.
 Die Root-Befehle `npm run lint:mobile`, `npm run typecheck:mobile` und `npm run typecheck:backend` laufen jetzt ebenfalls zuerst durch diesen Guard, damit fehlende Expo-/Backend-Pakete nicht mehr nur als rohe `typescript`-/`tsc`-Importfehler auftauchen.
 `npm run build:backend` nutzt jetzt denselben Guard, damit ein fehlendes lokales `typescript`-Binary im eingeschraenkten Workspace nicht mehr als unklare `Cannot find module .../tsc`-Fehlermeldung endet.

@@ -39,6 +39,9 @@ npm run dev:mobile
 npm install
 npm run setup:workspace
 
+# If npm cache entries are missing but network access is available
+SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace
+
 # Generate Prisma client
 cd packages/backend
 npx prisma generate
