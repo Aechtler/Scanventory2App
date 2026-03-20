@@ -640,8 +640,9 @@ export function formatMissingToolchainRequirements(
 
   lines.push(
     '- Restore the missing packages from cache or reinstall with network access.',
-    '- If network access is available, run: npm install',
-    '- Then rerun: npm run setup:workspace',
+    '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+    '- As a fallback, run: npm install',
+    '- Then rerun the guarded check: npm run setup:workspace',
   );
 
   if (affectedPackages.length > maxListedEntries) {

@@ -49,6 +49,7 @@ The next runnable-environment bootstrap cleanup is now implemented on `scanapp2`
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root mobile lint entrypoint, routing `npm run lint:mobile` through the existing workspace-setup guard so missing local TypeScript/toolchain packages now fail with actionable setup diagnostics before raw `Cannot find module 'typescript'` errors.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, treating unreadable cached tarballs as real offline cache misses so workspace bootstrap now short-circuits before a doomed offline install when the remaining blockers are entirely uncached or cache-corrupt.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding an opt-in `SCANAPP_ALLOW_NETWORK_INSTALL=1` fallback so known uncached or offline-failed workspace packages can retry through a normal `npm install` instead of stopping at offline-cache diagnostics when network access is available.
+The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, updating the suggested remediation flow to prefer `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` before the plain `npm install` fallback so setup output, README guidance, and the guarded bootstrap path stay aligned.
 
 ## Analyzed
 
