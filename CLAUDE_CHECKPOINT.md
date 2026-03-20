@@ -30,6 +30,7 @@ The next minor shared-hook cleanup is now implemented on `scanapp2` for `package
 The next minor market aggregation cleanup is now implemented on `scanapp2` for `packages/mobile/src/features/market/services/marketAggregator.ts`, replacing synthetic linear price interpolation with real platform-listing aggregation plus a controlled stats fallback backed by targeted Node coverage.
 The next backend logging cleanup is now implemented on `scanapp2` for `packages/backend/src/middleware/errorHandler.ts`, replacing raw stack-trace logging with sanitized request-correlated error lines backed by lightweight Node coverage.
 The next backend documentation cleanup is now implemented on `scanapp2` for `packages/backend/src/routes/apiDocs.ts`, splitting the oversized OpenAPI document builder and route-path definitions into focused metadata, path, component, and Swagger-HTML helpers while preserving the public docs route API.
+The next runnable-backend validation cleanup is now implemented on `scanapp2` for `packages/backend/src/middleware/requestId.ts`, tightening `x-request-id` normalization to reject blank, control-character, and oversized header values while adding direct targeted Node coverage for request-id preservation and regeneration behavior.
 
 ## Analyzed
 
@@ -64,6 +65,7 @@ The next backend documentation cleanup is now implemented on `scanapp2` for `pac
 - ARCH-06 docker-compose credential target in `docker-compose.yml` and `packages/backend/docker-compose.yml`, including the smallest env-file wiring that removes literal Postgres credentials from checked-in compose manifests while keeping lightweight local startup documentation
 - ARCH-07 backend API documentation target in `packages/backend/src/routes`, including the smallest maintained OpenAPI document and Swagger UI exposure that can ship without adding heavy runtime dependencies
 - ARCH-08 backend request-correlation target in `packages/backend/src/middleware`, including the smallest app-level seam for preserving or generating `x-request-id` and carrying it through the existing request logger without adding heavy tracing infrastructure
+- Follow-up request-id hardening target in `packages/backend/src/middleware/requestId.ts`, narrowing accepted inbound `x-request-id` values so log correlation stays safe without depending on a full backend runtime
 - MINOR-04 market aggregation target in `packages/mobile/src/features/market/services/marketAggregator.ts`, including replacing synthetic min/max interpolation with a helper that prefers real listing-price distributions and only falls back to platform-level stats when listings are unavailable
 
 ## Created

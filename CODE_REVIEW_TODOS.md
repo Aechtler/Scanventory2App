@@ -209,7 +209,7 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 - [x] **ARCH-08**: Kein Request-ID Tracing für Log-Korrelation
   - `packages/backend/src/app.ts`, `packages/backend/src/middleware/requestId.ts`, `packages/backend/src/middleware/requestLogging.ts`
-  - Behoben: zentrale Request-ID-Middleware uebernimmt oder erzeugt jetzt `x-request-id`, spiegelt sie im Response und reichert die bestehenden Request-Logs fuer bessere Korrelation an
+  - Behoben: zentrale Request-ID-Middleware uebernimmt oder erzeugt jetzt sichere `x-request-id`-Werte, lehnt leere/unsichere/uebergrosse Headerwerte ab, spiegelt die finalen IDs im Response und reichert die bestehenden Request-Logs fuer bessere Korrelation an
 
 ### Minor Issues
 
