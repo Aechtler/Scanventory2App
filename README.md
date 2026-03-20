@@ -118,7 +118,7 @@ npm run db:seed
 | `npm run lint:mobile` | Mobile Quelltexte erst nach `setup:workspace`-Guard linten, damit fehlende Toolchain-Pakete vor rohen `typescript`-Importfehlern sichtbar werden |
 | `npm run typecheck:mobile` | Mobile TypeScript-Pruefung erst nach `setup:workspace`-Guard ausfuehren, sonst mit konkreten Toolchain-Blockern abbrechen |
 | `npm run typecheck:backend` | Backend-TypeScript-Pruefung erst nach `setup:workspace`-Guard ausfuehren, sonst mit konkreten Toolchain-Blockern abbrechen |
-| `npm run typecheck:all` | Workspace-TypeScript pruefen |
+| `npm run typecheck:all` | Fuehrt die mobilen und Backend-Typechecks jetzt nacheinander ueber den jeweiligen `setup:workspace`-Guard aus, damit fehlende Toolchain-Pakete pro Workspace klar gemeldet werden |
 
 ## 🛠️ Tech Stack
 
@@ -195,7 +195,7 @@ npm run setup:workspace
 Wenn `npm run setup:workspace` fehlschlaegt, listet der Befehl jetzt die konkret betroffenen Pakete, ihre direkten Workspace-Owner und zusaetzliche hohle transitive Installationen getrennt auf. In einer eingeschraenkten Offline-Umgebung muss der fehlende npm-Cache zuerst wiederhergestellt oder einmal mit Netzwerkzugriff der bevorzugte Guard-Lauf `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` ausgefuehrt werden.
 Falls der Guard-Lauf selbst nicht moeglich ist, bleibt `npm install` der Fallback; danach sollte erneut `npm run setup:workspace` laufen.
 Fehlt die Root-`package-lock.json` oder ist sie defekt, meldet der Setup-Befehl das jetzt ebenfalls explizit und fordert zur Wiederherstellung bzw. Regenerierung der Lockfile auf, bevor weitere Offline-Restore-Schritte sinnvoll sind.
-Die Root-Befehle `npm run lint:mobile`, `npm run typecheck:mobile` und `npm run typecheck:backend` laufen jetzt ebenfalls zuerst durch diesen Guard, damit fehlende Expo-/Backend-Pakete nicht mehr nur als rohe `typescript`-/`tsc`-Importfehler auftauchen.
+Die Root-Befehle `npm run lint:mobile`, `npm run typecheck:mobile`, `npm run typecheck:backend` und `npm run typecheck:all` laufen jetzt ebenfalls zuerst durch diesen Guard, damit fehlende Expo-/Backend-Pakete nicht mehr nur als rohe `typescript`-/`tsc`-Importfehler auftauchen.
 `npm run build:backend` nutzt jetzt denselben Guard, damit ein fehlendes lokales `typescript`-Binary im eingeschraenkten Workspace nicht mehr als unklare `Cannot find module .../tsc`-Fehlermeldung endet.
 
 ---

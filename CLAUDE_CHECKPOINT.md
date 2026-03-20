@@ -55,6 +55,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs` and `scripts/workspace-toolchain-health.mjs`, preflighting stale or missing root lockfile entries for missing direct workspace dependencies so backend/mobile restore failures now call out `uuid`/`babel-preset-expo` package-lock drift before misleading cache-miss remediation.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, adding a dedicated `Lockfile packages to refresh` section so guarded backend/mobile validation now shows the exact stale root lockfile entries that must be regenerated before the next restore pass.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, preferring workspace-local `package-lock.json` entries over stale hoisted root entries so backend restore checks no longer misreport `packages/backend/node_modules/uuid` as a stale lockfile blocker while still surfacing the real mobile `babel-preset-expo` mismatch.
+The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck entrypoint, routing `npm run typecheck:all` through a sequential guarded runner so mobile and backend blocker diagnostics stay workspace-scoped instead of collapsing back to raw workspace-wide failures.
 
 ## Analyzed
 
@@ -458,6 +459,10 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
   - Still fails in this sandbox because backend tarballs remain uncached, but no longer reports a false `uuid` lockfile mismatch once the backend workspace-local lock entry is considered
 - `npm run typecheck:mobile`
   - Still fails in this sandbox because mobile tarballs remain uncached and still correctly reports the real `babel-preset-expo` declaration/lock mismatch
+- `node --test --experimental-strip-types scripts/run-workspace-typecheck.test.ts scripts/run-workspace-typecheck-all.test.ts`
+  - Passed
+- `npm run typecheck:all`
+  - Still fails in this sandbox on the first guarded mobile blocker because `babel-preset-expo` remains drifted/missing, but now stops with the same actionable workspace-scoped diagnostics instead of falling through to broad raw workspace errors
 
 ## What Remains
 
