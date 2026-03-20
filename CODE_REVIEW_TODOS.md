@@ -195,9 +195,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/backend/src/app.ts`, `packages/backend/src/middleware/requestLogging.ts`
   - Behoben: zentrale Express-Request-Logs erfassen jetzt Method, Path, Status, Timing und anonymen bzw. JWT-abgeleiteten `userId`; ein Node-Test guardet Log-Format und Middleware-Registrierung
 
-- [ ] **ARCH-05**: Health-Check prüft nur Server-Status
+- [x] **ARCH-05**: Health-Check prüft nur Server-Status
   - `packages/backend/src/routes/health.ts`
-  - Missing: DB-Connectivity, Disk Space, Upload-Dir writable
+  - Behoben: `/api/health` prueft jetzt DB-Konnektivitaet, Upload-Verzeichnis-Schreibbarkeit und freien Speicherplatz; degradierte Dependencies liefern 503 und ein detailliertes Check-Ergebnis
 
 - [ ] **ARCH-06**: Docker-Compose hardcoded Credentials
   - `packages/backend/docker-compose.yml:6-8`

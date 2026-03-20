@@ -21,6 +21,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 The next mobile architecture cleanup is now implemented on `scanapp2` for `packages/mobile/src/features/history/store/historyStore.ts`, replacing hardcoded cache/sync side effects with an injectable `createHistoryStoreState(...)` seam while preserving the public persisted Zustand hook.
 The next backend schema architecture cleanup is now implemented on `scanapp2` for `packages/backend/prisma/schema.prisma`, adding the missing `ScannedItem` compound index on `userId + scannedAt` together with a lightweight schema regression test and Prisma migration.
 The next backend architecture cleanup is now implemented on `scanapp2` for request logging, adding a central Express middleware that logs method, path, status, timing, and optional JWT-derived user IDs with lightweight Node coverage.
+The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/routes/health.ts`, expanding `/api/health` from a server-only ping into DB, upload-directory, and disk-space dependency checks with a lightweight Node-tested response builder.
 
 ## Analyzed
 
@@ -51,6 +52,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for reque
 - ARCH-02 mobile dependency-injection target in `historyStore.ts`, including the smallest seam for replacing hardcoded cache/sync services with injected dependencies while keeping the app-facing Zustand API stable
 - ARCH-03 database indexing target in `packages/backend/prisma/schema.prisma`, including the missing `ScannedItem` compound index for user-filtered timeline reads and the smallest lightweight guard that can run without a live database
 - ARCH-04 backend request-logging target in `packages/backend/src/app.ts`, including the smallest central middleware that records method, path, status, duration, and optional authenticated user context without introducing request-ID scope yet
+- ARCH-05 backend health-check target in `packages/backend/src/routes/health.ts`, including the smallest injectable seam for DB, upload-directory, and disk-space probes that stays runnable in the dependency-limited workspace
 
 ## Created
 
@@ -237,6 +239,11 @@ The next backend architecture cleanup is now implemented on `scanapp2` for reque
 - Added `packages/backend/src/middleware/requestLogging.ts` with a central Express middleware that logs each completed request as method, path, HTTP status, duration in milliseconds, and either the authenticated `userId` or `anonymous`
 - Updated `packages/backend/src/app.ts` to register the request logger once at app level so it covers both public and JWT-protected `/api` routes while preserving the existing HTTPS and error-handler flow
 - Added `packages/backend/src/middleware/requestLogging.test.ts` and included it in `npm run test:targeted` so the log-line contract and middleware registration stay guarded without requiring installed backend dependencies
+
+### ARCH-05 backend health checks
+- Added `packages/backend/src/routes/healthResponse.ts` with an injectable health-response builder that aggregates server, database, upload-directory, and disk-space checks into a stable API envelope
+- Updated `packages/backend/src/routes/health.ts` so `/api/health` now verifies Prisma connectivity, ensures the upload directory is writable via a temp-file probe, inspects free disk space via `statfs`, and returns HTTP 503 when any dependency is degraded
+- Added `packages/backend/src/routes/health.test.ts` and included it in `npm run test:targeted` so the health aggregation contract stays covered without requiring Express, Prisma, or a live database during targeted validation
 
 ## Validated
 
