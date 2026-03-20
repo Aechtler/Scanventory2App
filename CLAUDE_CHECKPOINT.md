@@ -27,6 +27,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for API d
 The next backend architecture cleanup is now implemented on `scanapp2` for request-ID tracing, adding a central middleware that preserves or generates `x-request-id`, echoes it in responses, and includes it in request logs with lightweight Node coverage.
 The next minor shared-UI cleanup is now implemented on `scanapp2` for `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx`, replacing the wrapper `index` key with child-derived stable keys backed by a lightweight Node-tested helper.
 The next minor shared-hook cleanup is now implemented on `scanapp2` for `packages/mobile/src/shared/hooks/useAsync.ts`, introducing an explicit exported `UseAsyncResult<T, Args>` return contract backed by a lightweight Node signature guard.
+The next minor market aggregation cleanup is now implemented on `scanapp2` for `packages/mobile/src/features/market/services/marketAggregator.ts`, replacing synthetic linear price interpolation with real platform-listing aggregation plus a controlled stats fallback backed by targeted Node coverage.
 
 ## Analyzed
 
@@ -61,6 +62,7 @@ The next minor shared-hook cleanup is now implemented on `scanapp2` for `package
 - ARCH-06 docker-compose credential target in `docker-compose.yml` and `packages/backend/docker-compose.yml`, including the smallest env-file wiring that removes literal Postgres credentials from checked-in compose manifests while keeping lightweight local startup documentation
 - ARCH-07 backend API documentation target in `packages/backend/src/routes`, including the smallest maintained OpenAPI document and Swagger UI exposure that can ship without adding heavy runtime dependencies
 - ARCH-08 backend request-correlation target in `packages/backend/src/middleware`, including the smallest app-level seam for preserving or generating `x-request-id` and carrying it through the existing request logger without adding heavy tracing infrastructure
+- MINOR-04 market aggregation target in `packages/mobile/src/features/market/services/marketAggregator.ts`, including replacing synthetic min/max interpolation with a helper that prefers real listing-price distributions and only falls back to platform-level stats when listings are unavailable
 
 ## Created
 
@@ -94,6 +96,8 @@ The next minor shared-hook cleanup is now implemented on `scanapp2` for `package
 - `packages/mobile/src/features/market/services/ebay/parseListings.ts`
 - `packages/mobile/src/features/market/services/ebay/calculateStats.ts`
 - `packages/mobile/src/features/market/services/ebay/search.test.ts`
+- `packages/mobile/src/features/market/services/marketAggregatorStats.ts`
+- `packages/mobile/src/features/market/services/marketAggregator.test.ts`
 - `packages/mobile/src/features/history/store/actions.ts`
 - `packages/mobile/src/features/history/store/selectors.ts`
 - `packages/mobile/src/features/history/store/types.ts`
@@ -279,6 +283,11 @@ The next minor shared-hook cleanup is now implemented on `scanapp2` for `package
 - Added `packages/mobile/src/shared/components/CardSlider/cardSliderKeys.ts` as a small pure helper that prefers existing child keys and falls back to deterministic value-based keys for primitive nodes
 - Added `packages/mobile/src/shared/components/CardSlider/cardSliderKeys.test.ts` and included it in `npm run test:targeted` so the key-selection behavior stays covered in the dependency-limited workspace
 
+### MINOR-04 market aggregation distribution
+- Added `packages/mobile/src/features/market/services/marketAggregatorStats.ts` as a small pure helper that aggregates cross-platform price stats from real listing prices instead of synthesizing a linear min/max spread
+- Updated `packages/mobile/src/features/market/services/marketAggregator.ts` to delegate combined stat calculation to the helper, keeping the existing `searchAllMarkets(...)` API stable
+- Added `packages/mobile/src/features/market/services/marketAggregator.test.ts` and included it in `npm run test:targeted` so non-linear listing distributions and the no-listings fallback stay covered in this dependency-limited workspace
+
 ## Validated
 
 - `git diff --check`
@@ -296,6 +305,8 @@ The next minor shared-hook cleanup is now implemented on `scanapp2` for `package
 - `node --test --experimental-strip-types packages/mobile/src/shared/components/CardSlider/cardSliderKeys.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/market/services/ebay/search.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/features/market/services/marketAggregator.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/store/historyStore.test.ts`
   - Passed

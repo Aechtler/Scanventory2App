@@ -221,9 +221,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/mobile/src/shared/hooks/useAsync.ts`
   - Behoben: `useAsync` exportiert jetzt einen expliziten `UseAsyncResult<T, Args>`-Vertrag; ein leichter Node-Guard-Test sichert die Signatur ohne React-Runtime ab
 
-- [ ] **MINOR-04**: Preisverteilung künstlich linear
+- [x] **MINOR-04**: Preisverteilung künstlich linear
   - `packages/mobile/src/features/market/services/marketAggregator.ts:71-75`
-  - Generiert gleichmäßig verteilte Preise statt realer Daten
+  - Behoben: Aggregation nutzt jetzt reale Plattform-Listings fuer Median/Verteilung und faellt bei fehlenden Listings nur noch kontrolliert auf plattformspezifische Stats zurueck
 
 - [ ] **MINOR-05**: Error Stack Traces in Logs
   - `packages/backend/src/middleware/errorHandler.ts:14`
