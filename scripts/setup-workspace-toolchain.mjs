@@ -70,6 +70,20 @@ function mergeMissingRequirements(...requirementGroups) {
   );
 }
 
+function collectCurrentMissingRequirements({
+  repoRoot,
+  packageLock,
+  collectMissingToolchainRequirements,
+  collectMissingWorkspaceDependencyRequirements,
+  collectMissingInstalledPackageRequirements,
+}) {
+  return mergeMissingRequirements(
+    collectMissingToolchainRequirements(repoRoot),
+    collectMissingWorkspaceDependencyRequirements(repoRoot),
+    collectMissingInstalledPackageRequirements(repoRoot, { packageLock }),
+  );
+}
+
 export async function runSetupWorkspaceToolchain(options = {}) {
   const {
     repoRoot: targetRepoRoot = repoRoot,
@@ -98,13 +112,14 @@ export async function runSetupWorkspaceToolchain(options = {}) {
   const workspaceDependencyOwners = collectWorkspaceDependencyOwnersImpl(targetRepoRoot);
 
   const { packageLock, issue: packageLockIssue } = loadPackageLockImpl(targetRepoRoot);
-  const missingRequirementsBeforeInstall = mergeMissingRequirements(
-    collectMissingToolchainRequirementsImpl(targetRepoRoot),
-    collectMissingWorkspaceDependencyRequirementsImpl(targetRepoRoot),
-    packageLock
-      ? collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock })
-      : [],
-  );
+  const missingRequirementsBeforeInstall = collectCurrentMissingRequirements({
+    repoRoot: targetRepoRoot,
+    packageLock,
+    collectMissingToolchainRequirements: collectMissingToolchainRequirementsImpl,
+    collectMissingWorkspaceDependencyRequirements:
+      collectMissingWorkspaceDependencyRequirementsImpl,
+    collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl,
+  });
   let unresolvedRequirements = missingRequirementsBeforeInstall;
 
   if (missingRequirementsBeforeInstall.length > 0 && packageLockIssue) {
@@ -146,10 +161,35 @@ export async function runSetupWorkspaceToolchain(options = {}) {
     }
 
     if (installStatus !== 0) {
+      const missingRequirementsAfterFailedInstall = collectCurrentMissingRequirements({
+        repoRoot: targetRepoRoot,
+        packageLock,
+        collectMissingToolchainRequirements: collectMissingToolchainRequirementsImpl,
+        collectMissingWorkspaceDependencyRequirements:
+          collectMissingWorkspaceDependencyRequirementsImpl,
+        collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl,
+      });
+      const postFailureRestoreResult = await restoreMissingToolchainRequirementsFromCacheImpl(
+        targetRepoRoot,
+        missingRequirementsAfterFailedInstall,
+        { packageLock },
+      );
+      const finalUnresolvedRequirements = postFailureRestoreResult.unresolvedRequirements;
+
+      if (postFailureRestoreResult.restoredPackages.length > 0) {
+        consoleImpl.log(
+          `Restored cached workspace packages after offline install failure: ${postFailureRestoreResult.restoredPackages.join(', ')}`,
+        );
+      }
+
       const offlineCacheMisses = mergeOfflineCacheMisses(
-        await collectOfflineCacheMissesFromLockfileImpl(targetRepoRoot, unresolvedRequirements, {
-          packageLock,
-        }),
+        await collectOfflineCacheMissesFromLockfileImpl(
+          targetRepoRoot,
+          finalUnresolvedRequirements,
+          {
+            packageLock,
+          },
+        ),
         extractOfflineInstallCacheMissesImpl(
           `${installResult.stdout ?? ''}\n${installResult.stderr ?? ''}`,
         ),
@@ -157,27 +197,23 @@ export async function runSetupWorkspaceToolchain(options = {}) {
 
       consoleImpl.error(`Offline npm install failed with exit code ${installStatus}.`);
       consoleImpl.error(
-        formatMissingToolchainRequirementsImpl(
-          mergeMissingRequirements(
-            collectMissingToolchainRequirementsImpl(targetRepoRoot),
-            collectMissingWorkspaceDependencyRequirementsImpl(targetRepoRoot),
-            collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock }),
-          ),
-          {
-            offlineCacheMisses,
-            workspaceDependencyOwners,
-          },
-        ),
+        formatMissingToolchainRequirementsImpl(finalUnresolvedRequirements, {
+          offlineCacheMisses,
+          workspaceDependencyOwners,
+        }),
       );
       return { exitCode: 1 };
     }
   }
 
-  const missingRequirementsAfterInstall = mergeMissingRequirements(
-    collectMissingToolchainRequirementsImpl(targetRepoRoot),
-    collectMissingWorkspaceDependencyRequirementsImpl(targetRepoRoot),
-    collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock }),
-  );
+  const missingRequirementsAfterInstall = collectCurrentMissingRequirements({
+    repoRoot: targetRepoRoot,
+    packageLock,
+    collectMissingToolchainRequirements: collectMissingToolchainRequirementsImpl,
+    collectMissingWorkspaceDependencyRequirements:
+      collectMissingWorkspaceDependencyRequirementsImpl,
+    collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl,
+  });
 
   if (missingRequirementsAfterInstall.length > 0) {
     consoleImpl.error(

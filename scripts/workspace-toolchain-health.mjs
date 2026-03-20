@@ -460,6 +460,12 @@ export async function restoreMissingToolchainRequirementsFromCache(
         moduleDirectory: requirement.moduleDirectory,
         resolved: packageLockEntry.resolved,
       });
+
+      if (!(packageBuffer instanceof Uint8Array)) {
+        unresolvedRequirements.push(requirement);
+        continue;
+      }
+
       const moduleDirectoryPath = path.join(repoRoot, requirement.moduleDirectory);
 
       await fs.promises.rm(moduleDirectoryPath, { recursive: true, force: true });

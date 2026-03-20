@@ -41,6 +41,8 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, summarizing oversized missing-package and offline-cache-miss reports so bootstrap failures stay actionable in dependency-limited environments instead of dumping thousand-line transitive package lists.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, annotating direct `@types/*` workspace dependencies with the runtime packages they block so backend/mobile typecheck failures are easier to triage when offline cache restoration is still incomplete.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for root typecheck entrypoints, routing `npm run typecheck:mobile` and `npm run typecheck:backend` through the existing workspace-setup guard so missing toolchain packages now fail with actionable setup diagnostics before raw TypeScript module errors.
+The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, retrying cache restoration after a failed offline install so newly hollow packages are healed before the final blocker report.
+The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, treating empty cached tarball reads as unresolved packages instead of crashing the workspace setup path.
 
 ## Analyzed
 
@@ -344,6 +346,11 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 - Kept the previous fully detailed output for smaller failure sets so existing targeted tests and local diagnostics remain stable when the workspace breakage is narrow
 - Expanded `scripts/workspace-toolchain-health.test.ts` with a formatter regression that proves large transitive/offline-miss sets are summarized deterministically
 
+### Workspace cache-restore follow-up
+- Updated `scripts/setup-workspace-toolchain.mjs` to re-scan the workspace after a failed offline install, retry cache restoration for newly hollow packages, and report only the still-unresolved blockers in the final diagnostic
+- Hardened `scripts/workspace-toolchain-health.mjs` so cache entries that resolve without tarball bytes are treated like cache misses instead of crashing extraction
+- Expanded `scripts/setup-workspace-toolchain.test.ts` and `scripts/workspace-toolchain-health.test.ts` with targeted regressions for the post-install restore pass and empty-cache-read handling
+
 ## Validated
 
 - `git diff --check`
@@ -354,6 +361,8 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
   - Passed
 - `node ./scripts/setup-workspace-toolchain.mjs`
   - Failed as expected in this sandbox, but now reports a summarized actionable blocker instead of a thousand-line transitive dump
+  - No longer crashes when a cached tarball read resolves without data; it now falls through to the unresolved-package report
+  - After a failed offline install it now retries cache restoration for newly hollow packages before rendering the final blocker list
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
@@ -395,6 +404,10 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
   - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files now include the broader direct workspace dependency surface such as `@prisma/client`, `react`, `react-native`, Expo/mobile runtime packages, `bcryptjs`, `multer`, `uuid`, plus the hollow backend/test `@types/*` packages
   - The installed-package health scan now also catches hollow top-level non-`@types` packages that already exist on disk from partial installs, while still ignoring nested package-owned `node_modules` entries to avoid false-positive noise
   - The failure output now separates direct workspace dependency owners (for example `@scanapp/mobile` vs `@scanapp/backend`) from additional hollow installed packages, making the remaining restore work easier to triage without a runnable install
+- `node --test --experimental-strip-types scripts/setup-workspace-toolchain.test.ts`
+  - Passed
+- `node --test --experimental-strip-types scripts/workspace-toolchain-health.test.ts`
+  - Passed
 - `npm run test:targeted`
   - Passed
 

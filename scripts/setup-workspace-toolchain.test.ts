@@ -241,8 +241,107 @@ test('runSetupWorkspaceToolchain merges missing direct workspace dependencies in
   assert.equal(result.exitCode, 1);
   assert.deepEqual(observed, [
     'restore:node_modules/expo,node_modules/react',
+    'restore:node_modules/expo,node_modules/react',
     'offline:node_modules/expo,node_modules/react',
     'format:node_modules/expo,node_modules/react',
     'owners:{"expo":["@scanapp/mobile"],"react":["@scanapp/root","@scanapp/mobile"]}',
+  ]);
+});
+
+test('runSetupWorkspaceToolchain retries cache restoration for newly hollow packages after offline install failure', async () => {
+  const observed: string[] = [];
+  let collectCount = 0;
+
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    collectWorkspaceDependencyOwners: () => ({
+      expo: ['@scanapp/mobile'],
+      react: ['@scanapp/mobile'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => {
+      collectCount += 1;
+
+      if (collectCount === 1) {
+        return [
+          {
+            moduleDirectory: 'node_modules/expo',
+            missingFiles: ['package.json'],
+          },
+        ];
+      }
+
+      if (collectCount === 2) {
+        return [
+          {
+            moduleDirectory: 'node_modules/expo',
+            missingFiles: ['package.json'],
+          },
+          {
+            moduleDirectory: 'node_modules/react',
+            missingFiles: ['package.json'],
+          },
+        ];
+      }
+
+      return [
+        {
+          moduleDirectory: 'node_modules/react',
+          missingFiles: ['package.json'],
+        },
+      ];
+    },
+    collectMissingWorkspaceDependencyRequirements: () => [],
+    collectMissingInstalledPackageRequirements: () => [],
+    restoreMissingToolchainRequirementsFromCache: async (_repoRoot, missingRequirements) => {
+      observed.push(`restore:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+
+      if (missingRequirements.some(({ moduleDirectory }) => moduleDirectory === 'node_modules/react')) {
+        return {
+          restoredPackages: ['react'],
+          unresolvedRequirements: missingRequirements.filter(
+            ({ moduleDirectory }) => moduleDirectory !== 'node_modules/react',
+          ),
+        };
+      }
+
+      return {
+        restoredPackages: [],
+        unresolvedRequirements: missingRequirements,
+      };
+    },
+    collectOfflineCacheMissesFromLockfile: async (_repoRoot, missingRequirements) => {
+      observed.push(`offline:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return [];
+    },
+    extractOfflineInstallCacheMisses: () => [],
+    formatMissingToolchainRequirements: (missingRequirements) => {
+      observed.push(`format:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return 'post-install restore result';
+    },
+    runNpmInstall: () => ({
+      status: 1,
+      stdout: '',
+      stderr: '',
+    }),
+    console: {
+      log: (message: string) => observed.push(`log:${message}`),
+      error: (message: string) => observed.push(`error:${message}`),
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(observed, [
+    'restore:node_modules/expo',
+    'log:Installing workspace dependencies for lint/typecheck...',
+    'restore:node_modules/expo,node_modules/react',
+    'log:Restored cached workspace packages after offline install failure: react',
+    'offline:node_modules/expo',
+    'error:Offline npm install failed with exit code 1.',
+    'format:node_modules/expo',
+    'error:post-install restore result',
   ]);
 });

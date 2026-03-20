@@ -535,6 +535,51 @@ test('restoreMissingToolchainRequirementsFromCache restores available tarballs a
   );
 });
 
+test('restoreMissingToolchainRequirementsFromCache treats empty cache reads as unresolved instead of crashing', async () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/expo': {
+          version: '54.0.32',
+          resolved: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
+          integrity: 'sha512-expo',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'expo'), { recursive: true });
+
+  const restored = await restoreMissingToolchainRequirementsFromCache(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json', 'tsconfig.base'],
+      },
+    ],
+    {
+      readTarballByIntegrity: async () => undefined,
+      extractPackageTarball: async () => {
+        throw new Error('extract should not run without tarball data');
+      },
+    },
+  );
+
+  assert.deepEqual(restored, {
+    restoredPackages: [],
+    unresolvedRequirements: [
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json', 'tsconfig.base'],
+      },
+    ],
+  });
+});
+
 test('loadPackageLock reports malformed lockfiles with an actionable issue', () => {
   const repoRoot = createTempRepo();
   const packageLockPath = path.join(repoRoot, 'package-lock.json');
