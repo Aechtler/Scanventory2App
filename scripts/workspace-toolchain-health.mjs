@@ -50,7 +50,15 @@ const DEFAULT_NPM_CACHE_DIRECTORY = path.join(
 );
 
 function packageNameFromModuleDirectory(moduleDirectory) {
-  return moduleDirectory.replace(/^node_modules\//, '');
+  const modulePathParts = moduleDirectory.split('/');
+  const nodeModulesIndex = modulePathParts.lastIndexOf('node_modules');
+
+  if (nodeModulesIndex === -1 || nodeModulesIndex === modulePathParts.length - 1) {
+    return moduleDirectory;
+  }
+
+  const packageParts = modulePathParts.slice(nodeModulesIndex + 1);
+  return packageParts[0]?.startsWith('@') ? packageParts.slice(0, 2).join('/') : packageParts[0];
 }
 
 function getOwnedDependencyNameFromPackageName(packageName) {
@@ -340,17 +348,20 @@ export function collectMissingInstalledPackageRequirements(
   });
 }
 
-export function collectMissingWorkspaceDependencyRequirements(repoRoot) {
-  const packageJsonPaths = listWorkspacePackageJsonPaths(repoRoot);
-  const workspacePackageNames = new Set();
-  const dependencyNames = new Set();
+export function collectMissingWorkspaceDependencyRequirements(repoRoot, options = {}) {
+  const {
+    packageLock = loadPackageLock(repoRoot).packageLock,
+  } = options;
+  const workspaceManifests = listWorkspacePackageManifests(repoRoot);
+  const workspacePackageNames = new Set(
+    workspaceManifests
+      .map(({ packageJson }) => packageJson.name)
+      .filter((packageName) => typeof packageName === 'string' && packageName.length > 0),
+  );
+  const missingRequirements = new Map();
 
-  for (const packageJsonPath of packageJsonPaths) {
-    const packageJson = readJsonFile(packageJsonPath);
-
-    if (typeof packageJson.name === 'string' && packageJson.name.length > 0) {
-      workspacePackageNames.add(packageJson.name);
-    }
+  for (const { packageJsonPath, packageJson } of workspaceManifests) {
+    const ownerPackageDirectory = getWorkspacePackageDirectory(packageJsonPath, repoRoot);
 
     for (const dependencyGroup of ['dependencies', 'devDependencies']) {
       const dependencies = packageJson[dependencyGroup];
@@ -359,23 +370,46 @@ export function collectMissingWorkspaceDependencyRequirements(repoRoot) {
         continue;
       }
 
-      for (const dependencyName of Object.keys(dependencies)) {
-        dependencyNames.add(dependencyName);
+      for (const dependencyName of Object.keys(dependencies).sort((left, right) =>
+        left.localeCompare(right),
+      )) {
+        if (workspacePackageNames.has(dependencyName)) {
+          continue;
+        }
+
+        const candidateModuleDirectories = getDirectDependencyLockEntryCandidates(
+          dependencyName,
+          ownerPackageDirectory,
+        );
+        const existingModuleDirectory = candidateModuleDirectories.find((moduleDirectory) =>
+          fs.existsSync(path.join(repoRoot, moduleDirectory, 'package.json')),
+        );
+
+        if (existingModuleDirectory) {
+          continue;
+        }
+
+        const preferredModuleDirectory =
+          candidateModuleDirectories.find((moduleDirectory) =>
+            Boolean(getPackageLockEntry(packageLock, moduleDirectory)),
+          ) ?? getModuleDirectoryFromPackageName(dependencyName);
+        const existingRequirement = missingRequirements.get(preferredModuleDirectory);
+
+        if (existingRequirement) {
+          continue;
+        }
+
+        missingRequirements.set(preferredModuleDirectory, {
+          moduleDirectory: preferredModuleDirectory,
+          missingFiles: ['package.json'],
+        });
       }
     }
   }
 
-  return [...dependencyNames]
-    .filter((dependencyName) => !workspacePackageNames.has(dependencyName))
-    .sort((left, right) => left.localeCompare(right))
-    .flatMap((dependencyName) => {
-      const moduleDirectory = getModuleDirectoryFromPackageName(dependencyName);
-      const packageJsonPath = path.join(repoRoot, moduleDirectory, 'package.json');
-
-      return fs.existsSync(packageJsonPath)
-        ? []
-        : [{ moduleDirectory, missingFiles: ['package.json'] }];
-    });
+  return [...missingRequirements.values()].sort((left, right) =>
+    left.moduleDirectory.localeCompare(right.moduleDirectory),
+  );
 }
 
 export function collectWorkspaceDependencyLockIssues(

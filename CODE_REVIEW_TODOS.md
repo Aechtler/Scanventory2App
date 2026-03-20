@@ -15,6 +15,7 @@
 ## Statusnotiz
 
 - 2026-03-20: Runnable-environment Guard-Diagnostik zeigt jetzt zusätzlich workspace-spezifische `npm install --workspace=...`-Hinweise fuer mobile/backend Validierung; der verbleibende Blocker sind weiterhin fehlende/offline nicht gecachte Tarballs, nicht mehr unklare Reparaturschritte.
+- 2026-03-20: Workspace-Dependency-Checks bevorzugen jetzt vorhandene workspace-lokale `package-lock.json`-Eintraege vor stale hoisted Root-Pfaden; `npm run typecheck:backend` meldet dadurch den echten Backend-Blocker `packages/backend/node_modules/uuid` mit `uuid-11.1.0.tgz` statt eines irrefuehrenden Root-`uuid-7.0.3`-Treffers.
 
 ---
 

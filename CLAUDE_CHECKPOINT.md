@@ -58,6 +58,7 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck entrypoint, routing `npm run typecheck:all` through a sequential guarded runner so mobile and backend blocker diagnostics stay workspace-scoped instead of collapsing back to raw workspace-wide failures.
 The next runnable-environment lockfile cleanup is now implemented on `scanapp2` for `packages/mobile/package.json` and the root `package-lock.json`, removing the stale duplicate `babel-preset-expo` mobile devDependency and aligning the hoisted lock entry with the real direct mobile dependency so guarded mobile typecheck now reports only remaining cache-miss blockers instead of repo-owned lock drift.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, adding workspace-scoped `npm install --workspace=...` remediation hints so guarded backend/mobile validation failures now point to the smallest useful reinstall path before the full-workspace fallback.
+The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, preferring workspace-local direct-dependency install paths when the root lockfile already resolves a package under `packages/*/node_modules`, so guarded backend validation now reports the real `packages/backend/node_modules/uuid` `11.1.0` blocker instead of a misleading stale hoisted root `uuid` tarball.
 
 ## Analyzed
 
@@ -475,6 +476,12 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
   - Passed
 - `npm run typecheck:backend`
   - Still fails in this sandbox because backend tarballs remain uncached, but the guarded output now includes the smallest useful reinstall hint first via `npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile`
+- `node --test --experimental-strip-types scripts/workspace-toolchain-health.test.ts`
+  - Passed after adding a regression guard for workspace-local direct dependency lockfile paths
+- `node --test --experimental-strip-types scripts/setup-workspace-toolchain.test.ts`
+  - Passed
+- `npm run typecheck:backend`
+  - Still fails in this sandbox because backend tarballs remain uncached, but now reports the real workspace-local blocker `packages/backend/node_modules/uuid` with the correct `uuid-11.1.0.tgz` cache miss instead of the stale hoisted root `uuid-7.0.3` tarball
 - `npm run lint:mobile`
   - Still fails in this sandbox because mobile tarballs remain uncached, but the guarded output now includes the same workspace-scoped reinstall hint before the full-workspace fallback
 

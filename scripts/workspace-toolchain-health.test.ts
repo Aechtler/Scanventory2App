@@ -233,6 +233,50 @@ test('collectMissingWorkspaceDependencyRequirements flags hollow direct workspac
   ]);
 });
 
+test('collectMissingWorkspaceDependencyRequirements prefers workspace-local lockfile paths for direct dependencies', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({
+      private: true,
+      workspaces: ['packages/*'],
+    }),
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'packages/backend/node_modules/uuid': {
+          version: '11.1.0',
+        },
+        'node_modules/uuid': {
+          version: '7.0.3',
+        },
+      },
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'backend', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/backend',
+      dependencies: {
+        uuid: '^11.1.0',
+      },
+    }),
+  );
+
+  const missing = collectMissingWorkspaceDependencyRequirements(repoRoot);
+
+  assert.deepEqual(missing, [
+    {
+      moduleDirectory: 'packages/backend/node_modules/uuid',
+      missingFiles: ['package.json'],
+    },
+  ]);
+});
+
 test('collectWorkspaceDependencyOwners maps external dependencies back to root and workspace packages', () => {
   const repoRoot = createTempRepo();
 

@@ -90,7 +90,15 @@ function shouldSkipOfflineInstallForKnownCacheMisses(unresolvedRequirements, off
 }
 
 function packageNameFromModuleDirectory(moduleDirectory) {
-  return moduleDirectory.replace(/^node_modules\//, '');
+  const modulePathParts = moduleDirectory.split('/');
+  const nodeModulesIndex = modulePathParts.lastIndexOf('node_modules');
+
+  if (nodeModulesIndex === -1 || nodeModulesIndex === modulePathParts.length - 1) {
+    return moduleDirectory;
+  }
+
+  const packageParts = modulePathParts.slice(nodeModulesIndex + 1);
+  return packageParts[0]?.startsWith('@') ? packageParts.slice(0, 2).join('/') : packageParts[0];
 }
 
 function filterWorkspaceDependencyOwners(workspaceDependencyOwners, workspaceNames = []) {
