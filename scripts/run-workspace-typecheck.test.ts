@@ -68,3 +68,22 @@ test('runWorkspaceTypecheck scopes workspace setup to the requested workspace', 
     'workspace:backend',
   ]);
 });
+
+test('runWorkspaceTypecheck skips setup when shared preflight already passed', async () => {
+  const calls: string[] = [];
+
+  const result = await runWorkspaceTypecheck('mobile', {
+    skipSetup: true,
+    runSetupWorkspaceToolchain: async () => {
+      calls.push('setup');
+      return { exitCode: 0 };
+    },
+    runWorkspaceCommand: (workspace) => {
+      calls.push(`workspace:${workspace}`);
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(calls, ['workspace:mobile']);
+});

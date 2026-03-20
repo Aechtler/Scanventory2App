@@ -60,6 +60,7 @@ The next runnable-environment lockfile cleanup is now implemented on `scanapp2` 
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, adding workspace-scoped `npm install --workspace=...` remediation hints so guarded backend/mobile validation failures now point to the smallest useful reinstall path before the full-workspace fallback.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, preferring workspace-local direct-dependency install paths when the root lockfile already resolves a package under `packages/*/node_modules`, so guarded backend validation now reports the real `packages/backend/node_modules/uuid` `11.1.0` blocker instead of a misleading stale hoisted root `uuid` tarball.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck runner, keeping `npm run typecheck:all` sequential but no longer stopping after the first workspace failure so mobile and backend blocker diagnostics plus a final summary stay visible in one pass.
+The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck runner, adding a shared `setup:workspace` preflight plus per-workspace `skipSetup` handoff so aggregate failures stay on the real direct mobile/backend blocker list instead of expanding into hundreds of hollow transitive packages after the first offline install attempt.
 
 ## Analyzed
 
@@ -487,8 +488,12 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
   - Still fails in this sandbox because mobile tarballs remain uncached, but the guarded output now includes the same workspace-scoped reinstall hint before the full-workspace fallback
 - `node --test --experimental-strip-types scripts/run-workspace-typecheck-all.test.ts`
   - Passed after adding a regression guard that `npm run typecheck:all` continues to backend and emits a final workspace summary instead of stopping at the first failure
+- `node --test --experimental-strip-types scripts/run-workspace-typecheck.test.ts scripts/run-workspace-typecheck-all.test.ts`
+  - Passed after adding a regression guard for the shared aggregate `setup:workspace` preflight and the per-workspace `skipSetup` handoff
 - `npm run typecheck:all`
   - Still fails in this sandbox because both mobile and backend tarballs remain uncached, but it now surfaces both workspace-specific blocker reports and ends with `Workspace typecheck summary: mobile failed (exit 1); backend failed (exit 1)`
+- `npm run typecheck:all`
+  - Still fails in this sandbox because the remaining direct mobile/backend tarballs are not cached locally, but now stays bounded to the same 45 direct blocker entries from the shared guarded setup instead of degrading into 500+ hollow transitive package misses on the backend pass
 
 ## What Remains
 
