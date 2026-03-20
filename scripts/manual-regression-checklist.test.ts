@@ -55,6 +55,13 @@ npm run typecheck:backend
 - manual sections completed
 - any regressions or blockers with exact file/flow context
 
+## Validation result template
+
+- Environment:
+- Command checks:
+- Manual sections completed:
+- Regressions / blockers:
+
 ## Trello update template
 
 - Ziel
@@ -114,6 +121,7 @@ npm run typecheck:mobile
     'Checklist is missing recording-results bullet: command checks run and pass/fail/block status',
     'Checklist is missing recording-results bullet: manual sections completed',
     'Checklist is missing recording-results bullet: any regressions or blockers with exact file/flow context',
+    'Checklist is missing validation result template section',
     'Checklist is missing Trello update template section',
   ]);
 });

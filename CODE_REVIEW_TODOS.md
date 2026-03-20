@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: `docs/manual-regression-checklist.md` traegt jetzt zusaetzlich ein konkretes `Validation result template`, und `scripts/manual-regression-checklist.mjs`/`.test.ts` guarden diese Handoff-Struktur mit, damit Batch-6-Validierungslaeufe ihre Umgebung, Command-Checks, manuellen Abschnitte und Blocker repo-konsistent festhalten.
 - 2026-03-20: Workspace-Restore-Diagnostik empfiehlt bei `npm run typecheck:backend` jetzt den kleinsten guarded Network-Retry `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run typecheck:backend` statt pauschal auf `setup:workspace` zurueckzuspringen; der reale Backend-Blocker bleibt die unveraenderte 13-Paket-Liste ohne lokal verfuegbare Tarballs.
 - 2026-03-20: `scripts/manual-regression-checklist.mjs` liest den ersten Bash-Block unter `## Quick command checks` jetzt auch dann korrekt, wenn davor erklaerender Text steht; zugleich guarden `scripts/manual-regression-checklist.test.ts` und `docs/manual-regression-checklist.md`, dass `npm run validate:manual-regression` selbst Teil der dokumentierten Quick-Checks bleibt.
 - 2026-03-20: `npm run typecheck:backend` bleibt nach einem fehlgeschlagenen `npm install --workspace=@scanapp/backend` jetzt auf den 13 direkten Backend-Blockern statt wieder in 400+ ownerless Hollow-Packages zu kippen; `scripts/setup-workspace-toolchain.mjs` laesst dafuer in workspace-scoped Post-Install-Diagnostik die generischen installed-package-Misses weg, abgesichert durch einen gezielten Red-Green-Test.

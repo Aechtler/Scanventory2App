@@ -19,6 +19,13 @@ const REQUIRED_RECORDING_BULLETS = [
   'any regressions or blockers with exact file/flow context',
 ];
 
+const REQUIRED_VALIDATION_TEMPLATE_FIELDS = [
+  'Environment:',
+  'Command checks:',
+  'Manual sections completed:',
+  'Regressions / blockers:',
+];
+
 const REQUIRED_TRELLO_FIELDS = [
   'Ziel',
   'Umfang',
@@ -103,6 +110,16 @@ export function validateManualRegressionChecklist(repoRoot) {
   for (const bullet of REQUIRED_RECORDING_BULLETS) {
     if (!documentText.includes(`- ${bullet}`)) {
       errors.push(`Checklist is missing recording-results bullet: ${bullet}`);
+    }
+  }
+
+  if (!documentText.includes('## Validation result template')) {
+    errors.push('Checklist is missing validation result template section');
+  } else {
+    for (const field of REQUIRED_VALIDATION_TEMPLATE_FIELDS) {
+      if (!documentText.includes(`- ${field}`)) {
+        errors.push(`Checklist is missing validation result template field: ${field}`);
+      }
     }
   }
 

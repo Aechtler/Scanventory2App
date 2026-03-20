@@ -204,6 +204,13 @@ If Trello is available, update the matching card/checklist with:
 - what is still blocked by environment/tooling
 - whether Batch 6 is ready to move forward
 
+## Validation result template
+
+- Environment:
+- Command checks:
+- Manual sections completed:
+- Regressions / blockers:
+
 ## Trello update template
 
 - Ziel
