@@ -10,6 +10,10 @@ const WORKSPACE_BUILD_COMMANDS = {
   backend: ['npm', ['run', 'build', '--workspace=@scanapp/backend']],
 };
 
+const WORKSPACE_PACKAGE_NAMES = {
+  backend: '@scanapp/backend',
+};
+
 function defaultRunWorkspaceCommand(workspace) {
   const [command, args] = WORKSPACE_BUILD_COMMANDS[workspace];
 
@@ -25,7 +29,10 @@ export async function runWorkspaceBuild(workspace, options = {}) {
     runWorkspaceCommand: runWorkspaceCommandImpl = defaultRunWorkspaceCommand,
   } = options;
 
-  const setupResult = await runSetupWorkspaceToolchainImpl();
+  const setupResult = await runSetupWorkspaceToolchainImpl({
+    workspaceNames: [WORKSPACE_PACKAGE_NAMES[workspace]],
+    retryCommand: `npm run build:${workspace}`,
+  });
 
   if ((setupResult?.exitCode ?? 1) !== 0) {
     return { exitCode: setupResult.exitCode ?? 1 };

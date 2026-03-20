@@ -44,3 +44,26 @@ test('runWorkspaceLint preserves non-zero workspace command exits', async () => 
 
   assert.equal(result.exitCode, 2);
 });
+
+test('runWorkspaceLint scopes workspace setup diagnostics to mobile', async () => {
+  let receivedOptions:
+    | {
+        workspaceNames?: string[];
+        retryCommand?: string;
+      }
+    | undefined;
+
+  const result = await runWorkspaceLint('mobile', {
+    runSetupWorkspaceToolchain: async (options) => {
+      receivedOptions = options;
+      return { exitCode: 0 };
+    },
+    runWorkspaceCommand: () => ({ status: 0 }),
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(receivedOptions, {
+    workspaceNames: ['@scanapp/mobile'],
+    retryCommand: 'npm run lint:mobile',
+  });
+});

@@ -44,3 +44,26 @@ test('runWorkspaceBuild preserves non-zero workspace command exits', async () =>
 
   assert.equal(result.exitCode, 2);
 });
+
+test('runWorkspaceBuild scopes workspace setup diagnostics to backend', async () => {
+  let receivedOptions:
+    | {
+        workspaceNames?: string[];
+        retryCommand?: string;
+      }
+    | undefined;
+
+  const result = await runWorkspaceBuild('backend', {
+    runSetupWorkspaceToolchain: async (options) => {
+      receivedOptions = options;
+      return { exitCode: 0 };
+    },
+    runWorkspaceCommand: () => ({ status: 0 }),
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(receivedOptions, {
+    workspaceNames: ['@scanapp/backend'],
+    retryCommand: 'npm run build:backend',
+  });
+});

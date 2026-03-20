@@ -10,6 +10,10 @@ const WORKSPACE_LINT_COMMANDS = {
   mobile: ['npm', ['run', 'lint', '--workspace=@scanapp/mobile']],
 };
 
+const WORKSPACE_PACKAGE_NAMES = {
+  mobile: '@scanapp/mobile',
+};
+
 function defaultRunWorkspaceCommand(workspace) {
   const [command, args] = WORKSPACE_LINT_COMMANDS[workspace];
 
@@ -25,7 +29,10 @@ export async function runWorkspaceLint(workspace, options = {}) {
     runWorkspaceCommand: runWorkspaceCommandImpl = defaultRunWorkspaceCommand,
   } = options;
 
-  const setupResult = await runSetupWorkspaceToolchainImpl();
+  const setupResult = await runSetupWorkspaceToolchainImpl({
+    workspaceNames: [WORKSPACE_PACKAGE_NAMES[workspace]],
+    retryCommand: `npm run lint:${workspace}`,
+  });
 
   if ((setupResult?.exitCode ?? 1) !== 0) {
     return { exitCode: setupResult.exitCode ?? 1 };

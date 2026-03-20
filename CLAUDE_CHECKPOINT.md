@@ -51,6 +51,7 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding an opt-in `SCANAPP_ALLOW_NETWORK_INSTALL=1` fallback so known uncached or offline-failed workspace packages can retry through a normal `npm install` instead of stopping at offline-cache diagnostics when network access is available.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, updating the suggested remediation flow to prefer `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` before the plain `npm install` fallback so setup output, README guidance, and the guarded bootstrap path stay aligned.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs` and `scripts/run-workspace-typecheck.mjs`, scoping `npm run typecheck:mobile` and `npm run typecheck:backend` blocker reports to the requested workspace so package restoration can proceed in smaller backend/mobile slices instead of one combined monorepo list.
+The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/run-workspace-lint.mjs` and `scripts/run-workspace-build.mjs`, scoping `npm run lint:mobile` and `npm run build:backend` blocker reports to the requested workspace so guarded validation stays focused on the active mobile or backend restore slice.
 
 ## Analyzed
 
@@ -430,15 +431,23 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
   - Fails early as expected in this sandbox, but now reports only backend-owned blockers plus shared `typescript`
 - `node ./scripts/run-workspace-typecheck.mjs mobile`
   - Fails early as expected in this sandbox, but now reports only mobile-owned blockers plus shared `typescript`
+- `node --test --experimental-strip-types scripts/run-workspace-lint.test.ts scripts/run-workspace-build.test.ts`
+  - Passed
+- `npm run lint:mobile`
+  - Still fails in this sandbox because mobile workspace packages are uncached or hollow
+  - Now reports only mobile-owned blockers plus shared `typescript`, keeping the runnable-environment output aligned with the already-scoped typecheck guard
+- `npm run build:backend`
+  - Still fails in this sandbox because backend workspace packages are uncached or hollow
+  - Now reports only backend-owned blockers plus shared `typescript`, keeping backend restore work isolated from mobile noise
 
 ## What Remains
 
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
-- Restore the uncached tarballs or repopulate the hollow package directories that the workspace-scoped `npm run typecheck:mobile` / `npm run typecheck:backend` guards now report explicitly, including the mobile `expo` / `nativewind` toolchain packages and backend-blocking direct `@types/*` packages; environments with network access can now use `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`
+- Restore the uncached tarballs or repopulate the hollow package directories that the workspace-scoped `npm run lint:mobile`, `npm run build:backend`, `npm run typecheck:mobile`, and `npm run typecheck:backend` guards now report explicitly, including the mobile `expo` / `nativewind` toolchain packages and backend-blocking direct `@types/*` packages; environments with network access can now use `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`
 - Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step
 
-Run `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` in a network-enabled environment, then use the now-scoped `npm run typecheck:backend` and `npm run typecheck:mobile` outputs to confirm each package slice is restored without cross-workspace noise before continuing with the Batch 6 manual regression checklist in a runnable device/backend environment.
+Run `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` in a network-enabled environment, then use the now-scoped `npm run build:backend`, `npm run lint:mobile`, `npm run typecheck:backend`, and `npm run typecheck:mobile` outputs to confirm each package slice is restored without cross-workspace noise before continuing with the Batch 6 manual regression checklist in a runnable device/backend environment.
