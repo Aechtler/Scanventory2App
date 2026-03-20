@@ -187,9 +187,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/mobile/src/features/history/store/historyStore.ts`
   - Behoben: die Zustand-Wiring-Datei nutzt jetzt einen injizierbaren `createHistoryStoreState(...)`-Seam; Cache- und Sync-Nebenwirkungen sind damit ohne Expo-/Backend-Runtime gezielt testbar
 
-- [ ] **ARCH-03**: Fehlende Datenbank-Compound-Indexes
+- [x] **ARCH-03**: Fehlende Datenbank-Compound-Indexes
   - `packages/backend/prisma/schema.prisma`
-  - Missing: `@@index([userId, scannedAt])` für effizientes Filtering
+  - Behoben: `ScannedItem` nutzt jetzt zusätzlich `@@index([userId, scannedAt])`; die zugehörige Prisma-Migration und ein leichter Schema-Guard-Test sichern den Index für user-gefilterte Timeline-Reads ab
 
 - [ ] **ARCH-04**: Kein Request-Logging Middleware
   - Keine Logs für Method, Path, Timing, User, Status

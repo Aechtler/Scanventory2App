@@ -19,6 +19,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, keeping the public service API stable while moving create/update payload normalization into focused helper builders.
 The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, replacing direct Prisma construction in the service logic with an injectable `createItemService(prisma)` factory while preserving the existing route-facing API.
 The next mobile architecture cleanup is now implemented on `scanapp2` for `packages/mobile/src/features/history/store/historyStore.ts`, replacing hardcoded cache/sync side effects with an injectable `createHistoryStoreState(...)` seam while preserving the public persisted Zustand hook.
+The next backend schema architecture cleanup is now implemented on `scanapp2` for `packages/backend/prisma/schema.prisma`, adding the missing `ScannedItem` compound index on `userId + scannedAt` together with a lightweight schema regression test and Prisma migration.
 
 ## Analyzed
 
@@ -47,6 +48,7 @@ The next mobile architecture cleanup is now implemented on `scanapp2` for `packa
 - Batch 7 next size-rule target in `itemService.ts`, including extraction boundaries between Prisma CRUD orchestration and payload normalization for create/price update flows
 - ARCH-01 backend dependency-injection target in `itemService.ts`, including the smallest seam for replacing direct `PrismaClient` construction with an injectable service factory
 - ARCH-02 mobile dependency-injection target in `historyStore.ts`, including the smallest seam for replacing hardcoded cache/sync services with injected dependencies while keeping the app-facing Zustand API stable
+- ARCH-03 database indexing target in `packages/backend/prisma/schema.prisma`, including the missing `ScannedItem` compound index for user-filtered timeline reads and the smallest lightweight guard that can run without a live database
 
 ## Created
 
@@ -100,6 +102,7 @@ The next mobile architecture cleanup is now implemented on `scanapp2` for `packa
 - `packages/mobile/src/features/history/store/state.ts`
 - `packages/backend/src/services/itemServiceFactory.ts`
 - `packages/backend/src/services/itemServiceFactory.test.ts`
+- `packages/backend/prisma/schema.test.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.test.ts`
 - `packages/mobile/src/features/history/components/HistoryDetailHeaderActions.tsx`
@@ -221,6 +224,11 @@ The next mobile architecture cleanup is now implemented on `scanapp2` for `packa
 - Updated `packages/mobile/src/features/history/store/historyStore.ts` to keep exporting the existing persisted Zustand hook while supplying the default cache/sync dependency bundle
 - Extended `packages/mobile/src/features/history/store/historyStore.test.ts` so add/update/remove flows prove the store uses injected cache and sync collaborators instead of hardcoded services
 
+### ARCH-03 backend compound index
+- Added `@@index([userId, scannedAt])` to `ScannedItem` in `packages/backend/prisma/schema.prisma` so the existing `where: { userId }` plus `orderBy: { scannedAt: 'desc' }` read path has a matching compound index
+- Added `packages/backend/prisma/migrations/20260320000000_add_scanned_item_user_scanned_at_index/migration.sql` to create `ScannedItem_userId_scannedAt_idx`
+- Added `packages/backend/prisma/schema.test.ts` and included it in `npm run test:targeted` so the schema and latest migration keep asserting the compound index without depending on Prisma CLI or a live Postgres instance
+
 ## Validated
 
 - `git diff --check`
@@ -242,6 +250,8 @@ The next mobile architecture cleanup is now implemented on `scanapp2` for `packa
 - `node --test --experimental-strip-types packages/backend/src/services/itemPayloads.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/backend/src/services/itemServiceFactory.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/backend/prisma/schema.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyDetail.test.ts`
   - Passed

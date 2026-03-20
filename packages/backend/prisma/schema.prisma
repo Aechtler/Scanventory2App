@@ -64,6 +64,7 @@ model ScannedItem {
 
   @@index([userId])
   @@index([scannedAt])
+  @@index([userId, scannedAt])
   @@index([productName])
   @@index([category])
 }
