@@ -475,6 +475,64 @@ test('runSetupWorkspaceToolchain scopes unresolved requirement diagnostics to th
   assert.deepEqual(calls, ['error:scoped misses']);
 });
 
+test('runSetupWorkspaceToolchain scopes npm install to the requested workspaces', async () => {
+  const installCalls: Array<{ offline: boolean; workspaceNames?: string[] }> = [];
+  let collectCount = 0;
+
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    workspaceNames: ['@scanapp/backend'],
+    collectWorkspaceDependencyOwners: () => ({
+      typescript: ['@scanapp/backend'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => {
+      collectCount += 1;
+
+      return collectCount === 1
+        ? [
+            {
+              moduleDirectory: 'node_modules/typescript',
+              missingFiles: ['lib/typescript.js'],
+            },
+          ]
+        : [];
+    },
+    collectMissingWorkspaceDependencyRequirements: () => [],
+    collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
+    restoreMissingToolchainRequirementsFromCache: async () => ({
+      restoredPackages: [],
+      unresolvedRequirements: [
+        {
+          moduleDirectory: 'node_modules/typescript',
+          missingFiles: ['lib/typescript.js'],
+        },
+      ],
+    }),
+    collectOfflineCacheMissesFromLockfile: async () => [],
+    runNpmInstall: ({ offline, workspaceNames }) => {
+      installCalls.push({ offline, workspaceNames });
+      return { status: 0, stdout: '', stderr: '' };
+    },
+    console: {
+      log: () => {},
+      error: () => {},
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(installCalls, [
+    {
+      offline: true,
+      workspaceNames: ['@scanapp/backend'],
+    },
+  ]);
+});
+
 test('runSetupWorkspaceToolchain merges missing direct workspace dependencies into cache restore and install diagnostics', async () => {
   const requirements = [
     {

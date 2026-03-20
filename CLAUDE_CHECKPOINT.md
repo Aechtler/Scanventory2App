@@ -64,6 +64,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck runner, adding a shared `setup:workspace` preflight plus per-workspace `skipSetup` handoff so aggregate failures stay on the real direct mobile/backend blocker list instead of expanding into hundreds of hollow transitive packages after the first offline install attempt.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, grouping aggregate `npm run typecheck:all` blockers by affected workspace count so the guarded output now points to the smallest restore slice first (`@scanapp/backend` before `@scanapp/mobile`) instead of only showing one combined reinstall command.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate build entrypoint, routing `npm run build:all` through the shared workspace-setup guard so missing backend toolchain packages now fail with actionable restore diagnostics plus a concise `Workspace build summary` instead of a raw `Cannot find module .../typescript/bin/tsc` crash.
+The next runnable-environment restore cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, forwarding requested workspace package names into the actual `npm install` attempt so backend/mobile guard runs now try the smallest workspace-scoped reinstall slice before falling back to a full-root install path.
 
 ## Analyzed
 
@@ -514,6 +515,10 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
   - Passed after narrowing scoped workspace owner reporting so backend-only restore guidance no longer leaks shared `typescript` ownership from `@scanapp/mobile`
 - `npm run typecheck:backend`
   - Still fails in this sandbox because backend tarballs remain uncached, but the guarded output now correctly recommends only `npm install --workspace=@scanapp/backend` for the backend restore slice instead of misdirecting to `@scanapp/mobile`
+- `node --test --experimental-strip-types scripts/setup-workspace-toolchain.test.ts scripts/run-workspace-typecheck.test.ts scripts/run-workspace-build.test.ts`
+  - Passed after adding a regression guard that the setup runner forwards requested workspace package names into the actual npm install attempt for backend/mobile restore slices
+- `npm run typecheck:backend`
+  - Still fails in this sandbox because the same 13 backend tarballs remain uncached, but the guarded restore path now attempts the backend-only workspace install slice before stopping on the truthful cache-miss report
 
 ## What Remains
 

@@ -16,11 +16,15 @@ import {
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
-function defaultRunNpmInstall({ offline = true } = {}) {
+function defaultRunNpmInstall({ offline = true, workspaceNames = [] } = {}) {
   const installArgs = ['install', '--no-audit', '--no-fund', '--loglevel=notice'];
 
   if (offline) {
     installArgs.splice(1, 0, '--offline');
+  }
+
+  for (const workspaceName of workspaceNames) {
+    installArgs.push(`--workspace=${workspaceName}`);
   }
 
   return spawnSync(
@@ -293,7 +297,10 @@ export async function runSetupWorkspaceToolchain(options = {}) {
 
     consoleImpl.log('Installing workspace dependencies for lint/typecheck...');
     let installMode = knownOfflineCacheMisses && allowNetworkInstall ? 'online' : 'offline';
-    let installResult = runNpmInstallImpl({ offline: installMode === 'offline' });
+    let installResult = runNpmInstallImpl({
+      offline: installMode === 'offline',
+      workspaceNames,
+    });
 
     if (
       installMode === 'offline' &&
@@ -316,7 +323,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
         consoleImpl.log('Offline npm install hit cache misses; retrying with network install...');
         consoleImpl.log('Installing workspace dependencies for lint/typecheck...');
         installMode = 'online';
-        installResult = runNpmInstallImpl({ offline: false });
+        installResult = runNpmInstallImpl({ offline: false, workspaceNames });
       }
     }
 

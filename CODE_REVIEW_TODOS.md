@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: `scripts/setup-workspace-toolchain.mjs` reicht angeforderte `workspaceNames` jetzt bis zum eigentlichen `npm install` durch; backend-/mobile-Guards versuchen dadurch zuerst den kleinsten `npm install --workspace=...`-Restore-Slice statt immer den kompletten Root-Install.
 - 2026-03-20: `npm run build:all` laeuft jetzt ueber einen gemeinsamen Runnable-environment-Guard statt direkt in `Cannot find module .../typescript/bin/tsc` zu crashen; der aktuelle Output zeigt den echten Backend-Restore-Slice mit 13 direkten Blockern plus knapper `Workspace build summary`.
 - 2026-03-20: Workspace-spezifische Guard-Diagnostik filtert Shared-Dependency-Owner jetzt auf den angeforderten Restore-Slice; `npm run typecheck:backend` empfiehlt dadurch bei fehlendem `typescript` nicht mehr irrefuehrend `@scanapp/mobile`, sondern korrekt nur `npm install --workspace=@scanapp/backend`.
 - 2026-03-20: Aggregate Runnable-environment-Diagnostik gruppiert `npm run typecheck:all`-Blocker jetzt zusaetzlich nach Workspace und priorisiert den kleineren Restore-Slice zuerst; der aktuelle Guard zeigt damit direkt `@scanapp/backend` mit 13 Blockern vor `@scanapp/mobile` mit 33 Blockern.
