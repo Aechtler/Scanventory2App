@@ -9,6 +9,7 @@ import {
   collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
   formatMissingToolchainRequirements,
+  loadPackageLock,
   restoreMissingToolchainRequirementsFromCache,
 } from './workspace-toolchain-health.mjs';
 
@@ -246,5 +247,57 @@ test('restoreMissingToolchainRequirementsFromCache restores available tarballs a
   assert.equal(
     fs.readFileSync(path.join(repoRoot, 'node_modules', 'expo', 'package.json'), 'utf8'),
     'expo tarball',
+  );
+});
+
+test('loadPackageLock reports malformed lockfiles with an actionable issue', () => {
+  const repoRoot = createTempRepo();
+  const packageLockPath = path.join(repoRoot, 'package-lock.json');
+
+  fs.writeFileSync(packageLockPath, '{invalid json');
+
+  const result = loadPackageLock(repoRoot);
+
+  assert.equal(result.packageLock, null);
+  assert.deepEqual(result.issue, {
+    packageLockPath,
+    reason: 'invalid',
+    detail: `Unable to parse ${packageLockPath}: Expected property name or '}' in JSON at position 1 (line 1 column 2)`,
+  });
+});
+
+test('formatMissingToolchainRequirements appends package-lock remediation when provided', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json', 'tsconfig.base'],
+      },
+    ],
+    {
+      packageLockIssue: {
+        packageLockPath: '/tmp/repo/package-lock.json',
+        reason: 'missing',
+        detail: 'Missing root package-lock.json at /tmp/repo/package-lock.json',
+      },
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/expo -> package.json, tsconfig.base',
+      '',
+      'Package-lock issue detected:',
+      '- Missing root package-lock.json at /tmp/repo/package-lock.json',
+      '',
+      'Suggested next steps:',
+      '- Restore or regenerate the root package-lock.json before retrying workspace setup.',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: npm install',
+      '- Then rerun: npm run setup:workspace',
+      '- Likely affected packages: expo',
+    ].join('\n'),
   );
 });

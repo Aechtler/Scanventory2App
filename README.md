@@ -188,6 +188,7 @@ npm run setup:workspace
 ```
 
 Wenn `npm run setup:workspace` fehlschlaegt, listet der Befehl jetzt die konkret betroffenen Pakete und die naechsten Restore-Schritte auf. In einer eingeschraenkten Offline-Umgebung muss der fehlende npm-Cache zuerst wiederhergestellt oder einmal mit Netzwerkzugriff `npm install` ausgefuehrt werden.
+Fehlt die Root-`package-lock.json` oder ist sie defekt, meldet der Setup-Befehl das jetzt ebenfalls explizit und fordert zur Wiederherstellung bzw. Regenerierung der Lockfile auf, bevor weitere Offline-Restore-Schritte sinnvoll sind.
 
 ---
 

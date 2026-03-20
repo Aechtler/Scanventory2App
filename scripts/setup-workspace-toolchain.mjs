@@ -5,6 +5,7 @@ import {
   collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
   formatMissingToolchainRequirements,
+  loadPackageLock,
   restoreMissingToolchainRequirementsFromCache,
 } from './workspace-toolchain-health.mjs';
 
@@ -40,13 +41,24 @@ function mergeOfflineCacheMisses(...missGroups) {
 }
 
 async function main() {
+  const { packageLock, issue: packageLockIssue } = loadPackageLock(repoRoot);
   const missingRequirementsBeforeInstall = collectMissingToolchainRequirements(repoRoot);
   let unresolvedRequirements = missingRequirementsBeforeInstall;
+
+  if (missingRequirementsBeforeInstall.length > 0 && packageLockIssue) {
+    console.error(
+      formatMissingToolchainRequirements(missingRequirementsBeforeInstall, {
+        packageLockIssue,
+      }),
+    );
+    process.exit(1);
+  }
 
   if (missingRequirementsBeforeInstall.length > 0) {
     const restoreResult = await restoreMissingToolchainRequirementsFromCache(
       repoRoot,
       missingRequirementsBeforeInstall,
+      { packageLock },
     );
     unresolvedRequirements = restoreResult.unresolvedRequirements;
 
@@ -72,7 +84,9 @@ async function main() {
 
     if (installStatus !== 0) {
       const offlineCacheMisses = mergeOfflineCacheMisses(
-        await collectOfflineCacheMissesFromLockfile(repoRoot, unresolvedRequirements),
+        await collectOfflineCacheMissesFromLockfile(repoRoot, unresolvedRequirements, {
+          packageLock,
+        }),
         extractOfflineInstallCacheMisses(
           `${installResult.stdout ?? ''}\n${installResult.stderr ?? ''}`,
         ),
@@ -96,6 +110,7 @@ async function main() {
         offlineCacheMisses: await collectOfflineCacheMissesFromLockfile(
           repoRoot,
           missingRequirementsAfterInstall,
+          { packageLock },
         ),
       }),
     );

@@ -57,6 +57,42 @@ function readPackageLock(repoRoot) {
   return JSON.parse(fs.readFileSync(getPackageLockPath(repoRoot), 'utf8'));
 }
 
+export function loadPackageLock(repoRoot) {
+  const packageLockPath = getPackageLockPath(repoRoot);
+
+  try {
+    return {
+      packageLock: readPackageLock(repoRoot),
+      issue: null,
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && error.code === 'ENOENT') {
+      return {
+        packageLock: null,
+        issue: {
+          packageLockPath,
+          reason: 'missing',
+          detail: `Missing root package-lock.json at ${packageLockPath}`,
+        },
+      };
+    }
+
+    const detail =
+      error instanceof Error
+        ? `Unable to parse ${packageLockPath}: ${error.message}`
+        : `Unable to parse ${packageLockPath}`;
+
+    return {
+      packageLock: null,
+      issue: {
+        packageLockPath,
+        reason: 'invalid',
+        detail,
+      },
+    };
+  }
+}
+
 function getPackageLockEntry(packageLock, moduleDirectory) {
   return packageLock?.packages?.[moduleDirectory];
 }
@@ -275,14 +311,22 @@ export function formatMissingToolchainRequirements(
   missingRequirements,
   options = {},
 ) {
-  const { offlineCacheMisses = [] } = options;
-  const affectedPackages = [...new Set(missingRequirements.map(({ moduleDirectory }) => packageNameFromModuleDirectory(moduleDirectory)))];
+  const { offlineCacheMisses = [], packageLockIssue = null } = options;
+  const affectedPackages = [
+    ...new Set(
+      missingRequirements.map(({ moduleDirectory }) => packageNameFromModuleDirectory(moduleDirectory)),
+    ),
+  ];
   const lines = [
     'Workspace setup incomplete. Missing required package files:',
     ...missingRequirements.map(
       ({ moduleDirectory, missingFiles }) => `- ${moduleDirectory} -> ${missingFiles.join(', ')}`,
     ),
   ];
+
+  if (packageLockIssue) {
+    lines.push('', 'Package-lock issue detected:', `- ${packageLockIssue.detail}`);
+  }
 
   if (offlineCacheMisses.length > 0) {
     lines.push(
@@ -297,6 +341,13 @@ export function formatMissingToolchainRequirements(
   lines.push(
     '',
     'Suggested next steps:',
+  );
+
+  if (packageLockIssue) {
+    lines.push('- Restore or regenerate the root package-lock.json before retrying workspace setup.');
+  }
+
+  lines.push(
     '- Restore the missing packages from cache or reinstall with network access.',
     '- If network access is available, run: npm install',
     '- Then rerun: npm run setup:workspace',

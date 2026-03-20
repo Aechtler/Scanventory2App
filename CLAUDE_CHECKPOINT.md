@@ -33,6 +33,7 @@ The next backend documentation cleanup is now implemented on `scanapp2` for `pac
 The next runnable-backend validation cleanup is now implemented on `scanapp2` for `packages/backend/src/middleware/requestId.ts`, tightening `x-request-id` normalization to reject blank, control-character, and oversized header values while adding direct targeted Node coverage for request-id preservation and regeneration behavior.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding workspace bootstrap failures with explicit affected-package remediation so missing offline cache/toolchain packages are actionable instead of opaque.
 The next runnable-environment toolchain cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding best-effort cached-package restoration plus lockfile-driven offline cache-miss detection so hollow workspace installs now report every missing tarball instead of stopping at the first npm failure.
+The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, surfacing missing or malformed root `package-lock.json` files as actionable workspace-setup diagnostics instead of raw fs/JSON exceptions.
 
 ## Analyzed
 
@@ -325,6 +326,11 @@ The next runnable-environment toolchain cleanup is now implemented on `scanapp2`
 - Extended `scripts/workspace-toolchain-health.mjs` with offline-cache-miss parsing plus stable remediation messaging so workspace bootstrap failures enumerate the likely affected packages and next restore steps
 - Updated `scripts/setup-workspace-toolchain.mjs` to capture npm output in-process while preserving the one-shot offline reinstall attempt, then print the actionable toolchain-health summary on failure
 - Updated `README.md` so the setup command description and node-modules troubleshooting section match the improved runnable-environment diagnostics
+
+### Workspace lockfile bootstrap diagnostics
+- Extended `scripts/workspace-toolchain-health.mjs` with a safe `loadPackageLock(...)` helper so missing or malformed root `package-lock.json` files are reported as stable actionable setup issues instead of bubbling raw fs/JSON exceptions
+- Updated `scripts/setup-workspace-toolchain.mjs` to stop early on lockfile issues when toolchain packages are missing, while still reusing the parsed lockfile for cache-restore and offline-cache-miss reporting when it is valid
+- Expanded `scripts/workspace-toolchain-health.test.ts` and updated `README.md` so the new lockfile remediation path is covered by the runnable targeted test surface and documented for future driver passes
 
 ## Validated
 
