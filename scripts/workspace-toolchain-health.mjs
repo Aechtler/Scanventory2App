@@ -53,12 +53,57 @@ function packageNameFromModuleDirectory(moduleDirectory) {
   return moduleDirectory.replace(/^node_modules\//, '');
 }
 
+function getModuleDirectoryFromPackageName(packageName) {
+  return path.join('node_modules', ...packageName.split('/'));
+}
+
 function getPackageLockPath(repoRoot) {
   return path.join(repoRoot, 'package-lock.json');
 }
 
 function readPackageLock(repoRoot) {
   return JSON.parse(fs.readFileSync(getPackageLockPath(repoRoot), 'utf8'));
+}
+
+function readJsonFile(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function getRootPackageJsonPath(repoRoot) {
+  return path.join(repoRoot, 'package.json');
+}
+
+function expandWorkspacePattern(repoRoot, workspacePattern) {
+  if (!workspacePattern.endsWith('/*')) {
+    const packageJsonPath = path.join(repoRoot, workspacePattern, 'package.json');
+    return fs.existsSync(packageJsonPath) ? [packageJsonPath] : [];
+  }
+
+  const workspaceDirectory = path.join(repoRoot, workspacePattern.slice(0, -2));
+
+  if (!fs.existsSync(workspaceDirectory)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(workspaceDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(workspaceDirectory, entry.name, 'package.json'))
+    .filter((packageJsonPath) => fs.existsSync(packageJsonPath))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function listWorkspacePackageJsonPaths(repoRoot) {
+  const rootPackageJsonPath = getRootPackageJsonPath(repoRoot);
+  const rootPackageJson = readJsonFile(rootPackageJsonPath);
+  const workspacePatterns = Array.isArray(rootPackageJson.workspaces) ? rootPackageJson.workspaces : [];
+
+  return [
+    rootPackageJsonPath,
+    ...workspacePatterns.flatMap((workspacePattern) =>
+      expandWorkspacePattern(repoRoot, workspacePattern),
+    ),
+  ];
 }
 
 export function loadPackageLock(repoRoot) {
@@ -206,6 +251,44 @@ export function collectMissingInstalledPackageRequirements(
 
     return missingFiles.length === 0 ? [] : [{ moduleDirectory, missingFiles }];
   });
+}
+
+export function collectMissingWorkspaceDependencyRequirements(repoRoot) {
+  const packageJsonPaths = listWorkspacePackageJsonPaths(repoRoot);
+  const workspacePackageNames = new Set();
+  const dependencyNames = new Set();
+
+  for (const packageJsonPath of packageJsonPaths) {
+    const packageJson = readJsonFile(packageJsonPath);
+
+    if (typeof packageJson.name === 'string' && packageJson.name.length > 0) {
+      workspacePackageNames.add(packageJson.name);
+    }
+
+    for (const dependencyGroup of ['dependencies', 'devDependencies']) {
+      const dependencies = packageJson[dependencyGroup];
+
+      if (!dependencies || typeof dependencies !== 'object') {
+        continue;
+      }
+
+      for (const dependencyName of Object.keys(dependencies)) {
+        dependencyNames.add(dependencyName);
+      }
+    }
+  }
+
+  return [...dependencyNames]
+    .filter((dependencyName) => !workspacePackageNames.has(dependencyName))
+    .sort((left, right) => left.localeCompare(right))
+    .flatMap((dependencyName) => {
+      const moduleDirectory = getModuleDirectoryFromPackageName(dependencyName);
+      const packageJsonPath = path.join(repoRoot, moduleDirectory, 'package.json');
+
+      return fs.existsSync(packageJsonPath)
+        ? []
+        : [{ moduleDirectory, missingFiles: ['package.json'] }];
+    });
 }
 
 export function extractOfflineInstallCacheMisses(installOutput) {

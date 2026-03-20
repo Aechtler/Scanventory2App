@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import {
   collectMissingInstalledPackageRequirements,
+  collectMissingWorkspaceDependencyRequirements,
   collectMissingToolchainRequirements,
   collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
@@ -74,6 +75,8 @@ export async function runSetupWorkspaceToolchain(options = {}) {
     loadPackageLock: loadPackageLockImpl = loadPackageLock,
     collectMissingToolchainRequirements: collectMissingToolchainRequirementsImpl =
       collectMissingToolchainRequirements,
+    collectMissingWorkspaceDependencyRequirements: collectMissingWorkspaceDependencyRequirementsImpl =
+      collectMissingWorkspaceDependencyRequirements,
     collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl =
       collectMissingInstalledPackageRequirements,
     restoreMissingToolchainRequirementsFromCache: restoreMissingToolchainRequirementsFromCacheImpl =
@@ -93,6 +96,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
   const { packageLock, issue: packageLockIssue } = loadPackageLockImpl(targetRepoRoot);
   const missingRequirementsBeforeInstall = mergeMissingRequirements(
     collectMissingToolchainRequirementsImpl(targetRepoRoot),
+    collectMissingWorkspaceDependencyRequirementsImpl(targetRepoRoot),
     packageLock
       ? collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock })
       : [],
@@ -151,6 +155,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
         formatMissingToolchainRequirementsImpl(
           mergeMissingRequirements(
             collectMissingToolchainRequirementsImpl(targetRepoRoot),
+            collectMissingWorkspaceDependencyRequirementsImpl(targetRepoRoot),
             collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock }),
           ),
           {
@@ -164,6 +169,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
 
   const missingRequirementsAfterInstall = mergeMissingRequirements(
     collectMissingToolchainRequirementsImpl(targetRepoRoot),
+    collectMissingWorkspaceDependencyRequirementsImpl(targetRepoRoot),
     collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock }),
   );
 

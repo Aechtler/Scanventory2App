@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import {
   collectMissingInstalledPackageRequirements,
+  collectMissingWorkspaceDependencyRequirements,
   collectMissingToolchainRequirements,
   collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
@@ -88,6 +89,69 @@ test('collectMissingInstalledPackageRequirements flags hollow installed packages
     {
       moduleDirectory: 'node_modules/@types/yargs',
       missingFiles: ['package.json', 'index.d.ts'],
+    },
+  ]);
+});
+
+test('collectMissingWorkspaceDependencyRequirements flags hollow direct workspace dependencies', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({
+      private: true,
+      workspaces: ['packages/*'],
+      dependencies: {
+        react: '19.1.0',
+      },
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'backend', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/backend',
+      dependencies: {
+        cors: '^2.8.5',
+      },
+      devDependencies: {
+        typescript: '~5.9.2',
+      },
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'mobile'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'mobile', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/mobile',
+      dependencies: {
+        expo: '~54.0.32',
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'react'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'node_modules', 'react', 'package.json'),
+    '{"name":"react"}',
+  );
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'expo'), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'typescript'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'node_modules', 'typescript', 'package.json'),
+    '{"name":"typescript"}',
+  );
+
+  const missing = collectMissingWorkspaceDependencyRequirements(repoRoot);
+
+  assert.deepEqual(missing, [
+    {
+      moduleDirectory: 'node_modules/cors',
+      missingFiles: ['package.json'],
+    },
+    {
+      moduleDirectory: 'node_modules/expo',
+      missingFiles: ['package.json'],
     },
   ]);
 });

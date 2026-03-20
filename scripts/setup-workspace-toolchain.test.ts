@@ -21,6 +21,7 @@ test('runSetupWorkspaceToolchain exits early with actionable package-lock diagno
         missingFiles: ['package.json', 'tsconfig.base'],
       },
     ],
+    collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
     formatMissingToolchainRequirements: (requirements, options) => {
       calls.push('format');
@@ -75,6 +76,7 @@ test('runSetupWorkspaceToolchain skips npm install when cache restoration resolv
           ]
         : [];
     },
+    collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: ['expo'],
@@ -111,6 +113,7 @@ test('runSetupWorkspaceToolchain reports merged offline cache misses after npm i
         missingFiles: ['package.json'],
       },
     ],
+    collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: [],
@@ -170,5 +173,62 @@ test('runSetupWorkspaceToolchain reports merged offline cache misses after npm i
     'stderr:install stderr',
     'error:Offline npm install failed with exit code 1.',
     'error:offline misses',
+  ]);
+});
+
+test('runSetupWorkspaceToolchain merges missing direct workspace dependencies into cache restore and install diagnostics', async () => {
+  const requirements = [
+    {
+      moduleDirectory: 'node_modules/expo',
+      missingFiles: ['package.json'],
+    },
+    {
+      moduleDirectory: 'node_modules/react',
+      missingFiles: ['package.json'],
+    },
+  ];
+
+  const observed: string[] = [];
+
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => [requirements[0]!],
+    collectMissingWorkspaceDependencyRequirements: () => [requirements[1]!],
+    collectMissingInstalledPackageRequirements: () => [],
+    restoreMissingToolchainRequirementsFromCache: async (_repoRoot, missingRequirements) => {
+      observed.push(`restore:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return {
+        restoredPackages: [],
+        unresolvedRequirements: missingRequirements,
+      };
+    },
+    collectOfflineCacheMissesFromLockfile: async (_repoRoot, missingRequirements) => {
+      observed.push(`offline:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return [];
+    },
+    formatMissingToolchainRequirements: (missingRequirements) => {
+      observed.push(`format:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return 'merged requirements';
+    },
+    runNpmInstall: () => ({
+      status: 1,
+      stdout: '',
+      stderr: '',
+    }),
+    console: {
+      log: () => {},
+      error: () => {},
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(observed, [
+    'restore:node_modules/expo,node_modules/react',
+    'offline:node_modules/expo,node_modules/react',
+    'format:node_modules/expo,node_modules/react',
   ]);
 });

@@ -36,6 +36,7 @@ The next runnable-environment toolchain cleanup is now implemented on `scanapp2`
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, surfacing missing or malformed root `package-lock.json` files as actionable workspace-setup diagnostics instead of raw fs/JSON exceptions.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding missing-package detection to hollow installed `@types/*` directories so backend/mobile typecheck blockers are reported and cache-restored alongside the existing Expo/nativewind toolchain requirements.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, exporting the bootstrap orchestration behind a testable runner and adding direct Node coverage for package-lock diagnostics, cache-restore short-circuiting, and offline-install failure reporting while preserving the CLI entrypoint behavior.
+The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding missing-package detection from the curated toolchain set to all direct root/mobile/backend workspace dependencies so hollow runtime packages are cache-restored or reported before typecheck stalls on hidden missing-module errors.
 
 ## Analyzed
 
@@ -380,7 +381,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
   - Runs the local TypeScript entrypoint now; currently fails on missing backend/mobile type packages in this sandbox
 - `node ./scripts/setup-workspace-toolchain.mjs`
   - Still fails in this sandbox because the workspace cache is incomplete, but now reports the affected packages and concrete recovery steps directly
-  - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files are `node_modules/expo/{package.json,tsconfig.base}`, `node_modules/nativewind/{package.json,types/index.d.ts}`, and the hollow backend `@types/{bcryptjs,cors,express-rate-limit,multer,uuid}` packages
+  - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files now include the broader direct workspace dependency surface such as `@prisma/client`, `react`, `react-native`, Expo/mobile runtime packages, `bcryptjs`, `multer`, `uuid`, plus the hollow backend/test `@types/*` packages
 - `npm run test:targeted`
   - Passed
 
@@ -389,7 +390,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
-- Restore the uncached tarballs or repopulate the hollow package directories that `npm run setup:workspace` now reports explicitly, including the missing `@types/*` packages, before retrying mobile/backend typecheck
+- Restore the uncached tarballs or repopulate the hollow package directories that `npm run setup:workspace` now reports explicitly, including the missing direct runtime packages and `@types/*` packages, before retrying mobile/backend typecheck
 - Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step
