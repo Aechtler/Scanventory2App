@@ -35,6 +35,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 The next runnable-environment toolchain cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding best-effort cached-package restoration plus lockfile-driven offline cache-miss detection so hollow workspace installs now report every missing tarball instead of stopping at the first npm failure.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, surfacing missing or malformed root `package-lock.json` files as actionable workspace-setup diagnostics instead of raw fs/JSON exceptions.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding missing-package detection to hollow installed `@types/*` directories so backend/mobile typecheck blockers are reported and cache-restored alongside the existing Expo/nativewind toolchain requirements.
+The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, exporting the bootstrap orchestration behind a testable runner and adding direct Node coverage for package-lock diagnostics, cache-restore short-circuiting, and offline-install failure reporting while preserving the CLI entrypoint behavior.
 
 ## Analyzed
 

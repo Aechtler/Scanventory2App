@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import {
   collectMissingInstalledPackageRequirements,
@@ -12,7 +13,7 @@ import {
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 
-function runNpmInstall() {
+function defaultRunNpmInstall() {
   return spawnSync(
     'npm',
     ['install', '--offline', '--no-audit', '--no-fund', '--loglevel=notice'],
@@ -67,96 +68,126 @@ function mergeMissingRequirements(...requirementGroups) {
   );
 }
 
-async function main() {
-  const { packageLock, issue: packageLockIssue } = loadPackageLock(repoRoot);
+export async function runSetupWorkspaceToolchain(options = {}) {
+  const {
+    repoRoot: targetRepoRoot = repoRoot,
+    loadPackageLock: loadPackageLockImpl = loadPackageLock,
+    collectMissingToolchainRequirements: collectMissingToolchainRequirementsImpl =
+      collectMissingToolchainRequirements,
+    collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl =
+      collectMissingInstalledPackageRequirements,
+    restoreMissingToolchainRequirementsFromCache: restoreMissingToolchainRequirementsFromCacheImpl =
+      restoreMissingToolchainRequirementsFromCache,
+    collectOfflineCacheMissesFromLockfile: collectOfflineCacheMissesFromLockfileImpl =
+      collectOfflineCacheMissesFromLockfile,
+    extractOfflineInstallCacheMisses: extractOfflineInstallCacheMissesImpl =
+      extractOfflineInstallCacheMisses,
+    formatMissingToolchainRequirements: formatMissingToolchainRequirementsImpl =
+      formatMissingToolchainRequirements,
+    runNpmInstall: runNpmInstallImpl = defaultRunNpmInstall,
+    console: consoleImpl = console,
+    writeStdout = (output) => process.stdout.write(output),
+    writeStderr = (output) => process.stderr.write(output),
+  } = options;
+
+  const { packageLock, issue: packageLockIssue } = loadPackageLockImpl(targetRepoRoot);
   const missingRequirementsBeforeInstall = mergeMissingRequirements(
-    collectMissingToolchainRequirements(repoRoot),
-    packageLock ? collectMissingInstalledPackageRequirements(repoRoot, { packageLock }) : [],
+    collectMissingToolchainRequirementsImpl(targetRepoRoot),
+    packageLock
+      ? collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock })
+      : [],
   );
   let unresolvedRequirements = missingRequirementsBeforeInstall;
 
   if (missingRequirementsBeforeInstall.length > 0 && packageLockIssue) {
-    console.error(
-      formatMissingToolchainRequirements(missingRequirementsBeforeInstall, {
+    consoleImpl.error(
+      formatMissingToolchainRequirementsImpl(missingRequirementsBeforeInstall, {
         packageLockIssue,
       }),
     );
-    process.exit(1);
+    return { exitCode: 1 };
   }
 
   if (missingRequirementsBeforeInstall.length > 0) {
-    const restoreResult = await restoreMissingToolchainRequirementsFromCache(
-      repoRoot,
+    const restoreResult = await restoreMissingToolchainRequirementsFromCacheImpl(
+      targetRepoRoot,
       missingRequirementsBeforeInstall,
       { packageLock },
     );
     unresolvedRequirements = restoreResult.unresolvedRequirements;
 
     if (restoreResult.restoredPackages.length > 0) {
-      console.log(
+      consoleImpl.log(
         `Restored cached workspace packages: ${restoreResult.restoredPackages.join(', ')}`,
       );
     }
   }
 
   if (unresolvedRequirements.length > 0) {
-    console.log('Installing workspace dependencies for lint/typecheck...');
-    const installResult = runNpmInstall();
+    consoleImpl.log('Installing workspace dependencies for lint/typecheck...');
+    const installResult = runNpmInstallImpl();
     const installStatus = installResult.status ?? 1;
 
     if (installResult.stdout) {
-      process.stdout.write(installResult.stdout);
+      writeStdout(installResult.stdout);
     }
 
     if (installResult.stderr) {
-      process.stderr.write(installResult.stderr);
+      writeStderr(installResult.stderr);
     }
 
     if (installStatus !== 0) {
       const offlineCacheMisses = mergeOfflineCacheMisses(
-        await collectOfflineCacheMissesFromLockfile(repoRoot, unresolvedRequirements, {
+        await collectOfflineCacheMissesFromLockfileImpl(targetRepoRoot, unresolvedRequirements, {
           packageLock,
         }),
-        extractOfflineInstallCacheMisses(
+        extractOfflineInstallCacheMissesImpl(
           `${installResult.stdout ?? ''}\n${installResult.stderr ?? ''}`,
         ),
       );
 
-      console.error(`Offline npm install failed with exit code ${installStatus}.`);
-      console.error(
-        formatMissingToolchainRequirements(
+      consoleImpl.error(`Offline npm install failed with exit code ${installStatus}.`);
+      consoleImpl.error(
+        formatMissingToolchainRequirementsImpl(
           mergeMissingRequirements(
-            collectMissingToolchainRequirements(repoRoot),
-            collectMissingInstalledPackageRequirements(repoRoot, { packageLock }),
+            collectMissingToolchainRequirementsImpl(targetRepoRoot),
+            collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock }),
           ),
           {
-          offlineCacheMisses,
+            offlineCacheMisses,
           },
         ),
       );
-      process.exit(1);
+      return { exitCode: 1 };
     }
   }
 
   const missingRequirementsAfterInstall = mergeMissingRequirements(
-    collectMissingToolchainRequirements(repoRoot),
-    collectMissingInstalledPackageRequirements(repoRoot, { packageLock }),
+    collectMissingToolchainRequirementsImpl(targetRepoRoot),
+    collectMissingInstalledPackageRequirementsImpl(targetRepoRoot, { packageLock }),
   );
 
   if (missingRequirementsAfterInstall.length > 0) {
-    console.error(
-      formatMissingToolchainRequirements(missingRequirementsAfterInstall, {
-        offlineCacheMisses: await collectOfflineCacheMissesFromLockfile(
-          repoRoot,
+    consoleImpl.error(
+      formatMissingToolchainRequirementsImpl(missingRequirementsAfterInstall, {
+        offlineCacheMisses: await collectOfflineCacheMissesFromLockfileImpl(
+          targetRepoRoot,
           missingRequirementsAfterInstall,
           { packageLock },
         ),
       }),
     );
-    process.exit(1);
+    return { exitCode: 1 };
   }
 
-  console.log('Workspace lint/typecheck toolchain is ready.');
+  consoleImpl.log('Workspace lint/typecheck toolchain is ready.');
+  return { exitCode: 0 };
 }
 
-await main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const result = await runSetupWorkspaceToolchain();
+
+  if (result.exitCode !== 0) {
+    process.exit(result.exitCode);
+  }
+}
