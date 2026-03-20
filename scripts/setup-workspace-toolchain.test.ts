@@ -129,12 +129,7 @@ test('runSetupWorkspaceToolchain reports merged offline cache misses after npm i
         },
       ],
     }),
-    collectOfflineCacheMissesFromLockfile: async () => [
-      {
-        packageName: 'expo',
-        tarballUrl: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
-      },
-    ],
+    collectOfflineCacheMissesFromLockfile: async () => [],
     extractOfflineInstallCacheMisses: () => [
       {
         packageName: 'expo',
@@ -182,6 +177,76 @@ test('runSetupWorkspaceToolchain reports merged offline cache misses after npm i
     'error:Offline npm install failed with exit code 1.',
     'error:offline misses',
   ]);
+});
+
+test('runSetupWorkspaceToolchain skips offline npm install when unresolved requirements are already confirmed cache misses', async () => {
+  const calls: string[] = [];
+  const unresolvedRequirements = [
+    {
+      moduleDirectory: 'node_modules/expo',
+      missingFiles: ['package.json'],
+    },
+    {
+      moduleDirectory: 'node_modules/nativewind',
+      missingFiles: ['package.json', 'types/index.d.ts'],
+    },
+  ];
+
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    collectWorkspaceDependencyOwners: () => ({
+      expo: ['@scanapp/mobile'],
+      nativewind: ['@scanapp/mobile'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => unresolvedRequirements,
+    collectMissingWorkspaceDependencyRequirements: () => [],
+    collectMissingInstalledPackageRequirements: () => [],
+    restoreMissingToolchainRequirementsFromCache: async () => ({
+      restoredPackages: [],
+      unresolvedRequirements,
+    }),
+    collectOfflineCacheMissesFromLockfile: async (_repoRoot, missingRequirements) => {
+      assert.deepEqual(missingRequirements, unresolvedRequirements);
+      return [
+        {
+          packageName: 'expo',
+          tarballUrl: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
+        },
+        {
+          packageName: 'nativewind',
+          tarballUrl: 'https://registry.npmjs.org/nativewind/-/nativewind-4.2.1.tgz',
+        },
+      ];
+    },
+    formatMissingToolchainRequirements: (_requirements, options) => {
+      assert.deepEqual(options?.offlineCacheMisses, [
+        {
+          packageName: 'expo',
+          tarballUrl: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
+        },
+        {
+          packageName: 'nativewind',
+          tarballUrl: 'https://registry.npmjs.org/nativewind/-/nativewind-4.2.1.tgz',
+        },
+      ]);
+      return 'preinstall misses';
+    },
+    runNpmInstall: () => {
+      calls.push('install');
+      return { status: 0, stdout: '', stderr: '' };
+    },
+    console: {
+      log: (message: string) => calls.push(`log:${message}`),
+      error: (message: string) => calls.push(`error:${message}`),
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(calls, ['error:preinstall misses']);
 });
 
 test('runSetupWorkspaceToolchain merges missing direct workspace dependencies into cache restore and install diagnostics', async () => {
@@ -241,6 +306,7 @@ test('runSetupWorkspaceToolchain merges missing direct workspace dependencies in
   assert.equal(result.exitCode, 1);
   assert.deepEqual(observed, [
     'restore:node_modules/expo,node_modules/react',
+    'offline:node_modules/expo,node_modules/react',
     'restore:node_modules/expo,node_modules/react',
     'offline:node_modules/expo,node_modules/react',
     'format:node_modules/expo,node_modules/react',
@@ -336,6 +402,7 @@ test('runSetupWorkspaceToolchain retries cache restoration for newly hollow pack
   assert.equal(result.exitCode, 1);
   assert.deepEqual(observed, [
     'restore:node_modules/expo',
+    'offline:node_modules/expo',
     'log:Installing workspace dependencies for lint/typecheck...',
     'restore:node_modules/expo,node_modules/react',
     'log:Restored cached workspace packages after offline install failure: react',

@@ -44,6 +44,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, retrying cache restoration after a failed offline install so newly hollow packages are healed before the final blocker report.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, treating empty cached tarball reads as unresolved packages instead of crashing the workspace setup path.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root backend build entrypoint, routing `npm run build:backend` through the existing workspace-setup guard so missing local TypeScript/toolchain packages now fail with actionable setup diagnostics before raw `Cannot find module .../tsc` errors.
+The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, preflighting unresolved lockfile-backed cache misses so doomed offline installs stop before they expand `node_modules` into hundreds of additional hollow transitive package directories.
 
 ## Analyzed
 
@@ -395,17 +396,22 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyDetail.test.ts`
   - Passed
 - `npm run typecheck:mobile`
-  - Runs the local TypeScript entrypoint now; currently fails on missing mobile workspace packages in this sandbox (`expo/tsconfig.base`, `nativewind/types`)
+  - Still fails in this sandbox because uncached direct workspace packages remain unresolved
+  - Now stops with the concise direct-blocker list from `setup:workspace` instead of ballooning into hundreds of hollow transitive package reports when rerun sequentially
 - `npm run lint:mobile`
   - Passed via the new repo-local mobile lint runner
 - `npm run typecheck:backend`
-  - Runs the local TypeScript entrypoint now; currently fails on missing backend/mobile type packages in this sandbox
+  - Still fails in this sandbox because uncached direct workspace packages remain unresolved
+  - Now stops with the same concise direct-blocker list from `setup:workspace`
 - `node ./scripts/setup-workspace-toolchain.mjs`
   - Still fails in this sandbox because the workspace cache is incomplete, but now reports the affected packages and concrete recovery steps directly
   - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files now include the broader direct workspace dependency surface such as `@prisma/client`, `react`, `react-native`, Expo/mobile runtime packages, `bcryptjs`, `multer`, `uuid`, plus the hollow backend/test `@types/*` packages
   - The installed-package health scan now also catches hollow top-level non-`@types` packages that already exist on disk from partial installs, while still ignoring nested package-owned `node_modules` entries to avoid false-positive noise
   - The failure output now separates direct workspace dependency owners (for example `@scanapp/mobile` vs `@scanapp/backend`) from additional hollow installed packages, making the remaining restore work easier to triage without a runnable install
+  - The new preinstall cache-miss short-circuit now skips doomed offline reinstalls when every unresolved direct blocker is already known uncached from `package-lock.json`, keeping the remaining blocker report bounded to the real direct workspace packages
 - `node --test --experimental-strip-types scripts/setup-workspace-toolchain.test.ts`
+  - Passed
+- `node --test --experimental-strip-types scripts/setup-workspace-toolchain.test.ts scripts/workspace-toolchain-health.test.ts scripts/run-workspace-typecheck.test.ts packages/mobile/toolchain.test.ts`
   - Passed
 - `node --test --experimental-strip-types scripts/workspace-toolchain-health.test.ts`
   - Passed

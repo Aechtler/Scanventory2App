@@ -70,6 +70,18 @@ function mergeMissingRequirements(...requirementGroups) {
   );
 }
 
+function shouldSkipOfflineInstallForKnownCacheMisses(unresolvedRequirements, offlineCacheMisses) {
+  if (unresolvedRequirements.length === 0 || offlineCacheMisses.length === 0) {
+    return false;
+  }
+
+  const missedPackages = new Set(offlineCacheMisses.map((miss) => miss.packageName));
+
+  return unresolvedRequirements.every((requirement) =>
+    missedPackages.has(requirement.moduleDirectory.replace(/^node_modules\//, '')),
+  );
+}
+
 function collectCurrentMissingRequirements({
   repoRoot,
   packageLock,
@@ -148,6 +160,29 @@ export async function runSetupWorkspaceToolchain(options = {}) {
   }
 
   if (unresolvedRequirements.length > 0) {
+    const preinstallOfflineCacheMisses = await collectOfflineCacheMissesFromLockfileImpl(
+      targetRepoRoot,
+      unresolvedRequirements,
+      {
+        packageLock,
+      },
+    );
+
+    if (
+      shouldSkipOfflineInstallForKnownCacheMisses(
+        unresolvedRequirements,
+        preinstallOfflineCacheMisses,
+      )
+    ) {
+      consoleImpl.error(
+        formatMissingToolchainRequirementsImpl(unresolvedRequirements, {
+          offlineCacheMisses: preinstallOfflineCacheMisses,
+          workspaceDependencyOwners,
+        }),
+      );
+      return { exitCode: 1 };
+    }
+
     consoleImpl.log('Installing workspace dependencies for lint/typecheck...');
     const installResult = runNpmInstallImpl();
     const installStatus = installResult.status ?? 1;
