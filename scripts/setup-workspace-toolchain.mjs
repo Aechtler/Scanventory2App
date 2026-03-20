@@ -156,11 +156,14 @@ function collectCurrentMissingRequirements({
   collectMissingToolchainRequirements,
   collectMissingWorkspaceDependencyRequirements,
   collectMissingInstalledPackageRequirements,
+  includeMissingInstalledPackageRequirements = true,
 }) {
   return mergeMissingRequirements(
     collectMissingToolchainRequirements(repoRoot),
     collectMissingWorkspaceDependencyRequirements(repoRoot),
-    collectMissingInstalledPackageRequirements(repoRoot, { packageLock }),
+    ...(includeMissingInstalledPackageRequirements
+      ? [collectMissingInstalledPackageRequirements(repoRoot, { packageLock })]
+      : []),
   );
 }
 
@@ -342,15 +345,16 @@ export async function runSetupWorkspaceToolchain(options = {}) {
         collectCurrentMissingRequirements({
           repoRoot: targetRepoRoot,
           packageLock,
-          collectMissingToolchainRequirements: collectMissingToolchainRequirementsImpl,
-          collectMissingWorkspaceDependencyRequirements:
-            collectMissingWorkspaceDependencyRequirementsImpl,
-          collectMissingInstalledPackageRequirements:
-            collectMissingInstalledPackageRequirementsImpl,
-        }),
-        workspaceDependencyOwners,
-        workspaceNames,
-      );
+        collectMissingToolchainRequirements: collectMissingToolchainRequirementsImpl,
+        collectMissingWorkspaceDependencyRequirements:
+          collectMissingWorkspaceDependencyRequirementsImpl,
+        collectMissingInstalledPackageRequirements:
+          collectMissingInstalledPackageRequirementsImpl,
+        includeMissingInstalledPackageRequirements: workspaceNames.length === 0,
+      }),
+      workspaceDependencyOwners,
+      workspaceNames,
+    );
       const postFailureRestoreResult = await restoreMissingToolchainRequirementsFromCacheImpl(
         targetRepoRoot,
         missingRequirementsAfterFailedInstall,
@@ -407,6 +411,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
       collectMissingWorkspaceDependencyRequirements:
         collectMissingWorkspaceDependencyRequirementsImpl,
       collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl,
+      includeMissingInstalledPackageRequirements: workspaceNames.length === 0,
     }),
     workspaceDependencyOwners,
     workspaceNames,

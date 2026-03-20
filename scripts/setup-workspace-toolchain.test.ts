@@ -533,6 +533,88 @@ test('runSetupWorkspaceToolchain scopes npm install to the requested workspaces'
   ]);
 });
 
+test('runSetupWorkspaceToolchain keeps workspace-scoped post-install diagnostics focused on direct blockers', async () => {
+  const observed: string[] = [];
+  let installedRequirementCollectCount = 0;
+
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    workspaceNames: ['@scanapp/backend'],
+    retryCommand: 'npm run typecheck:backend',
+    collectWorkspaceDependencyOwners: () => ({
+      typescript: ['@scanapp/backend'],
+      uuid: ['@scanapp/backend'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => [
+      {
+        moduleDirectory: 'node_modules/typescript',
+        missingFiles: ['lib/typescript.js'],
+      },
+    ],
+    collectMissingWorkspaceDependencyRequirements: () => [
+      {
+        moduleDirectory: 'node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+    ],
+    collectMissingInstalledPackageRequirements: () => {
+      installedRequirementCollectCount += 1;
+
+      return installedRequirementCollectCount === 1
+        ? []
+        : [
+            {
+              moduleDirectory: 'node_modules/@babel/core',
+              missingFiles: ['package.json'],
+            },
+          ];
+    },
+    collectWorkspaceDependencyLockIssues: () => [],
+    restoreMissingToolchainRequirementsFromCache: async (_repoRoot, missingRequirements) => {
+      observed.push(`restore:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return {
+        restoredPackages: [],
+        unresolvedRequirements: missingRequirements,
+      };
+    },
+    collectOfflineCacheMissesFromLockfile: async (_repoRoot, missingRequirements) => {
+      observed.push(`offline:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return [];
+    },
+    formatMissingToolchainRequirements: (missingRequirements, options) => {
+      observed.push(`format:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      observed.push(`owners:${JSON.stringify(options?.workspaceDependencyOwners)}`);
+      return 'workspace-scoped failure';
+    },
+    runNpmInstall: () => ({
+      status: 1,
+      stdout: '',
+      stderr: '',
+    }),
+    console: {
+      log: (message: string) => observed.push(`log:${message}`),
+      error: (message: string) => observed.push(`error:${message}`),
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(observed, [
+    'restore:node_modules/typescript,node_modules/uuid',
+    'offline:node_modules/typescript,node_modules/uuid',
+    'log:Installing workspace dependencies for lint/typecheck...',
+    'restore:node_modules/typescript,node_modules/uuid',
+    'offline:node_modules/typescript,node_modules/uuid',
+    'error:Offline npm install failed with exit code 1.',
+    'format:node_modules/typescript,node_modules/uuid',
+    'owners:{"typescript":["@scanapp/backend"],"uuid":["@scanapp/backend"]}',
+    'error:workspace-scoped failure',
+  ]);
+});
+
 test('runSetupWorkspaceToolchain merges missing direct workspace dependencies into cache restore and install diagnostics', async () => {
   const requirements = [
     {
