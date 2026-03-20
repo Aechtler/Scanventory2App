@@ -438,6 +438,7 @@ test('formatMissingToolchainRequirements renders a stable actionable message', (
       'Suggested next steps:',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile',
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: expo, @types/uuid',
@@ -473,6 +474,7 @@ test('formatMissingToolchainRequirements maps scoped @types packages back to wor
       'Suggested next steps:',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/mobile',
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: @types/babel__core',
@@ -535,6 +537,7 @@ test('formatMissingToolchainRequirements appends offline cache misses when provi
       'Suggested next steps:',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/mobile',
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: expo',
@@ -611,9 +614,54 @@ test('formatMissingToolchainRequirements appends direct dependency lockfile issu
       '- Refresh the root package-lock.json so direct workspace dependency versions match package.json declarations.',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile',
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: uuid, babel-preset-expo',
+    ].join('\n'),
+  );
+});
+
+test('formatMissingToolchainRequirements suggests a workspace-scoped reinstall when owners are known', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/@types/uuid',
+        missingFiles: ['package.json', 'index.d.ts'],
+      },
+    ],
+    {
+      retryCommand: 'npm run typecheck:backend',
+      workspaceDependencyOwners: {
+        uuid: ['@scanapp/backend'],
+      },
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/uuid -> package.json',
+      '- node_modules/@types/uuid -> package.json, index.d.ts',
+      '',
+      'Direct workspace dependency owners:',
+      '- uuid -> @scanapp/backend',
+      '',
+      'Workspace-owned type-definition blockers:',
+      '- @types/uuid (for uuid) -> @scanapp/backend',
+      '',
+      'Suggested next steps:',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend',
+      '- As a fallback, run: npm install',
+      '- Then rerun the guarded check: npm run typecheck:backend',
+      '- Likely affected packages: uuid, @types/uuid',
     ].join('\n'),
   );
 });
@@ -666,6 +714,7 @@ test('formatMissingToolchainRequirements calls out missing root lockfile entries
       '- Refresh the root package-lock.json so direct workspace dependency versions match package.json declarations.',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend',
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: tsx',

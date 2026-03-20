@@ -57,6 +57,7 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, preferring workspace-local `package-lock.json` entries over stale hoisted root entries so backend restore checks no longer misreport `packages/backend/node_modules/uuid` as a stale lockfile blocker while still surfacing the real mobile `babel-preset-expo` mismatch.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck entrypoint, routing `npm run typecheck:all` through a sequential guarded runner so mobile and backend blocker diagnostics stay workspace-scoped instead of collapsing back to raw workspace-wide failures.
 The next runnable-environment lockfile cleanup is now implemented on `scanapp2` for `packages/mobile/package.json` and the root `package-lock.json`, removing the stale duplicate `babel-preset-expo` mobile devDependency and aligning the hoisted lock entry with the real direct mobile dependency so guarded mobile typecheck now reports only remaining cache-miss blockers instead of repo-owned lock drift.
+The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, adding workspace-scoped `npm install --workspace=...` remediation hints so guarded backend/mobile validation failures now point to the smallest useful reinstall path before the full-workspace fallback.
 
 ## Analyzed
 
@@ -470,15 +471,21 @@ The next runnable-environment lockfile cleanup is now implemented on `scanapp2` 
   - Passed
 - `npm run typecheck:mobile`
   - Still fails in this sandbox because mobile tarballs remain uncached, but the previous `babel-preset-expo` declaration/lock mismatch is now gone and the guarded report points only to real offline cache misses
+- `node --test --experimental-strip-types scripts/workspace-toolchain-health.test.ts scripts/setup-workspace-toolchain.test.ts scripts/run-workspace-lint.test.ts scripts/run-workspace-typecheck.test.ts scripts/run-workspace-build.test.ts`
+  - Passed
+- `npm run typecheck:backend`
+  - Still fails in this sandbox because backend tarballs remain uncached, but the guarded output now includes the smallest useful reinstall hint first via `npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile`
+- `npm run lint:mobile`
+  - Still fails in this sandbox because mobile tarballs remain uncached, but the guarded output now includes the same workspace-scoped reinstall hint before the full-workspace fallback
 
 ## What Remains
 
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
-- Restore the uncached tarballs or repopulate the hollow package directories that the workspace-scoped `npm run lint:mobile`, `npm run build:backend`, `npm run typecheck:mobile`, and `npm run typecheck:backend` guards now report explicitly, including the mobile `expo` / `nativewind` toolchain packages and backend-blocking direct `@types/*` packages; environments with network access can now use `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`
+- Restore the uncached tarballs or repopulate the hollow package directories that the workspace-scoped `npm run lint:mobile`, `npm run build:backend`, `npm run typecheck:mobile`, and `npm run typecheck:backend` guards now report explicitly, using the new `npm install --workspace=...` hints for the smallest useful reinstall path first; environments with network access can still use `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`
 - Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step
 
-With the stale mobile `babel-preset-expo` declaration removed and the hoisted lock entry aligned, the next step is to repopulate the remaining uncached mobile/backend tarballs in a network-enabled environment via `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`, then rerun the scoped `npm run typecheck:backend` and `npm run typecheck:mobile` guards.
+Use the new guarded remediation hint in a network-enabled environment to repopulate the remaining mobile/backend tarballs with the smallest useful command first, then rerun the scoped guards: `npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile` (or `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`), followed by `npm run typecheck:backend` and `npm run lint:mobile`.

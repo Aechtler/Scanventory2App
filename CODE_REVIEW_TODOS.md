@@ -12,6 +12,10 @@
 - **P2 - MEDIUM**: Code-Qualität, Projektregeln, Maintainability
 - **P3 - LOW**: Best Practices, Documentation, Nice-to-haves
 
+## Statusnotiz
+
+- 2026-03-20: Runnable-environment Guard-Diagnostik zeigt jetzt zusätzlich workspace-spezifische `npm install --workspace=...`-Hinweise fuer mobile/backend Validierung; der verbleibende Blocker sind weiterhin fehlende/offline nicht gecachte Tarballs, nicht mehr unklare Reparaturschritte.
+
 ---
 
 ## P0 - CRITICAL (Sofort beheben)

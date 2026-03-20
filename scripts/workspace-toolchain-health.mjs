@@ -75,6 +75,21 @@ function formatWorkspaceOwnedPackageLine(packageName, workspaceDependencyOwners)
   return `- ${packageName}${dependencyLabel} -> ${owners.join(', ')}`;
 }
 
+function collectAffectedWorkspaceOwners(
+  directWorkspacePackages,
+  workspaceOwnedTypePackages,
+  workspaceDependencyOwners,
+) {
+  return [...new Set([
+    ...directWorkspacePackages.flatMap(
+      (packageName) => workspaceDependencyOwners[packageName] ?? [],
+    ),
+    ...workspaceOwnedTypePackages.flatMap(
+      ({ dependencyName }) => workspaceDependencyOwners[dependencyName] ?? [],
+    ),
+  ])].sort((left, right) => left.localeCompare(right));
+}
+
 function getModuleDirectoryFromPackageName(packageName) {
   return path.join('node_modules', ...packageName.split('/'));
 }
@@ -714,6 +729,11 @@ export function formatMissingToolchainRequirements(
   const workspaceOwnedTypePackageNames = new Set(
     workspaceOwnedTypePackages.map(({ packageName }) => packageName),
   );
+  const affectedWorkspaceOwners = collectAffectedWorkspaceOwners(
+    directWorkspacePackages,
+    workspaceOwnedTypePackages,
+    workspaceDependencyOwners,
+  );
   const transitivePackages = affectedPackages.filter(
     (packageName) =>
       !directWorkspacePackages.includes(packageName) &&
@@ -820,9 +840,17 @@ export function formatMissingToolchainRequirements(
   lines.push(
     '- Restore the missing packages from cache or reinstall with network access.',
     '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
-    '- As a fallback, run: npm install',
-    `- Then rerun the guarded check: ${retryCommand}`,
   );
+
+  if (affectedWorkspaceOwners.length > 0) {
+    lines.push(
+      `- To repair only the affected workspaces first, run: npm install ${affectedWorkspaceOwners
+        .map((workspaceName) => `--workspace=${workspaceName}`)
+        .join(' ')}`,
+    );
+  }
+
+  lines.push('- As a fallback, run: npm install', `- Then rerun the guarded check: ${retryCommand}`);
 
   if (affectedPackages.length > maxListedEntries) {
     lines.push(
