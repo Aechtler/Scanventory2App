@@ -94,6 +94,81 @@ test('collectMissingInstalledPackageRequirements flags hollow installed packages
   ]);
 });
 
+test('collectMissingInstalledPackageRequirements also flags hollow non-types installed packages present on disk', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/react': {
+          version: '19.1.0',
+        },
+        'node_modules/@babel/core': {
+          version: '7.28.4',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'react'), {
+    recursive: true,
+  });
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', '@babel', 'core'), {
+    recursive: true,
+  });
+  fs.writeFileSync(
+    path.join(repoRoot, 'node_modules', '@babel', 'core', 'package.json'),
+    '{"name":"@babel/core"}',
+  );
+
+  const missing = collectMissingInstalledPackageRequirements(repoRoot);
+
+  assert.deepEqual(missing, [
+    {
+      moduleDirectory: 'node_modules/react',
+      missingFiles: ['package.json'],
+    },
+  ]);
+});
+
+test('collectMissingInstalledPackageRequirements ignores nested package-owned node_modules entries', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/expo': {
+          version: '54.0.32',
+        },
+        'node_modules/expo/node_modules/@expo/metro-config': {
+          version: '54.0.8',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'expo'), {
+    recursive: true,
+  });
+  fs.mkdirSync(
+    path.join(repoRoot, 'node_modules', 'expo', 'node_modules', '@expo', 'metro-config'),
+    {
+      recursive: true,
+    },
+  );
+
+  const missing = collectMissingInstalledPackageRequirements(repoRoot);
+
+  assert.deepEqual(missing, [
+    {
+      moduleDirectory: 'node_modules/expo',
+      missingFiles: ['package.json', 'tsconfig.base'],
+    },
+  ]);
+});
+
 test('collectMissingWorkspaceDependencyRequirements flags hollow direct workspace dependencies', () => {
   const repoRoot = createTempRepo();
 

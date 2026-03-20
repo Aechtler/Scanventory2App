@@ -158,17 +158,24 @@ function getPackageLockEntry(packageLock, moduleDirectory) {
   return packageLock?.packages?.[moduleDirectory];
 }
 
-function listInstalledTypesModuleDirectories(repoRoot) {
-  const typesDirectory = path.join(repoRoot, 'node_modules', '@types');
+function isTopLevelInstalledModuleDirectory(moduleDirectory) {
+  const modulePathParts = moduleDirectory.split('/');
 
-  if (!fs.existsSync(typesDirectory)) {
-    return [];
+  if (modulePathParts[0] !== 'node_modules') {
+    return false;
   }
 
-  return fs
-    .readdirSync(typesDirectory, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => `node_modules/@types/${entry.name}`)
+  if (modulePathParts[1]?.startsWith('@')) {
+    return modulePathParts.length === 3;
+  }
+
+  return modulePathParts.length === 2;
+}
+
+function listInstalledModuleDirectories(repoRoot, packageLock) {
+  return Object.keys(packageLock?.packages ?? {})
+    .filter((moduleDirectory) => isTopLevelInstalledModuleDirectory(moduleDirectory))
+    .filter((moduleDirectory) => fs.existsSync(path.join(repoRoot, moduleDirectory)))
     .sort((left, right) => left.localeCompare(right));
 }
 
@@ -250,13 +257,12 @@ export function collectMissingInstalledPackageRequirements(
 ) {
   const { packageLock = readPackageLock(repoRoot) } = options;
 
-  return listInstalledTypesModuleDirectories(repoRoot).flatMap((moduleDirectory) => {
-    if (!getPackageLockEntry(packageLock, moduleDirectory)) {
-      return [];
-    }
-
+  return listInstalledModuleDirectories(repoRoot, packageLock).flatMap((moduleDirectory) => {
     const requiredFiles =
-      TOOLCHAIN_REQUIREMENT_MAP.get(moduleDirectory) ?? ['package.json', 'index.d.ts'];
+      TOOLCHAIN_REQUIREMENT_MAP.get(moduleDirectory) ??
+      (moduleDirectory.startsWith('node_modules/@types/')
+        ? ['package.json', 'index.d.ts']
+        : ['package.json']);
     const missingFiles = requiredFiles.filter(
       (relativeFilePath) => !fs.existsSync(path.join(repoRoot, moduleDirectory, relativeFilePath)),
     );

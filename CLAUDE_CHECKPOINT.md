@@ -383,6 +383,7 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 - `node ./scripts/setup-workspace-toolchain.mjs`
   - Still fails in this sandbox because the workspace cache is incomplete, but now reports the affected packages and concrete recovery steps directly
   - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files now include the broader direct workspace dependency surface such as `@prisma/client`, `react`, `react-native`, Expo/mobile runtime packages, `bcryptjs`, `multer`, `uuid`, plus the hollow backend/test `@types/*` packages
+  - The installed-package health scan now also catches hollow top-level non-`@types` packages that already exist on disk from partial installs, while still ignoring nested package-owned `node_modules` entries to avoid false-positive noise
   - The failure output now separates direct workspace dependency owners (for example `@scanapp/mobile` vs `@scanapp/backend`) from additional hollow installed packages, making the remaining restore work easier to triage without a runnable install
 - `npm run test:targeted`
   - Passed
