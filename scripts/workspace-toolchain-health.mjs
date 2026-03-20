@@ -397,6 +397,8 @@ export async function collectOfflineCacheMissesFromLockfile(
     cacheDirectory = DEFAULT_NPM_CACHE_DIRECTORY,
     packageLock = readPackageLock(repoRoot),
     hasCachedTarball = async ({ integrity }) => hasCachedTarballByIntegrity(integrity, cacheDirectory),
+    readTarballByIntegrity: readTarball = async (integrity) =>
+      readTarballByIntegrity(integrity, cacheDirectory),
   } = options;
   const misses = [];
   const seenTarballs = new Set();
@@ -408,14 +410,18 @@ export async function collectOfflineCacheMissesFromLockfile(
       continue;
     }
 
-    if (
-      await hasCachedTarball({
-        integrity: packageLockEntry.integrity,
-        moduleDirectory: requirement.moduleDirectory,
-        resolved: packageLockEntry.resolved,
-      })
-    ) {
-      continue;
+    const cacheMeta = {
+      integrity: packageLockEntry.integrity,
+      moduleDirectory: requirement.moduleDirectory,
+      resolved: packageLockEntry.resolved,
+    };
+
+    if (await hasCachedTarball(cacheMeta)) {
+      const packageBuffer = await readTarball(packageLockEntry.integrity, cacheMeta);
+
+      if (packageBuffer instanceof Uint8Array && packageBuffer.byteLength > 0) {
+        continue;
+      }
     }
 
     if (seenTarballs.has(packageLockEntry.resolved)) {

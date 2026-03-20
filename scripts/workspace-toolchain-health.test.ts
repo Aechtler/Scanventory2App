@@ -452,6 +452,8 @@ test('collectOfflineCacheMissesFromLockfile reports scoped and unscoped missing 
     ],
     {
       hasCachedTarball: async ({ integrity }) => integrity === 'sha512-expo',
+      readTarballByIntegrity: async (integrity) =>
+        integrity === 'sha512-expo' ? Buffer.from('expo tarball') : undefined,
     },
   );
 
@@ -459,6 +461,63 @@ test('collectOfflineCacheMissesFromLockfile reports scoped and unscoped missing 
     {
       packageName: '@types/uuid',
       tarballUrl: 'https://registry.npmjs.org/@types/uuid/-/uuid-10.0.0.tgz',
+    },
+  ]);
+});
+
+test('collectOfflineCacheMissesFromLockfile treats unreadable cached tarballs as cache misses', async () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/tsx': {
+          version: '4.21.0',
+          resolved: 'https://registry.npmjs.org/tsx/-/tsx-4.21.0.tgz',
+          integrity: 'sha512-tsx',
+        },
+        'node_modules/typescript': {
+          version: '5.9.3',
+          resolved: 'https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz',
+          integrity: 'sha512-typescript',
+        },
+      },
+    }),
+  );
+
+  const misses = await collectOfflineCacheMissesFromLockfile(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'node_modules/tsx',
+        missingFiles: ['package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/typescript',
+        missingFiles: ['lib/typescript.js'],
+      },
+    ],
+    {
+      hasCachedTarball: async ({ integrity }) => integrity === 'sha512-tsx' || integrity === 'sha512-typescript',
+      readTarballByIntegrity: async (integrity) => {
+        if (integrity === 'sha512-tsx') {
+          return undefined;
+        }
+
+        return Buffer.alloc(0);
+      },
+    },
+  );
+
+  assert.deepEqual(misses, [
+    {
+      packageName: 'tsx',
+      tarballUrl: 'https://registry.npmjs.org/tsx/-/tsx-4.21.0.tgz',
+    },
+    {
+      packageName: 'typescript',
+      tarballUrl: 'https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz',
     },
   ]);
 });
