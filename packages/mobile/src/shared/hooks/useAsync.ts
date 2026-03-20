@@ -1,6 +1,11 @@
 import { useState, useCallback } from 'react';
 import type { AsyncState } from '../types';
 
+export interface UseAsyncResult<T, Args extends unknown[] = []> extends AsyncState<T> {
+  execute: (...args: Args) => Promise<T | null>;
+  reset: () => void;
+}
+
 /**
  * useAsync - Hook für asynchrone Operationen mit Loading/Error State
  *
@@ -12,7 +17,7 @@ import type { AsyncState } from '../types';
  */
 export function useAsync<T, Args extends unknown[] = []>(
   asyncFunction: (...args: Args) => Promise<T>
-) {
+): UseAsyncResult<T, Args> {
   const [state, setState] = useState<AsyncState<T>>({
     data: null,
     loading: false,

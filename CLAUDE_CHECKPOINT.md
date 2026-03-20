@@ -26,6 +26,7 @@ The next backend compose architecture cleanup is now implemented on `scanapp2`, 
 The next backend architecture cleanup is now implemented on `scanapp2` for API documentation, adding a maintained OpenAPI 3.1 document at `/api/docs/openapi.json` plus a lightweight Swagger UI shell at `/api/docs` with targeted Node coverage.
 The next backend architecture cleanup is now implemented on `scanapp2` for request-ID tracing, adding a central middleware that preserves or generates `x-request-id`, echoes it in responses, and includes it in request logs with lightweight Node coverage.
 The next minor shared-UI cleanup is now implemented on `scanapp2` for `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx`, replacing the wrapper `index` key with child-derived stable keys backed by a lightweight Node-tested helper.
+The next minor shared-hook cleanup is now implemented on `scanapp2` for `packages/mobile/src/shared/hooks/useAsync.ts`, introducing an explicit exported `UseAsyncResult<T, Args>` return contract backed by a lightweight Node signature guard.
 
 ## Analyzed
 

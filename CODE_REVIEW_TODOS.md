@@ -217,8 +217,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx:49`
   - Behoben: `CardSlider` nutzt jetzt Child-Keys statt `index` und hat einen kleinen Node-getesteten Helper fuer stabile Fallback-Keys
 
-- [ ] **MINOR-02**: `useAsync` Return-Type nicht explizit
-  - `packages/mobile/src/shared/hooks/useAsync.ts:43-47`
+- [x] **MINOR-02**: `useAsync` Return-Type nicht explizit
+  - `packages/mobile/src/shared/hooks/useAsync.ts`
+  - Behoben: `useAsync` exportiert jetzt einen expliziten `UseAsyncResult<T, Args>`-Vertrag; ein leichter Node-Guard-Test sichert die Signatur ohne React-Runtime ab
 
 - [ ] **MINOR-04**: Preisverteilung künstlich linear
   - `packages/mobile/src/features/market/services/marketAggregator.ts:71-75`
