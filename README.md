@@ -72,6 +72,8 @@ npm run docker:down
 
 **URLs:**
 - API: http://localhost:3000
+- API-Doku: http://localhost:3000/api/docs
+- OpenAPI JSON: http://localhost:3000/api/docs/openapi.json
 - PostgreSQL: localhost:5432
 
 ### Mobile App

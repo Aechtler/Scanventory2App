@@ -23,6 +23,7 @@ The next backend schema architecture cleanup is now implemented on `scanapp2` fo
 The next backend architecture cleanup is now implemented on `scanapp2` for request logging, adding a central Express middleware that logs method, path, status, timing, and optional JWT-derived user IDs with lightweight Node coverage.
 The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/routes/health.ts`, expanding `/api/health` from a server-only ping into DB, upload-directory, and disk-space dependency checks with a lightweight Node-tested response builder.
 The next backend compose architecture cleanup is now implemented on `scanapp2`, moving hardcoded Docker Compose Postgres credentials into env files with a lightweight regression test that rejects literal DB secrets in both compose manifests.
+The next backend architecture cleanup is now implemented on `scanapp2` for API documentation, adding a maintained OpenAPI 3.1 document at `/api/docs/openapi.json` plus a lightweight Swagger UI shell at `/api/docs` with targeted Node coverage.
 
 ## Analyzed
 
@@ -55,6 +56,7 @@ The next backend compose architecture cleanup is now implemented on `scanapp2`, 
 - ARCH-04 backend request-logging target in `packages/backend/src/app.ts`, including the smallest central middleware that records method, path, status, duration, and optional authenticated user context without introducing request-ID scope yet
 - ARCH-05 backend health-check target in `packages/backend/src/routes/health.ts`, including the smallest injectable seam for DB, upload-directory, and disk-space probes that stays runnable in the dependency-limited workspace
 - ARCH-06 docker-compose credential target in `docker-compose.yml` and `packages/backend/docker-compose.yml`, including the smallest env-file wiring that removes literal Postgres credentials from checked-in compose manifests while keeping lightweight local startup documentation
+- ARCH-07 backend API documentation target in `packages/backend/src/routes`, including the smallest maintained OpenAPI document and Swagger UI exposure that can ship without adding heavy runtime dependencies
 
 ## Created
 
@@ -253,6 +255,11 @@ The next backend compose architecture cleanup is now implemented on `scanapp2`, 
 - Updated `packages/backend/docker-compose.yml` so both services read their database-related variables from `packages/backend/.env`, with the Postgres healthcheck now using container environment variables instead of a hardcoded username
 - Expanded `.env.docker.example` and `packages/backend/.env.example` to document the required Postgres and `DATABASE_URL` variables, and updated the README compose setup notes accordingly
 - Added `packages/backend/dockerComposeConfig.test.ts` and included it in `npm run test:targeted` so future changes cannot reintroduce literal DB credentials into the checked-in compose files
+
+### ARCH-07 backend API documentation
+- Added `packages/backend/src/routes/apiDocs.ts` with a maintained OpenAPI 3.1 document builder that covers the current health, auth, image, and item endpoints plus shared request schemas and bearer auth metadata
+- Added `packages/backend/src/routes/docs.ts` and updated `packages/backend/src/routes/index.ts` so `/api/docs/openapi.json` serves the OpenAPI JSON and `/api/docs` serves a lightweight Swagger UI shell without introducing a new backend runtime dependency
+- Added `packages/backend/src/routes/docs.test.ts`, included it in `npm run test:targeted`, and documented the new local URLs in `README.md`
 
 ## Validated
 

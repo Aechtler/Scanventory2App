@@ -9,6 +9,7 @@ import healthRouter from './health';
 import itemsRouter from './items';
 import imagesRouter from './images';
 import authRouter from './auth';
+import docsRouter from './docs';
 
 const router = Router();
 
@@ -16,6 +17,7 @@ const router = Router();
 router.use('/health', healthRouter);
 router.use('/images', imagesRouter);
 router.use('/auth', authRouter);
+router.use('/docs', docsRouter);
 
 // Geschuetzte Routen (JWT Auth erforderlich)
 router.use('/items', jwtAuthMiddleware, itemsRouter);

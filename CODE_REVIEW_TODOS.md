@@ -203,7 +203,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/backend/docker-compose.yml:6-8`
   - Behoben: Root- und Backend-Compose lesen Postgres- und `DATABASE_URL`-Werte jetzt aus `.env.docker` bzw. `packages/backend/.env`; ein gezielter Node-Test guardet, dass die Compose-Dateien keine DB-Credentials mehr hartkodieren
 
-- [ ] **ARCH-07**: Keine API-Dokumentation (OpenAPI/Swagger)
+- [x] **ARCH-07**: Keine API-Dokumentation (OpenAPI/Swagger)
+  - `packages/backend/src/routes/apiDocs.ts`, `packages/backend/src/routes/docs.ts`
+  - Behoben: `/api/docs/openapi.json` liefert jetzt eine gepflegte OpenAPI-3.1-Spezifikation fuer Auth-, Health-, Image- und Item-Endpunkte; `/api/docs` rendert dazu eine schlanke Swagger-UI-Ansicht, abgesichert durch einen gezielten Node-Test
 
 - [ ] **ARCH-08**: Kein Request-ID Tracing für Log-Korrelation
 
