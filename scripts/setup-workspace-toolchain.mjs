@@ -2,8 +2,10 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import {
   collectMissingToolchainRequirements,
+  collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
   formatMissingToolchainRequirements,
+  restoreMissingToolchainRequirementsFromCache,
 } from './workspace-toolchain-health.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -19,42 +21,88 @@ function runNpmInstall() {
   );
 }
 
-const missingRequirementsBeforeInstall = collectMissingToolchainRequirements(repoRoot);
-let installStatus = 0;
+function mergeOfflineCacheMisses(...missGroups) {
+  const mergedMisses = [];
+  const seenTarballs = new Set();
 
-if (missingRequirementsBeforeInstall.length > 0) {
-  console.log('Installing workspace dependencies for lint/typecheck...');
-  const installResult = runNpmInstall();
-  installStatus = installResult.status ?? 1;
+  for (const misses of missGroups) {
+    for (const miss of misses) {
+      if (seenTarballs.has(miss.tarballUrl)) {
+        continue;
+      }
 
-  if (installResult.stdout) {
-    process.stdout.write(installResult.stdout);
+      seenTarballs.add(miss.tarballUrl);
+      mergedMisses.push(miss);
+    }
   }
 
-  if (installResult.stderr) {
-    process.stderr.write(installResult.stderr);
-  }
+  return mergedMisses;
+}
 
-  if (installStatus !== 0) {
-    const offlineCacheMisses = extractOfflineInstallCacheMisses(
-      `${installResult.stdout ?? ''}\n${installResult.stderr ?? ''}`,
+async function main() {
+  const missingRequirementsBeforeInstall = collectMissingToolchainRequirements(repoRoot);
+  let unresolvedRequirements = missingRequirementsBeforeInstall;
+
+  if (missingRequirementsBeforeInstall.length > 0) {
+    const restoreResult = await restoreMissingToolchainRequirementsFromCache(
+      repoRoot,
+      missingRequirementsBeforeInstall,
     );
+    unresolvedRequirements = restoreResult.unresolvedRequirements;
 
-    console.error(`Offline npm install failed with exit code ${installStatus}.`);
+    if (restoreResult.restoredPackages.length > 0) {
+      console.log(
+        `Restored cached workspace packages: ${restoreResult.restoredPackages.join(', ')}`,
+      );
+    }
+  }
+
+  if (unresolvedRequirements.length > 0) {
+    console.log('Installing workspace dependencies for lint/typecheck...');
+    const installResult = runNpmInstall();
+    const installStatus = installResult.status ?? 1;
+
+    if (installResult.stdout) {
+      process.stdout.write(installResult.stdout);
+    }
+
+    if (installResult.stderr) {
+      process.stderr.write(installResult.stderr);
+    }
+
+    if (installStatus !== 0) {
+      const offlineCacheMisses = mergeOfflineCacheMisses(
+        await collectOfflineCacheMissesFromLockfile(repoRoot, unresolvedRequirements),
+        extractOfflineInstallCacheMisses(
+          `${installResult.stdout ?? ''}\n${installResult.stderr ?? ''}`,
+        ),
+      );
+
+      console.error(`Offline npm install failed with exit code ${installStatus}.`);
+      console.error(
+        formatMissingToolchainRequirements(collectMissingToolchainRequirements(repoRoot), {
+          offlineCacheMisses,
+        }),
+      );
+      process.exit(1);
+    }
+  }
+
+  const missingRequirementsAfterInstall = collectMissingToolchainRequirements(repoRoot);
+
+  if (missingRequirementsAfterInstall.length > 0) {
     console.error(
-      formatMissingToolchainRequirements(collectMissingToolchainRequirements(repoRoot), {
-        offlineCacheMisses,
+      formatMissingToolchainRequirements(missingRequirementsAfterInstall, {
+        offlineCacheMisses: await collectOfflineCacheMissesFromLockfile(
+          repoRoot,
+          missingRequirementsAfterInstall,
+        ),
       }),
     );
     process.exit(1);
   }
+
+  console.log('Workspace lint/typecheck toolchain is ready.');
 }
 
-const missingRequirementsAfterInstall = collectMissingToolchainRequirements(repoRoot);
-
-if (missingRequirementsAfterInstall.length > 0) {
-  console.error(formatMissingToolchainRequirements(missingRequirementsAfterInstall));
-  process.exit(1);
-}
-
-console.log('Workspace lint/typecheck toolchain is ready.');
+await main();

@@ -32,6 +32,7 @@ The next backend logging cleanup is now implemented on `scanapp2` for `packages/
 The next backend documentation cleanup is now implemented on `scanapp2` for `packages/backend/src/routes/apiDocs.ts`, splitting the oversized OpenAPI document builder and route-path definitions into focused metadata, path, component, and Swagger-HTML helpers while preserving the public docs route API.
 The next runnable-backend validation cleanup is now implemented on `scanapp2` for `packages/backend/src/middleware/requestId.ts`, tightening `x-request-id` normalization to reject blank, control-character, and oversized header values while adding direct targeted Node coverage for request-id preservation and regeneration behavior.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding workspace bootstrap failures with explicit affected-package remediation so missing offline cache/toolchain packages are actionable instead of opaque.
+The next runnable-environment toolchain cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding best-effort cached-package restoration plus lockfile-driven offline cache-miss detection so hollow workspace installs now report every missing tarball instead of stopping at the first npm failure.
 
 ## Analyzed
 
@@ -68,6 +69,7 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 - ARCH-08 backend request-correlation target in `packages/backend/src/middleware`, including the smallest app-level seam for preserving or generating `x-request-id` and carrying it through the existing request logger without adding heavy tracing infrastructure
 - Follow-up request-id hardening target in `packages/backend/src/middleware/requestId.ts`, narrowing accepted inbound `x-request-id` values so log correlation stays safe without depending on a full backend runtime
 - MINOR-04 market aggregation target in `packages/mobile/src/features/market/services/marketAggregator.ts`, including replacing synthetic min/max interpolation with a helper that prefers real listing-price distributions and only falls back to platform-level stats when listings are unavailable
+- Follow-up workspace toolchain target in `scripts/setup-workspace-toolchain.mjs`, including the smallest best-effort cached-package restoration step and lockfile-driven offline cache validation that can run without network access
 
 ## Created
 
@@ -258,6 +260,11 @@ The next runnable-environment validation cleanup is now implemented on `scanapp2
 
 ### ARCH-04 backend request logging
 - Added `packages/backend/src/middleware/requestLogging.ts` with a central Express middleware that logs each completed request as method, path, HTTP status, duration in milliseconds, and either the authenticated `userId` or `anonymous`
+
+### Runnable-environment toolchain cleanup
+- Extended `scripts/workspace-toolchain-health.mjs` with a best-effort cache-restore path for hollow package directories, scoped-package tarball parsing, and lockfile-driven checks for whether required tarball bodies actually exist in the local npm cache
+- Updated `scripts/setup-workspace-toolchain.mjs` to attempt cached restoration before `npm install --offline` and to report all unresolved offline cache misses from `package-lock.json` even when npm aborts on the first missing tarball
+- Expanded `scripts/workspace-toolchain-health.test.ts` with coverage for scoped-package cache-miss detection and restore-or-report behavior so the new setup diagnostics stay runnable in this dependency-limited workspace
 - Updated `packages/backend/src/app.ts` to register the request logger once at app level so it covers both public and JWT-protected `/api` routes while preserving the existing HTTPS and error-handler flow
 - Added `packages/backend/src/middleware/requestLogging.test.ts` and included it in `npm run test:targeted` so the log-line contract and middleware registration stay guarded without requiring installed backend dependencies
 

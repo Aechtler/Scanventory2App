@@ -6,8 +6,10 @@ import path from 'node:path';
 
 import {
   collectMissingToolchainRequirements,
+  collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
   formatMissingToolchainRequirements,
+  restoreMissingToolchainRequirementsFromCache,
 } from './workspace-toolchain-health.mjs';
 
 function createTempRepo(): string {
@@ -126,5 +128,123 @@ test('formatMissingToolchainRequirements appends offline cache misses when provi
       '- Then rerun: npm run setup:workspace',
       '- Likely affected packages: expo',
     ].join('\n'),
+  );
+});
+
+test('collectOfflineCacheMissesFromLockfile reports scoped and unscoped missing tarballs', async () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/expo': {
+          version: '54.0.32',
+          resolved: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
+          integrity: 'sha512-expo',
+        },
+        'node_modules/@types/uuid': {
+          version: '10.0.0',
+          resolved: 'https://registry.npmjs.org/@types/uuid/-/uuid-10.0.0.tgz',
+          integrity: 'sha512-types-uuid',
+        },
+      },
+    }),
+  );
+
+  const misses = await collectOfflineCacheMissesFromLockfile(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/@types/uuid',
+        missingFiles: ['package.json', 'index.d.ts'],
+      },
+    ],
+    {
+      hasCachedTarball: async ({ integrity }) => integrity === 'sha512-expo',
+    },
+  );
+
+  assert.deepEqual(misses, [
+    {
+      packageName: '@types/uuid',
+      tarballUrl: 'https://registry.npmjs.org/@types/uuid/-/uuid-10.0.0.tgz',
+    },
+  ]);
+});
+
+test('restoreMissingToolchainRequirementsFromCache restores available tarballs and reports unresolved packages', async () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/expo': {
+          version: '54.0.32',
+          resolved: 'https://registry.npmjs.org/expo/-/expo-54.0.32.tgz',
+          integrity: 'sha512-expo',
+        },
+        'node_modules/nativewind': {
+          version: '4.2.1',
+          resolved: 'https://registry.npmjs.org/nativewind/-/nativewind-4.2.1.tgz',
+          integrity: 'sha512-nativewind',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'expo'), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'nativewind'), { recursive: true });
+
+  const restored = await restoreMissingToolchainRequirementsFromCache(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json', 'tsconfig.base'],
+      },
+      {
+        moduleDirectory: 'node_modules/nativewind',
+        missingFiles: ['package.json', 'types/index.d.ts'],
+      },
+    ],
+    {
+      readTarballByIntegrity: async (integrity) => {
+        if (integrity === 'sha512-expo') {
+          return Buffer.from('expo tarball');
+        }
+
+        const error = new Error('missing');
+        (error as NodeJS.ErrnoException).code = 'ENOENT';
+        throw error;
+      },
+      extractPackageTarball: async (packageBuffer, moduleDirectoryPath) => {
+        fs.mkdirSync(moduleDirectoryPath, { recursive: true });
+        fs.writeFileSync(
+          path.join(moduleDirectoryPath, 'package.json'),
+          packageBuffer.toString('utf8'),
+        );
+        fs.writeFileSync(path.join(moduleDirectoryPath, 'tsconfig.base'), '{}');
+      },
+    },
+  );
+
+  assert.deepEqual(restored, {
+    restoredPackages: ['expo'],
+    unresolvedRequirements: [
+      {
+        moduleDirectory: 'node_modules/nativewind',
+        missingFiles: ['package.json', 'types/index.d.ts'],
+      },
+    ],
+  });
+  assert.equal(
+    fs.readFileSync(path.join(repoRoot, 'node_modules', 'expo', 'package.json'), 'utf8'),
+    'expo tarball',
   );
 });
