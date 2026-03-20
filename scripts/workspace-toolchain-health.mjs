@@ -476,11 +476,32 @@ export async function restoreMissingToolchainRequirementsFromCache(
   };
 }
 
+function pushSummarizedSection(lines, title, entries, { maxListedEntries, overflowLabel }) {
+  if (entries.length === 0) {
+    return;
+  }
+
+  const visibleEntries = entries.slice(0, maxListedEntries);
+  const omittedCount = entries.length - visibleEntries.length;
+  const titleWithoutColon = title.endsWith(':') ? title.slice(0, -1) : title;
+  const sectionTitle =
+    omittedCount > 0
+      ? `${titleWithoutColon} (showing first ${visibleEntries.length} of ${entries.length}):`
+      : title;
+
+  lines.push('', sectionTitle, ...visibleEntries);
+
+  if (omittedCount > 0) {
+    lines.push(`- ... ${omittedCount} more ${overflowLabel} omitted for brevity`);
+  }
+}
+
 export function formatMissingToolchainRequirements(
   missingRequirements,
   options = {},
 ) {
   const {
+    maxListedEntries = 25,
     offlineCacheMisses = [],
     packageLockIssue = null,
     workspaceDependencyOwners = {},
@@ -498,12 +519,19 @@ export function formatMissingToolchainRequirements(
   const transitivePackages = affectedPackages.filter(
     (packageName) => !directWorkspacePackages.includes(packageName),
   );
-  const lines = [
-    'Workspace setup incomplete. Missing required package files:',
-    ...missingRequirements.map(
-      ({ moduleDirectory, missingFiles }) => `- ${moduleDirectory} -> ${missingFiles.join(', ')}`,
-    ),
-  ];
+  const lines = ['Workspace setup incomplete. Missing required package files:'];
+
+  const missingRequirementLines = missingRequirements.map(
+    ({ moduleDirectory, missingFiles }) => `- ${moduleDirectory} -> ${missingFiles.join(', ')}`,
+  );
+
+  lines.push(...missingRequirementLines.slice(0, maxListedEntries));
+
+  if (missingRequirementLines.length > maxListedEntries) {
+    lines.push(
+      `- ... ${missingRequirementLines.length - maxListedEntries} more missing package entries omitted for brevity`,
+    );
+  }
 
   if (directWorkspacePackages.length > 0) {
     lines.push(
@@ -515,27 +543,29 @@ export function formatMissingToolchainRequirements(
     );
   }
 
-  if (transitivePackages.length > 0) {
-    lines.push(
-      '',
-      'Additional hollow installed packages:',
-      ...transitivePackages.map((packageName) => `- ${packageName}`),
-    );
-  }
+  pushSummarizedSection(
+    lines,
+    'Additional hollow installed packages:',
+    transitivePackages.map((packageName) => `- ${packageName}`),
+    {
+      maxListedEntries,
+      overflowLabel: 'packages',
+    },
+  );
 
   if (packageLockIssue) {
     lines.push('', 'Package-lock issue detected:', `- ${packageLockIssue.detail}`);
   }
 
-  if (offlineCacheMisses.length > 0) {
-    lines.push(
-      '',
-      'Offline npm cache misses detected:',
-      ...offlineCacheMisses.map(
-        ({ packageName, tarballUrl }) => `- ${packageName} -> ${tarballUrl}`,
-      ),
-    );
-  }
+  pushSummarizedSection(
+    lines,
+    'Offline npm cache misses detected:',
+    offlineCacheMisses.map(({ packageName, tarballUrl }) => `- ${packageName} -> ${tarballUrl}`),
+    {
+      maxListedEntries,
+      overflowLabel: 'cache misses',
+    },
+  );
 
   lines.push(
     '',
@@ -550,8 +580,18 @@ export function formatMissingToolchainRequirements(
     '- Restore the missing packages from cache or reinstall with network access.',
     '- If network access is available, run: npm install',
     '- Then rerun: npm run setup:workspace',
-    `- Likely affected packages: ${affectedPackages.join(', ')}`,
   );
+
+  if (affectedPackages.length > maxListedEntries) {
+    lines.push(
+      `- Likely affected packages (showing first ${maxListedEntries} of ${affectedPackages.length}): ${affectedPackages
+        .slice(0, maxListedEntries)
+        .join(', ')}`,
+      `- ... ${affectedPackages.length - maxListedEntries} more affected packages omitted for brevity`,
+    );
+  } else {
+    lines.push(`- Likely affected packages: ${affectedPackages.join(', ')}`);
+  }
 
   return lines.join('\n');
 }

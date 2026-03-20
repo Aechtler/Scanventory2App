@@ -38,6 +38,7 @@ The next runnable-environment bootstrap cleanup is now implemented on `scanapp2`
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, exporting the bootstrap orchestration behind a testable runner and adding direct Node coverage for package-lock diagnostics, cache-restore short-circuiting, and offline-install failure reporting while preserving the CLI entrypoint behavior.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding missing-package detection from the curated toolchain set to all direct root/mobile/backend workspace dependencies so hollow runtime packages are cache-restored or reported before typecheck stalls on hidden missing-module errors.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, grouping missing packages by direct workspace owners versus additional hollow installed packages so setup failures now show what blocks backend, mobile, or only transitive/test dependencies at a glance.
+The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, summarizing oversized missing-package and offline-cache-miss reports so bootstrap failures stay actionable in dependency-limited environments instead of dumping thousand-line transitive package lists.
 
 ## Analyzed
 
@@ -336,6 +337,11 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 - Updated `scripts/setup-workspace-toolchain.mjs` to stop early on lockfile issues when toolchain packages are missing, while still reusing the parsed lockfile for cache-restore and offline-cache-miss reporting when it is valid
 - Expanded `scripts/workspace-toolchain-health.test.ts` and updated `README.md` so the new lockfile remediation path is covered by the runnable targeted test surface and documented for future driver passes
 
+### Workspace diagnostic output cleanup
+- Updated `scripts/workspace-toolchain-health.mjs` so oversized setup failures now cap the rendered missing-package entries, transitive-package list, offline-cache-miss list, and affected-package summary with explicit counts and omission lines
+- Kept the previous fully detailed output for smaller failure sets so existing targeted tests and local diagnostics remain stable when the workspace breakage is narrow
+- Expanded `scripts/workspace-toolchain-health.test.ts` with a formatter regression that proves large transitive/offline-miss sets are summarized deterministically
+
 ## Validated
 
 - `git diff --check`
@@ -344,6 +350,8 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
   - Passed
 - `npm run test:targeted`
   - Passed
+- `node ./scripts/setup-workspace-toolchain.mjs`
+  - Failed as expected in this sandbox, but now reports a summarized actionable blocker instead of a thousand-line transitive dump
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`

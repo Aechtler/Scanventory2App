@@ -554,3 +554,50 @@ test('formatMissingToolchainRequirements appends package-lock remediation when p
     ].join('\n'),
   );
 });
+
+test('formatMissingToolchainRequirements summarizes large transitive requirement and cache-miss lists', () => {
+  const missingRequirements = Array.from({ length: 7 }, (_, index) => ({
+    moduleDirectory: `node_modules/transitive-${index + 1}`,
+    missingFiles: ['package.json'],
+  }));
+
+  const offlineCacheMisses = Array.from({ length: 7 }, (_, index) => ({
+    packageName: `transitive-${index + 1}`,
+    tarballUrl: `https://registry.npmjs.org/transitive-${index + 1}/-/transitive-${index + 1}-1.0.0.tgz`,
+  }));
+
+  const message = formatMissingToolchainRequirements(missingRequirements, {
+    maxListedEntries: 3,
+    offlineCacheMisses,
+  });
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/transitive-1 -> package.json',
+      '- node_modules/transitive-2 -> package.json',
+      '- node_modules/transitive-3 -> package.json',
+      '- ... 4 more missing package entries omitted for brevity',
+      '',
+      'Additional hollow installed packages (showing first 3 of 7):',
+      '- transitive-1',
+      '- transitive-2',
+      '- transitive-3',
+      '- ... 4 more packages omitted for brevity',
+      '',
+      'Offline npm cache misses detected (showing first 3 of 7):',
+      '- transitive-1 -> https://registry.npmjs.org/transitive-1/-/transitive-1-1.0.0.tgz',
+      '- transitive-2 -> https://registry.npmjs.org/transitive-2/-/transitive-2-1.0.0.tgz',
+      '- transitive-3 -> https://registry.npmjs.org/transitive-3/-/transitive-3-1.0.0.tgz',
+      '- ... 4 more cache misses omitted for brevity',
+      '',
+      'Suggested next steps:',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: npm install',
+      '- Then rerun: npm run setup:workspace',
+      '- Likely affected packages (showing first 3 of 7): transitive-1, transitive-2, transitive-3',
+      '- ... 4 more affected packages omitted for brevity',
+    ].join('\n'),
+  );
+});
