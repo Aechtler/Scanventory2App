@@ -132,9 +132,26 @@ npm run db:seed
 API_URL=http://localhost:3000
 ```
 
+### Docker Compose (`.env.docker`)
+```env
+POSTGRES_USER=scanapp
+POSTGRES_PASSWORD=change-me-in-local-env
+POSTGRES_DB=scanapp
+DATABASE_URL=postgresql://scanapp:change-me-in-local-env@db:5432/scanapp
+API_KEY=change-me-to-a-secure-key
+```
+
+Compose liest diese Werte aus `.env.docker`. Starte daher mit:
+```bash
+cp .env.docker.example .env.docker
+```
+
 ### Backend (`packages/backend/.env`)
 ```env
-DATABASE_URL=postgresql://scanapp:scanapp_dev@localhost:5432/scanapp
+POSTGRES_USER=scanapp
+POSTGRES_PASSWORD=change-me-in-local-env
+POSTGRES_DB=scanapp
+DATABASE_URL=postgresql://scanapp:change-me-in-local-env@db:5432/scanapp
 PORT=3000
 API_KEY=your-secret-key
 UPLOAD_DIR=/app/uploads

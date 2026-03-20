@@ -22,6 +22,7 @@ The next mobile architecture cleanup is now implemented on `scanapp2` for `packa
 The next backend schema architecture cleanup is now implemented on `scanapp2` for `packages/backend/prisma/schema.prisma`, adding the missing `ScannedItem` compound index on `userId + scannedAt` together with a lightweight schema regression test and Prisma migration.
 The next backend architecture cleanup is now implemented on `scanapp2` for request logging, adding a central Express middleware that logs method, path, status, timing, and optional JWT-derived user IDs with lightweight Node coverage.
 The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/routes/health.ts`, expanding `/api/health` from a server-only ping into DB, upload-directory, and disk-space dependency checks with a lightweight Node-tested response builder.
+The next backend compose architecture cleanup is now implemented on `scanapp2`, moving hardcoded Docker Compose Postgres credentials into env files with a lightweight regression test that rejects literal DB secrets in both compose manifests.
 
 ## Analyzed
 
@@ -53,6 +54,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 - ARCH-03 database indexing target in `packages/backend/prisma/schema.prisma`, including the missing `ScannedItem` compound index for user-filtered timeline reads and the smallest lightweight guard that can run without a live database
 - ARCH-04 backend request-logging target in `packages/backend/src/app.ts`, including the smallest central middleware that records method, path, status, duration, and optional authenticated user context without introducing request-ID scope yet
 - ARCH-05 backend health-check target in `packages/backend/src/routes/health.ts`, including the smallest injectable seam for DB, upload-directory, and disk-space probes that stays runnable in the dependency-limited workspace
+- ARCH-06 docker-compose credential target in `docker-compose.yml` and `packages/backend/docker-compose.yml`, including the smallest env-file wiring that removes literal Postgres credentials from checked-in compose manifests while keeping lightweight local startup documentation
 
 ## Created
 
@@ -105,6 +107,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 - `packages/backend/src/services/itemPayloads.test.ts`
 - `packages/mobile/src/features/history/store/state.ts`
 - `packages/backend/src/middleware/requestLogging.ts`
+- `packages/backend/dockerComposeConfig.test.ts`
 - `packages/backend/src/middleware/requestLogging.test.ts`
 - `packages/backend/src/services/itemServiceFactory.ts`
 - `packages/backend/src/services/itemServiceFactory.test.ts`
@@ -245,9 +248,19 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 - Updated `packages/backend/src/routes/health.ts` so `/api/health` now verifies Prisma connectivity, ensures the upload directory is writable via a temp-file probe, inspects free disk space via `statfs`, and returns HTTP 503 when any dependency is degraded
 - Added `packages/backend/src/routes/health.test.ts` and included it in `npm run test:targeted` so the health aggregation contract stays covered without requiring Express, Prisma, or a live database during targeted validation
 
+### ARCH-06 docker compose credentials
+- Updated root `docker-compose.yml` so both the `db` and `backend` services read their database-related variables from `.env.docker` instead of embedding Postgres credentials or a literal `DATABASE_URL`
+- Updated `packages/backend/docker-compose.yml` so both services read their database-related variables from `packages/backend/.env`, with the Postgres healthcheck now using container environment variables instead of a hardcoded username
+- Expanded `.env.docker.example` and `packages/backend/.env.example` to document the required Postgres and `DATABASE_URL` variables, and updated the README compose setup notes accordingly
+- Added `packages/backend/dockerComposeConfig.test.ts` and included it in `npm run test:targeted` so future changes cannot reintroduce literal DB credentials into the checked-in compose files
+
 ## Validated
 
 - `git diff --check`
+  - Passed
+- `node --test --experimental-strip-types packages/backend/dockerComposeConfig.test.ts`
+  - Passed
+- `npm run test:targeted`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts`
   - Passed

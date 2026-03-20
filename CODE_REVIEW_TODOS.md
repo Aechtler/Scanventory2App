@@ -199,9 +199,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/backend/src/routes/health.ts`
   - Behoben: `/api/health` prueft jetzt DB-Konnektivitaet, Upload-Verzeichnis-Schreibbarkeit und freien Speicherplatz; degradierte Dependencies liefern 503 und ein detailliertes Check-Ergebnis
 
-- [ ] **ARCH-06**: Docker-Compose hardcoded Credentials
+- [x] **ARCH-06**: Docker-Compose hardcoded Credentials
   - `packages/backend/docker-compose.yml:6-8`
-  - **Fix**: `.env` File verwenden
+  - Behoben: Root- und Backend-Compose lesen Postgres- und `DATABASE_URL`-Werte jetzt aus `.env.docker` bzw. `packages/backend/.env`; ein gezielter Node-Test guardet, dass die Compose-Dateien keine DB-Credentials mehr hartkodieren
 
 - [ ] **ARCH-07**: Keine API-Dokumentation (OpenAPI/Swagger)
 
