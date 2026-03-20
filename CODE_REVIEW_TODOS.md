@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: Workspace-Restore versucht bei fehlenden Cache-Tarballs jetzt zusaetzlich versionstreue lokal installierte Paketverzeichnisse aus bekannten npm/globalen Quellen wiederzuverwenden; `scripts/workspace-toolchain-health.test.ts` guardet sowohl den Match-Fall als auch den Schutz gegen falsch versionierte lokale Fallbacks, waehrend `npm run typecheck:backend` im Sandbox-Workspace weiterhin auf derselben echten 13-Paket-Liste bleibt.
 - 2026-03-20: `docs/manual-regression-checklist.md` traegt jetzt zusaetzlich ein konkretes `Validation result template`, und `scripts/manual-regression-checklist.mjs`/`.test.ts` guarden diese Handoff-Struktur mit, damit Batch-6-Validierungslaeufe ihre Umgebung, Command-Checks, manuellen Abschnitte und Blocker repo-konsistent festhalten.
 - 2026-03-20: Workspace-Restore-Diagnostik empfiehlt bei `npm run typecheck:backend` jetzt den kleinsten guarded Network-Retry `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run typecheck:backend` statt pauschal auf `setup:workspace` zurueckzuspringen; der reale Backend-Blocker bleibt die unveraenderte 13-Paket-Liste ohne lokal verfuegbare Tarballs.
 - 2026-03-20: `scripts/manual-regression-checklist.mjs` liest den ersten Bash-Block unter `## Quick command checks` jetzt auch dann korrekt, wenn davor erklaerender Text steht; zugleich guarden `scripts/manual-regression-checklist.test.ts` und `docs/manual-regression-checklist.md`, dass `npm run validate:manual-regression` selbst Teil der dokumentierten Quick-Checks bleibt.

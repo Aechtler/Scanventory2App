@@ -1097,6 +1097,120 @@ test('restoreMissingToolchainRequirementsFromCache treats empty cache reads as u
   });
 });
 
+test('restoreMissingToolchainRequirementsFromCache falls back to matching installed package directories when cache tarballs are unavailable', async () => {
+  const repoRoot = createTempRepo();
+  const sourceDirectory = path.join(createTempRepo(), 'node_modules', 'uuid');
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'packages/backend/node_modules/uuid': {
+          version: '11.1.0',
+          resolved: 'https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz',
+          integrity: 'sha512-uuid',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend', 'node_modules', 'uuid'), {
+    recursive: true,
+  });
+  fs.mkdirSync(path.join(sourceDirectory, 'dist'), { recursive: true });
+  fs.writeFileSync(
+    path.join(sourceDirectory, 'package.json'),
+    JSON.stringify({ name: 'uuid', version: '11.1.0' }),
+  );
+  fs.writeFileSync(path.join(sourceDirectory, 'dist', 'index.js'), 'export const v4 = () => "uuid";');
+
+  const restored = await restoreMissingToolchainRequirementsFromCache(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'packages/backend/node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+    ],
+    {
+      readTarballByIntegrity: async () => {
+        const error = new Error('missing');
+        (error as NodeJS.ErrnoException).code = 'ENOENT';
+        throw error;
+      },
+      findInstalledPackageSourceDirectories: async () => [sourceDirectory],
+    },
+  );
+
+  assert.deepEqual(restored, {
+    restoredPackages: ['uuid'],
+    unresolvedRequirements: [],
+  });
+  assert.equal(
+    fs.readFileSync(path.join(repoRoot, 'packages', 'backend', 'node_modules', 'uuid', 'package.json'), 'utf8'),
+    JSON.stringify({ name: 'uuid', version: '11.1.0' }),
+  );
+  assert.equal(
+    fs.readFileSync(path.join(repoRoot, 'packages', 'backend', 'node_modules', 'uuid', 'dist', 'index.js'), 'utf8'),
+    'export const v4 = () => "uuid";',
+  );
+});
+
+test('restoreMissingToolchainRequirementsFromCache ignores installed package fallbacks with the wrong version', async () => {
+  const repoRoot = createTempRepo();
+  const sourceDirectory = path.join(createTempRepo(), 'node_modules', 'uuid');
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'packages/backend/node_modules/uuid': {
+          version: '11.1.0',
+          resolved: 'https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz',
+          integrity: 'sha512-uuid',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend', 'node_modules', 'uuid'), {
+    recursive: true,
+  });
+  fs.mkdirSync(sourceDirectory, { recursive: true });
+  fs.writeFileSync(
+    path.join(sourceDirectory, 'package.json'),
+    JSON.stringify({ name: 'uuid', version: '9.0.1' }),
+  );
+
+  const restored = await restoreMissingToolchainRequirementsFromCache(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'packages/backend/node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+    ],
+    {
+      readTarballByIntegrity: async () => {
+        const error = new Error('missing');
+        (error as NodeJS.ErrnoException).code = 'ENOENT';
+        throw error;
+      },
+      findInstalledPackageSourceDirectories: async () => [sourceDirectory],
+    },
+  );
+
+  assert.deepEqual(restored, {
+    restoredPackages: [],
+    unresolvedRequirements: [
+      {
+        moduleDirectory: 'packages/backend/node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+    ],
+  });
+});
+
 test('loadPackageLock reports malformed lockfiles with an actionable issue', () => {
   const repoRoot = createTempRepo();
   const packageLockPath = path.join(repoRoot, 'package-lock.json');

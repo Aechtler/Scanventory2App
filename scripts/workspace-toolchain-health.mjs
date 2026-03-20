@@ -48,6 +48,12 @@ const DEFAULT_NPM_CACHE_DIRECTORY = path.join(
   '.npm',
   '_cacache',
 );
+const DEFAULT_INSTALLED_PACKAGE_SEARCH_ROOTS = [
+  path.join(process.env.HOME ?? '/root', '.npm', '_npx'),
+  '/usr/lib/node_modules',
+  '/usr/local/lib/node_modules',
+];
+const DEFAULT_INSTALLED_PACKAGE_SEARCH_MAX_DEPTH = 6;
 
 function packageNameFromModuleDirectory(moduleDirectory) {
   const modulePathParts = moduleDirectory.split('/');
@@ -141,6 +147,59 @@ function collectAffectedWorkspaceBlockers(
 
 function getModuleDirectoryFromPackageName(packageName) {
   return path.join('node_modules', ...packageName.split('/'));
+}
+
+function getPackageDirectoryNameParts(packageName) {
+  return packageName.split('/');
+}
+
+function findInstalledPackageSourceDirectories(
+  packageName,
+  {
+    searchRoots = DEFAULT_INSTALLED_PACKAGE_SEARCH_ROOTS,
+    maxDepth = DEFAULT_INSTALLED_PACKAGE_SEARCH_MAX_DEPTH,
+  } = {},
+) {
+  const matches = new Set();
+  const packageDirectoryNameParts = getPackageDirectoryNameParts(packageName);
+
+  function visitDirectory(directoryPath, depth) {
+    if (depth > maxDepth || !fs.existsSync(directoryPath)) {
+      return;
+    }
+
+    let entries;
+
+    try {
+      entries = fs.readdirSync(directoryPath, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+
+      const entryPath = path.join(directoryPath, entry.name);
+
+      if (entry.name === 'node_modules') {
+        const candidatePath = path.join(entryPath, ...packageDirectoryNameParts);
+
+        if (fs.existsSync(candidatePath)) {
+          matches.add(candidatePath);
+        }
+      }
+
+      visitDirectory(entryPath, depth + 1);
+    }
+  }
+
+  for (const searchRoot of searchRoots) {
+    visitDirectory(searchRoot, 0);
+  }
+
+  return [...matches].sort((left, right) => left.localeCompare(right));
 }
 
 function getPackageLockPath(repoRoot) {
@@ -340,6 +399,59 @@ async function readTarballByIntegrity(integrity, cacheDirectory = DEFAULT_NPM_CA
   const cacache = loadBundledNpmModule('cacache');
   const cacheEntry = await cacache.get.byDigest(cacheDirectory, integrity);
   return cacheEntry.data;
+}
+
+function readPackageVersion(packageDirectoryPath) {
+  const packageJsonPath = path.join(packageDirectoryPath, 'package.json');
+
+  try {
+    const packageJson = readJsonFile(packageJsonPath);
+    return typeof packageJson.version === 'string' ? packageJson.version : null;
+  } catch {
+    return null;
+  }
+}
+
+async function restoreRequirementFromInstalledPackageDirectory(
+  repoRoot,
+  requirement,
+  packageLockEntry,
+  findInstalledPackageSourceDirectoriesImpl,
+) {
+  const packageName = packageNameFromModuleDirectory(requirement.moduleDirectory);
+  const expectedVersion =
+    packageLockEntry && typeof packageLockEntry.version === 'string'
+      ? packageLockEntry.version
+      : null;
+  const sourceDirectories = await findInstalledPackageSourceDirectoriesImpl(packageName, {
+    expectedVersion,
+    moduleDirectory: requirement.moduleDirectory,
+  });
+
+  for (const sourceDirectoryPath of sourceDirectories) {
+    if (expectedVersion && readPackageVersion(sourceDirectoryPath) !== expectedVersion) {
+      continue;
+    }
+
+    const moduleDirectoryPath = path.join(repoRoot, requirement.moduleDirectory);
+
+    await fs.promises.rm(moduleDirectoryPath, { recursive: true, force: true });
+    await fs.promises.mkdir(path.dirname(moduleDirectoryPath), { recursive: true });
+    await fs.promises.cp(sourceDirectoryPath, moduleDirectoryPath, {
+      recursive: true,
+      force: true,
+    });
+
+    const missingFiles = requirement.missingFiles.filter(
+      (relativeFilePath) => !fs.existsSync(path.join(moduleDirectoryPath, relativeFilePath)),
+    );
+
+    if (missingFiles.length === 0) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function extractPackageTarball(packageBuffer, moduleDirectoryPath) {
@@ -673,6 +785,8 @@ export async function restoreMissingToolchainRequirementsFromCache(
     readTarballByIntegrity: readTarball = async (integrity) =>
       readTarballByIntegrity(integrity, cacheDirectory),
     extractPackageTarball: extractTarball = extractPackageTarball,
+    findInstalledPackageSourceDirectories:
+      findInstalledPackageSourceDirectoriesImpl = findInstalledPackageSourceDirectories,
   } = options;
   const restoredPackages = [];
   const unresolvedRequirements = [];
@@ -692,6 +806,18 @@ export async function restoreMissingToolchainRequirementsFromCache(
       });
 
       if (!(packageBuffer instanceof Uint8Array)) {
+        if (
+          await restoreRequirementFromInstalledPackageDirectory(
+            repoRoot,
+            requirement,
+            packageLockEntry,
+            findInstalledPackageSourceDirectoriesImpl,
+          )
+        ) {
+          restoredPackages.push(packageNameFromModuleDirectory(requirement.moduleDirectory));
+          continue;
+        }
+
         unresolvedRequirements.push(requirement);
         continue;
       }
@@ -720,6 +846,18 @@ export async function restoreMissingToolchainRequirementsFromCache(
       restoredPackages.push(packageNameFromModuleDirectory(requirement.moduleDirectory));
     } catch (error) {
       if (error && typeof error === 'object' && error.code === 'ENOENT') {
+        if (
+          await restoreRequirementFromInstalledPackageDirectory(
+            repoRoot,
+            requirement,
+            packageLockEntry,
+            findInstalledPackageSourceDirectoriesImpl,
+          )
+        ) {
+          restoredPackages.push(packageNameFromModuleDirectory(requirement.moduleDirectory));
+          continue;
+        }
+
         unresolvedRequirements.push(requirement);
         continue;
       }
