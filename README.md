@@ -113,7 +113,7 @@ npm run db:seed
 | `npm run docker:logs` | Logs ansehen |
 | `npm run dev:mobile` | Mobile App starten |
 | `npm run build:all` | Alles bauen |
-| `npm run setup:workspace` | Lokale Lint-/Typecheck-Toolchain pruefen und fehlende/hohle Cache-Pakete explizit melden |
+| `npm run setup:workspace` | Lokale Lint-/Typecheck-Toolchain pruefen und fehlende/hohle Cache-Pakete inkl. naechster Wiederherstellungsschritte explizit melden |
 | `npm run lint:mobile` | Mobile Quelltexte mit lokalem Guard linten |
 | `npm run typecheck:all` | TypeScript prüfen |
 
@@ -186,6 +186,8 @@ npm run clean
 npm install
 npm run setup:workspace
 ```
+
+Wenn `npm run setup:workspace` fehlschlaegt, listet der Befehl jetzt die konkret betroffenen Pakete und die naechsten Restore-Schritte auf. In einer eingeschraenkten Offline-Umgebung muss der fehlende npm-Cache zuerst wiederhergestellt oder einmal mit Netzwerkzugriff `npm install` ausgefuehrt werden.
 
 ---
 

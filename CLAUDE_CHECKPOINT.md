@@ -31,6 +31,7 @@ The next minor market aggregation cleanup is now implemented on `scanapp2` for `
 The next backend logging cleanup is now implemented on `scanapp2` for `packages/backend/src/middleware/errorHandler.ts`, replacing raw stack-trace logging with sanitized request-correlated error lines backed by lightweight Node coverage.
 The next backend documentation cleanup is now implemented on `scanapp2` for `packages/backend/src/routes/apiDocs.ts`, splitting the oversized OpenAPI document builder and route-path definitions into focused metadata, path, component, and Swagger-HTML helpers while preserving the public docs route API.
 The next runnable-backend validation cleanup is now implemented on `scanapp2` for `packages/backend/src/middleware/requestId.ts`, tightening `x-request-id` normalization to reject blank, control-character, and oversized header values while adding direct targeted Node coverage for request-id preservation and regeneration behavior.
+The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding workspace bootstrap failures with explicit affected-package remediation so missing offline cache/toolchain packages are actionable instead of opaque.
 
 ## Analyzed
 
@@ -313,6 +314,11 @@ The next runnable-backend validation cleanup is now implemented on `scanapp2` fo
 - Updated `scripts/setup-workspace-toolchain.mjs` to treat missing `expo`, `nativewind`, and critical backend `@types/*` files as a broken workspace, attempt the existing offline reinstall once, and then print the exact missing package/file list if the cache cannot restore them
 - Added the new toolchain-health regression to `npm run test:targeted` and tightened the README command description so future driver passes can see the concrete blocker immediately
 
+### Workspace bootstrap remediation follow-up
+- Extended `scripts/workspace-toolchain-health.mjs` with offline-cache-miss parsing plus stable remediation messaging so workspace bootstrap failures enumerate the likely affected packages and next restore steps
+- Updated `scripts/setup-workspace-toolchain.mjs` to capture npm output in-process while preserving the one-shot offline reinstall attempt, then print the actionable toolchain-health summary on failure
+- Updated `README.md` so the setup command description and node-modules troubleshooting section match the improved runnable-environment diagnostics
+
 ## Validated
 
 - `git diff --check`
@@ -358,6 +364,7 @@ The next runnable-backend validation cleanup is now implemented on `scanapp2` fo
 - `npm run typecheck:backend`
   - Runs the local TypeScript entrypoint now; currently fails on missing backend/mobile type packages in this sandbox
 - `node ./scripts/setup-workspace-toolchain.mjs`
+  - Still fails in this sandbox because the workspace cache is incomplete, but now reports the affected packages and concrete recovery steps directly
   - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files are `node_modules/expo/{package.json,tsconfig.base}`, `node_modules/nativewind/{package.json,types/index.d.ts}`, and the hollow backend `@types/{bcryptjs,cors,express-rate-limit,multer,uuid}` packages
 - `npm run test:targeted`
   - Passed
