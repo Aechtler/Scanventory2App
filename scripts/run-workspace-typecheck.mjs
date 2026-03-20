@@ -11,6 +11,11 @@ const WORKSPACE_TYPECHECK_COMMANDS = {
   backend: ['npm', ['run', 'build', '--workspace=@scanapp/backend']],
 };
 
+const WORKSPACE_PACKAGE_NAMES = {
+  mobile: '@scanapp/mobile',
+  backend: '@scanapp/backend',
+};
+
 function defaultRunWorkspaceCommand(workspace) {
   const [command, args] = WORKSPACE_TYPECHECK_COMMANDS[workspace];
 
@@ -26,7 +31,10 @@ export async function runWorkspaceTypecheck(workspace, options = {}) {
     runWorkspaceCommand: runWorkspaceCommandImpl = defaultRunWorkspaceCommand,
   } = options;
 
-  const setupResult = await runSetupWorkspaceToolchainImpl();
+  const setupResult = await runSetupWorkspaceToolchainImpl({
+    workspaceNames: [WORKSPACE_PACKAGE_NAMES[workspace]],
+    retryCommand: `npm run typecheck:${workspace}`,
+  });
 
   if ((setupResult?.exitCode ?? 1) !== 0) {
     return { exitCode: setupResult.exitCode ?? 1 };

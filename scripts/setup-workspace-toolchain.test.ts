@@ -249,6 +249,140 @@ test('runSetupWorkspaceToolchain skips offline npm install when unresolved requi
   assert.deepEqual(calls, ['error:preinstall misses']);
 });
 
+test('runSetupWorkspaceToolchain scopes unresolved requirement diagnostics to the requested workspace', async () => {
+  const calls: string[] = [];
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    workspaceNames: ['@scanapp/backend'],
+    retryCommand: 'npm run typecheck:backend',
+    collectWorkspaceDependencyOwners: () => ({
+      expo: ['@scanapp/mobile'],
+      express: ['@scanapp/backend'],
+      typescript: ['@scanapp/backend', '@scanapp/mobile'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => [
+      {
+        moduleDirectory: 'node_modules/typescript',
+        missingFiles: ['lib/typescript.js'],
+      },
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json', 'tsconfig.base'],
+      },
+    ],
+    collectMissingWorkspaceDependencyRequirements: () => [
+      {
+        moduleDirectory: 'node_modules/express',
+        missingFiles: ['package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/ownerless-helper',
+        missingFiles: ['package.json'],
+      },
+    ],
+    collectMissingInstalledPackageRequirements: () => [],
+    restoreMissingToolchainRequirementsFromCache: async () => ({
+      restoredPackages: [],
+      unresolvedRequirements: [
+        {
+          moduleDirectory: 'node_modules/typescript',
+          missingFiles: ['lib/typescript.js'],
+        },
+        {
+          moduleDirectory: 'node_modules/express',
+          missingFiles: ['package.json'],
+        },
+        {
+          moduleDirectory: 'node_modules/ownerless-helper',
+          missingFiles: ['package.json'],
+        },
+      ],
+    }),
+    collectOfflineCacheMissesFromLockfile: async (_repoRoot, missingRequirements) => {
+      assert.deepEqual(missingRequirements, [
+        {
+          moduleDirectory: 'node_modules/typescript',
+          missingFiles: ['lib/typescript.js'],
+        },
+        {
+          moduleDirectory: 'node_modules/express',
+          missingFiles: ['package.json'],
+        },
+        {
+          moduleDirectory: 'node_modules/ownerless-helper',
+          missingFiles: ['package.json'],
+        },
+      ]);
+
+      return [
+        {
+          packageName: 'typescript',
+          tarballUrl: 'https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz',
+        },
+        {
+          packageName: 'express',
+          tarballUrl: 'https://registry.npmjs.org/express/-/express-5.1.0.tgz',
+        },
+        {
+          packageName: 'ownerless-helper',
+          tarballUrl: 'https://registry.npmjs.org/ownerless-helper/-/ownerless-helper-1.0.0.tgz',
+        },
+      ];
+    },
+    formatMissingToolchainRequirements: (missingRequirements, options) => {
+      assert.deepEqual(missingRequirements, [
+        {
+          moduleDirectory: 'node_modules/typescript',
+          missingFiles: ['lib/typescript.js'],
+        },
+        {
+          moduleDirectory: 'node_modules/express',
+          missingFiles: ['package.json'],
+        },
+        {
+          moduleDirectory: 'node_modules/ownerless-helper',
+          missingFiles: ['package.json'],
+        },
+      ]);
+      assert.deepEqual(options?.workspaceDependencyOwners, {
+        express: ['@scanapp/backend'],
+        typescript: ['@scanapp/backend', '@scanapp/mobile'],
+      });
+      assert.deepEqual(options?.offlineCacheMisses, [
+        {
+          packageName: 'typescript',
+          tarballUrl: 'https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz',
+        },
+        {
+          packageName: 'express',
+          tarballUrl: 'https://registry.npmjs.org/express/-/express-5.1.0.tgz',
+        },
+        {
+          packageName: 'ownerless-helper',
+          tarballUrl: 'https://registry.npmjs.org/ownerless-helper/-/ownerless-helper-1.0.0.tgz',
+        },
+      ]);
+      assert.equal(options?.retryCommand, 'npm run typecheck:backend');
+      return 'scoped misses';
+    },
+    runNpmInstall: () => {
+      calls.push('install');
+      return { status: 0, stdout: '', stderr: '' };
+    },
+    console: {
+      log: (message: string) => calls.push(`log:${message}`),
+      error: (message: string) => calls.push(`error:${message}`),
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(calls, ['error:scoped misses']);
+});
+
 test('runSetupWorkspaceToolchain merges missing direct workspace dependencies into cache restore and install diagnostics', async () => {
   const requirements = [
     {

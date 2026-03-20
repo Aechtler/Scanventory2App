@@ -538,6 +538,7 @@ export function formatMissingToolchainRequirements(
     maxListedEntries = 25,
     offlineCacheMisses = [],
     packageLockIssue = null,
+    retryCommand = 'npm run setup:workspace',
     workspaceDependencyOwners = {},
   } = options;
   const affectedPackages = [
@@ -642,7 +643,7 @@ export function formatMissingToolchainRequirements(
     '- Restore the missing packages from cache or reinstall with network access.',
     '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
     '- As a fallback, run: npm install',
-    '- Then rerun the guarded check: npm run setup:workspace',
+    `- Then rerun the guarded check: ${retryCommand}`,
   );
 
   if (affectedPackages.length > maxListedEntries) {
