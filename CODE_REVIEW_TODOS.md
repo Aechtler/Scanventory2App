@@ -179,9 +179,9 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 ### Architektur & Best Practices
 
-- [ ] **ARCH-01**: Dependency Injection fehlt im Backend
-  - Services instanziieren PrismaClient direkt → nicht testbar
-  - **Fix**: `createItemService(prisma)` Pattern
+- [x] **ARCH-01**: Dependency Injection fehlt im Backend
+  - `packages/backend/src/services/itemService.ts`
+  - Behoben: `itemService` nutzt jetzt ein `createItemService(prisma)`-Pattern über eine injizierbare Factory; die Default-Prisma-Instanz bleibt für die App bestehen, aber die Kernlogik ist jetzt ohne Prisma-Laufzeit gezielt testbar
 
 - [ ] **ARCH-02**: Dependency Injection fehlt im historyStore
   - `syncNewItem`, `syncPrices` sind hardcoded → nicht testbar

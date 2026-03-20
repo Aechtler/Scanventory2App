@@ -17,6 +17,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/backend/src/routes/items.ts`, keeping the public `/api/items` router stable while moving create/read/delete/update handlers and shared validation helpers into focused sibling files.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/app/history/[id].tsx`, keeping the route screen focused on store/routing wiring while moving header actions, market/quicklink rendering, not-found UI, and detail-state helpers into focused siblings.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, keeping the public service API stable while moving create/update payload normalization into focused helper builders.
+The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, replacing direct Prisma construction in the service logic with an injectable `createItemService(prisma)` factory while preserving the existing route-facing API.
 
 ## Analyzed
 
@@ -43,6 +44,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Batch 7 next size-rule target in `items.ts`, including extraction boundaries between router wiring, shared auth/validation helpers, multipart create handling, and update/delete handlers
 - Batch 7 next size-rule target in `history/[id].tsx`, including extraction boundaries between route wiring, header actions, market/quicklink section rendering, and detail-state bootstrap helpers
 - Batch 7 next size-rule target in `itemService.ts`, including extraction boundaries between Prisma CRUD orchestration and payload normalization for create/price update flows
+- ARCH-01 backend dependency-injection target in `itemService.ts`, including the smallest seam for replacing direct `PrismaClient` construction with an injectable service factory
 
 ## Created
 
@@ -93,6 +95,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - `packages/backend/src/routes/items/update.ts`
 - `packages/backend/src/services/itemPayloads.ts`
 - `packages/backend/src/services/itemPayloads.test.ts`
+- `packages/backend/src/services/itemServiceFactory.ts`
+- `packages/backend/src/services/itemServiceFactory.test.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.test.ts`
 - `packages/mobile/src/features/history/components/HistoryDetailHeaderActions.tsx`
@@ -204,6 +208,11 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Extracted create-item normalization plus price-, Kleinanzeigen-, and market-value update builders into `packages/backend/src/services/itemPayloads.ts`
 - Added `packages/backend/src/services/itemPayloads.test.ts` and extended the targeted Node test entrypoint so the backend service split has runnable coverage without requiring Prisma or installed workspace dependencies
 
+### ARCH-01 backend dependency injection
+- Extracted injectable backend item-service orchestration into `packages/backend/src/services/itemServiceFactory.ts`
+- Updated `packages/backend/src/services/itemService.ts` to keep exporting the existing route-facing functions while delegating through a default Prisma-backed factory instance
+- Added `packages/backend/src/services/itemServiceFactory.test.ts` so the service logic can be exercised with injected stubs instead of a live Prisma client
+
 ## Validated
 
 - `git diff --check`
@@ -224,6 +233,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
   - Passed
 - `node --test --experimental-strip-types packages/backend/src/services/itemPayloads.test.ts`
   - Passed
+- `node --test --experimental-strip-types packages/backend/src/services/itemServiceFactory.test.ts`
+  - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyDetail.test.ts`
   - Passed
 - `npm run typecheck:mobile`
@@ -241,8 +252,8 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Run mobile/backend typecheck or manual regression in a runnable dependency-installed environment
-- Continue with the next highest-value cleanup or runnable-environment validation now that the remaining Batch 7 size-rule target is complete
+- Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step
 
-Run mobile/backend typecheck plus the manual regression checklist in a dependency-installed environment, or pick the next medium-priority cleanup from `CODE_REVIEW_TODOS.md` now that the Batch 7 size-rule queue is cleared.
+Run mobile/backend typecheck plus the manual regression checklist in a dependency-installed environment, or pick the next medium-priority cleanup from `CODE_REVIEW_TODOS.md` now that ARCH-01 is closed.

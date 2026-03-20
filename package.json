@@ -18,7 +18,7 @@
     "typecheck:backend": "npm run build --workspace=@scanapp/backend",
     "typecheck:all": "npm run typecheck --workspaces --if-present",
     "test:mobile": "npm run test --workspace=@scanapp/mobile",
-    "test:targeted": "node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts packages/mobile/src/features/history/utils/historyDetail.test.ts packages/mobile/src/features/history/store/historyStore.test.ts packages/mobile/src/features/analyze/utils/productImageLoading.test.ts packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts packages/mobile/src/features/market/services/ebay/search.test.ts packages/mobile/src/shared/components/Animated.test.ts packages/backend/src/routes/items/shared.test.ts packages/backend/src/services/itemPayloads.test.ts",
+    "test:targeted": "node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyPricing.test.ts packages/mobile/src/features/history/utils/historyDetail.test.ts packages/mobile/src/features/history/store/historyStore.test.ts packages/mobile/src/features/analyze/utils/productImageLoading.test.ts packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts packages/mobile/src/features/market/services/ebay/search.test.ts packages/mobile/src/shared/components/Animated.test.ts packages/backend/src/routes/items/shared.test.ts packages/backend/src/services/itemPayloads.test.ts packages/backend/src/services/itemServiceFactory.test.ts",
     "test:all": "npm run test --workspaces --if-present",
     "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist",
     "db:migrate": "npm run db:migrate --workspace=@scanapp/backend",
