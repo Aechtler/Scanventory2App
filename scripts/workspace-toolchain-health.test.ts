@@ -295,6 +295,7 @@ test('formatMissingToolchainRequirements renders a stable actionable message', (
     {
       workspaceDependencyOwners: {
         expo: ['@scanapp/mobile'],
+        uuid: ['@scanapp/backend'],
       },
     },
   );
@@ -309,14 +310,48 @@ test('formatMissingToolchainRequirements renders a stable actionable message', (
       'Direct workspace dependency owners:',
       '- expo -> @scanapp/mobile',
       '',
-      'Additional hollow installed packages:',
-      '- @types/uuid',
+      'Workspace-owned type-definition blockers:',
+      '- @types/uuid (for uuid) -> @scanapp/backend',
       '',
       'Suggested next steps:',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: npm install',
       '- Then rerun: npm run setup:workspace',
       '- Likely affected packages: expo, @types/uuid',
+    ].join('\n'),
+  );
+});
+
+test('formatMissingToolchainRequirements maps scoped @types packages back to workspace dependency owners', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/@types/babel__core',
+        missingFiles: ['package.json', 'index.d.ts'],
+      },
+    ],
+    {
+      workspaceDependencyOwners: {
+        '@types/babel__core': ['@scanapp/mobile'],
+        '@babel/core': ['@scanapp/mobile'],
+      },
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/@types/babel__core -> package.json, index.d.ts',
+      '',
+      'Direct workspace dependency owners:',
+      '- @types/babel__core (for @babel/core) -> @scanapp/mobile',
+      '',
+      'Suggested next steps:',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: npm install',
+      '- Then rerun: npm run setup:workspace',
+      '- Likely affected packages: @types/babel__core',
     ].join('\n'),
   );
 });

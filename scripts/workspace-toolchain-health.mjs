@@ -53,6 +53,28 @@ function packageNameFromModuleDirectory(moduleDirectory) {
   return moduleDirectory.replace(/^node_modules\//, '');
 }
 
+function getOwnedDependencyNameFromPackageName(packageName) {
+  if (!packageName.startsWith('@types/')) {
+    return packageName;
+  }
+
+  const unscopedName = packageName.slice('@types/'.length);
+  return unscopedName.includes('__') ? `@${unscopedName.replace('__', '/')}` : unscopedName;
+}
+
+function formatWorkspaceOwnedPackageLine(packageName, workspaceDependencyOwners) {
+  const dependencyName = getOwnedDependencyNameFromPackageName(packageName);
+  const owners = workspaceDependencyOwners[packageName];
+  const dependencyLabel =
+    dependencyName !== packageName &&
+    Array.isArray(workspaceDependencyOwners[dependencyName]) &&
+    workspaceDependencyOwners[dependencyName].length > 0
+      ? ` (for ${dependencyName})`
+      : '';
+
+  return `- ${packageName}${dependencyLabel} -> ${owners.join(', ')}`;
+}
+
 function getModuleDirectoryFromPackageName(packageName) {
   return path.join('node_modules', ...packageName.split('/'));
 }
@@ -516,8 +538,25 @@ export function formatMissingToolchainRequirements(
       Array.isArray(workspaceDependencyOwners[packageName]) &&
       workspaceDependencyOwners[packageName].length > 0,
   );
+  const workspaceOwnedTypePackages = affectedPackages
+    .filter((packageName) => packageName.startsWith('@types/'))
+    .map((packageName) => ({
+      packageName,
+      dependencyName: getOwnedDependencyNameFromPackageName(packageName),
+    }))
+    .filter(
+      ({ packageName, dependencyName }) =>
+        !directWorkspacePackages.includes(packageName) &&
+        Array.isArray(workspaceDependencyOwners[dependencyName]) &&
+        workspaceDependencyOwners[dependencyName].length > 0,
+    );
+  const workspaceOwnedTypePackageNames = new Set(
+    workspaceOwnedTypePackages.map(({ packageName }) => packageName),
+  );
   const transitivePackages = affectedPackages.filter(
-    (packageName) => !directWorkspacePackages.includes(packageName),
+    (packageName) =>
+      !directWorkspacePackages.includes(packageName) &&
+      !workspaceOwnedTypePackageNames.has(packageName),
   );
   const lines = ['Workspace setup incomplete. Missing required package files:'];
 
@@ -537,8 +576,19 @@ export function formatMissingToolchainRequirements(
     lines.push(
       '',
       'Direct workspace dependency owners:',
-      ...directWorkspacePackages.map(
-        (packageName) => `- ${packageName} -> ${workspaceDependencyOwners[packageName].join(', ')}`,
+      ...directWorkspacePackages.map((packageName) =>
+        formatWorkspaceOwnedPackageLine(packageName, workspaceDependencyOwners),
+      ),
+    );
+  }
+
+  if (workspaceOwnedTypePackages.length > 0) {
+    lines.push(
+      '',
+      'Workspace-owned type-definition blockers:',
+      ...workspaceOwnedTypePackages.map(
+        ({ packageName, dependencyName }) =>
+          `- ${packageName} (for ${dependencyName}) -> ${workspaceDependencyOwners[dependencyName].join(', ')}`,
       ),
     );
   }
