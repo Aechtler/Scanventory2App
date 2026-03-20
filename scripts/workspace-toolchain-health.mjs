@@ -50,6 +50,7 @@ const DEFAULT_NPM_CACHE_DIRECTORY = path.join(
 );
 const DEFAULT_INSTALLED_PACKAGE_SEARCH_ROOTS = [
   path.join(process.env.HOME ?? '/root', '.npm', '_npx'),
+  path.join(process.env.HOME ?? '/root', '.openclaw', 'workspace'),
   '/usr/lib/node_modules',
   '/usr/local/lib/node_modules',
 ];
@@ -782,11 +783,15 @@ export async function restoreMissingToolchainRequirementsFromCache(
   const {
     cacheDirectory = DEFAULT_NPM_CACHE_DIRECTORY,
     packageLock = readPackageLock(repoRoot),
+    installedPackageSearchRoots = DEFAULT_INSTALLED_PACKAGE_SEARCH_ROOTS,
     readTarballByIntegrity: readTarball = async (integrity) =>
       readTarballByIntegrity(integrity, cacheDirectory),
     extractPackageTarball: extractTarball = extractPackageTarball,
     findInstalledPackageSourceDirectories:
-      findInstalledPackageSourceDirectoriesImpl = findInstalledPackageSourceDirectories,
+      findInstalledPackageSourceDirectoriesImpl = (packageName) =>
+        findInstalledPackageSourceDirectories(packageName, {
+          searchRoots: installedPackageSearchRoots,
+        }),
   } = options;
   const restoredPackages = [];
   const unresolvedRequirements = [];

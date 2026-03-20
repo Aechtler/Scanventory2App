@@ -1211,6 +1211,78 @@ test('restoreMissingToolchainRequirementsFromCache ignores installed package fal
   });
 });
 
+test('restoreMissingToolchainRequirementsFromCache can search additional local roots for pnpm-style installed packages', async () => {
+  const repoRoot = createTempRepo();
+  const searchRoot = createTempRepo();
+  const sourceDirectory = path.join(
+    searchRoot,
+    'other-repo',
+    'node_modules',
+    '.pnpm',
+    'typescript@5.9.3',
+    'node_modules',
+    'typescript',
+  );
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/typescript': {
+          version: '5.9.3',
+          resolved: 'https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz',
+          integrity: 'sha512-typescript',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', 'typescript'), { recursive: true });
+  fs.mkdirSync(path.join(sourceDirectory, 'lib'), { recursive: true });
+  fs.writeFileSync(
+    path.join(sourceDirectory, 'package.json'),
+    JSON.stringify({ name: 'typescript', version: '5.9.3' }),
+  );
+  fs.writeFileSync(
+    path.join(sourceDirectory, 'lib', 'typescript.js'),
+    'export const version = "5.9.3";',
+  );
+
+  const restored = await restoreMissingToolchainRequirementsFromCache(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'node_modules/typescript',
+        missingFiles: ['package.json', 'lib/typescript.js'],
+      },
+    ],
+    {
+      readTarballByIntegrity: async () => {
+        const error = new Error('missing');
+        (error as NodeJS.ErrnoException).code = 'ENOENT';
+        throw error;
+      },
+      installedPackageSearchRoots: [searchRoot],
+    },
+  );
+
+  assert.deepEqual(restored, {
+    restoredPackages: ['typescript'],
+    unresolvedRequirements: [],
+  });
+  assert.equal(
+    fs.readFileSync(path.join(repoRoot, 'node_modules', 'typescript', 'package.json'), 'utf8'),
+    JSON.stringify({ name: 'typescript', version: '5.9.3' }),
+  );
+  assert.equal(
+    fs.readFileSync(
+      path.join(repoRoot, 'node_modules', 'typescript', 'lib', 'typescript.js'),
+      'utf8',
+    ),
+    'export const version = "5.9.3";',
+  );
+});
+
 test('loadPackageLock reports malformed lockfiles with an actionable issue', () => {
   const repoRoot = createTempRepo();
   const packageLockPath = path.join(repoRoot, 'package-lock.json');
