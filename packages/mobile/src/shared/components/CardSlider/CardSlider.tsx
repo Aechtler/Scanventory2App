@@ -6,6 +6,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { View, ScrollView, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { PageIndicator } from './PageIndicator';
+import { getCardSliderItemKey } from './cardSliderKeys';
 import { CardSliderProps } from './types';
 
 const HORIZONTAL_PADDING = 16;
@@ -48,8 +49,8 @@ export function CardSlider({
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {childArray.map((child, index) => (
-          <View key={index} style={{ width: slideWidth }}>
+        {childArray.map((child) => (
+          <View key={getCardSliderItemKey(child)} style={{ width: slideWidth }}>
             {child}
           </View>
         ))}

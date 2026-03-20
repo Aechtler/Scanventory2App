@@ -25,6 +25,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 The next backend compose architecture cleanup is now implemented on `scanapp2`, moving hardcoded Docker Compose Postgres credentials into env files with a lightweight regression test that rejects literal DB secrets in both compose manifests.
 The next backend architecture cleanup is now implemented on `scanapp2` for API documentation, adding a maintained OpenAPI 3.1 document at `/api/docs/openapi.json` plus a lightweight Swagger UI shell at `/api/docs` with targeted Node coverage.
 The next backend architecture cleanup is now implemented on `scanapp2` for request-ID tracing, adding a central middleware that preserves or generates `x-request-id`, echoes it in responses, and includes it in request logs with lightweight Node coverage.
+The next minor shared-UI cleanup is now implemented on `scanapp2` for `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx`, replacing the wrapper `index` key with child-derived stable keys backed by a lightweight Node-tested helper.
 
 ## Analyzed
 
@@ -116,6 +117,8 @@ The next backend architecture cleanup is now implemented on `scanapp2` for reque
 - `packages/backend/src/middleware/requestLogging.test.ts`
 - `packages/backend/src/services/itemServiceFactory.ts`
 - `packages/backend/src/services/itemServiceFactory.test.ts`
+- `packages/mobile/src/shared/components/CardSlider/cardSliderKeys.ts`
+- `packages/mobile/src/shared/components/CardSlider/cardSliderKeys.test.ts`
 - `packages/backend/prisma/schema.test.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.test.ts`
@@ -270,6 +273,11 @@ The next backend architecture cleanup is now implemented on `scanapp2` for reque
 - Updated `packages/backend/src/middleware/requestLogging.ts` so each completed request log line now includes `req=<requestId>` alongside method, path, status, duration, and optional authenticated user context
 - Extended `packages/backend/src/middleware/requestLogging.test.ts` and kept it in `npm run test:targeted` so the log-line contract and middleware registration order stay guarded without requiring installed backend dependencies
 
+### MINOR-01 CardSlider stable keys
+- Updated `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx` so slide wrapper views use child-derived keys instead of `index`, removing the dynamic-list anti-pattern without changing the public component API
+- Added `packages/mobile/src/shared/components/CardSlider/cardSliderKeys.ts` as a small pure helper that prefers existing child keys and falls back to deterministic value-based keys for primitive nodes
+- Added `packages/mobile/src/shared/components/CardSlider/cardSliderKeys.test.ts` and included it in `npm run test:targeted` so the key-selection behavior stays covered in the dependency-limited workspace
+
 ## Validated
 
 - `git diff --check`
@@ -283,6 +291,8 @@ The next backend architecture cleanup is now implemented on `scanapp2` for reque
 - `node --test --experimental-strip-types packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/shared/components/Animated.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/mobile/src/shared/components/CardSlider/cardSliderKeys.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/market/services/ebay/search.test.ts`
   - Passed

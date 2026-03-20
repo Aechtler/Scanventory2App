@@ -213,9 +213,9 @@ _Keine offenen P0-Issues mehr! 🎉_
 
 ### Minor Issues
 
-- [ ] **MINOR-01**: `index` als React key in CardSlider
+- [x] **MINOR-01**: `index` als React key in CardSlider
   - `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx:49`
-  - Anti-Pattern bei dynamischen Listen
+  - Behoben: `CardSlider` nutzt jetzt Child-Keys statt `index` und hat einen kleinen Node-getesteten Helper fuer stabile Fallback-Keys
 
 - [ ] **MINOR-02**: `useAsync` Return-Type nicht explizit
   - `packages/mobile/src/shared/hooks/useAsync.ts:43-47`
