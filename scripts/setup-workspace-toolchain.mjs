@@ -1,38 +1,34 @@
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
+import {
+  collectMissingToolchainRequirements,
+  formatMissingToolchainRequirements,
+} from './workspace-toolchain-health.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const requiredModulePath = path.join(
-  repoRoot,
-  'node_modules',
-  'typescript',
-  'lib',
-  'typescript.js',
-);
-
-function hasRequiredToolchain() {
-  return fs.existsSync(requiredModulePath);
-}
 
 function runNpmInstall() {
-  const result = spawnSync('npm', ['install', '--offline', '--no-audit', '--no-fund'], {
+  return spawnSync('npm', ['install', '--offline', '--no-audit', '--no-fund'], {
     cwd: repoRoot,
     stdio: 'inherit',
   });
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
 }
 
-if (!hasRequiredToolchain()) {
+const missingRequirementsBeforeInstall = collectMissingToolchainRequirements(repoRoot);
+let installStatus = 0;
+
+if (missingRequirementsBeforeInstall.length > 0) {
   console.log('Installing workspace dependencies for lint/typecheck...');
-  runNpmInstall();
+  installStatus = runNpmInstall().status ?? 1;
 }
 
-if (!hasRequiredToolchain()) {
-  console.error('Workspace setup incomplete. Missing local TypeScript runtime.');
+const missingRequirementsAfterInstall = collectMissingToolchainRequirements(repoRoot);
+
+if (missingRequirementsAfterInstall.length > 0) {
+  if (installStatus !== 0) {
+    console.error(`Offline npm install failed with exit code ${installStatus}.`);
+  }
+  console.error(formatMissingToolchainRequirements(missingRequirementsAfterInstall));
   process.exit(1);
 }
 

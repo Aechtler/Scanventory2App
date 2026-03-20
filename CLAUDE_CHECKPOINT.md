@@ -308,6 +308,11 @@ The next runnable-backend validation cleanup is now implemented on `scanapp2` fo
 - Updated the mobile/backend typecheck scripts to invoke the checked-in TypeScript entrypoint directly, and fixed a pre-existing TSX syntax break in `packages/mobile/src/features/history/components/EditableProductCard/EditableProductCard.tsx` that the new lint command surfaced
 - Added `packages/mobile/toolchain.test.ts`, included it in `npm run test:targeted`, and documented `npm run setup:workspace` in `README.md` and `QUICKSTART.md`
 
+### Workspace package restoration diagnostics
+- Added `scripts/workspace-toolchain-health.mjs` plus `scripts/workspace-toolchain-health.test.ts` so the repo now has a focused, tested check for hollow cached installs where the module directory exists but the required package files do not
+- Updated `scripts/setup-workspace-toolchain.mjs` to treat missing `expo`, `nativewind`, and critical backend `@types/*` files as a broken workspace, attempt the existing offline reinstall once, and then print the exact missing package/file list if the cache cannot restore them
+- Added the new toolchain-health regression to `npm run test:targeted` and tightened the README command description so future driver passes can see the concrete blocker immediately
+
 ## Validated
 
 - `git diff --check`
@@ -353,7 +358,7 @@ The next runnable-backend validation cleanup is now implemented on `scanapp2` fo
 - `npm run typecheck:backend`
   - Runs the local TypeScript entrypoint now; currently fails on missing backend/mobile type packages in this sandbox
 - `node ./scripts/setup-workspace-toolchain.mjs`
-  - Passed
+  - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files are `node_modules/expo/{package.json,tsconfig.base}`, `node_modules/nativewind/{package.json,types/index.d.ts}`, and the hollow backend `@types/{bcryptjs,cors,express-rate-limit,multer,uuid}` packages
 - `npm run test:targeted`
   - Passed
 
@@ -362,6 +367,7 @@ The next runnable-backend validation cleanup is now implemented on `scanapp2` fo
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
+- Restore the uncached tarballs or repopulate the hollow package directories that `npm run setup:workspace` now reports explicitly before retrying mobile/backend typecheck
 - Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step

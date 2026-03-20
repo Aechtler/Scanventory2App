@@ -113,7 +113,7 @@ npm run db:seed
 | `npm run docker:logs` | Logs ansehen |
 | `npm run dev:mobile` | Mobile App starten |
 | `npm run build:all` | Alles bauen |
-| `npm run setup:workspace` | Lokale Lint-/Typecheck-Toolchain pruefen |
+| `npm run setup:workspace` | Lokale Lint-/Typecheck-Toolchain pruefen und fehlende/hohle Cache-Pakete explizit melden |
 | `npm run lint:mobile` | Mobile Quelltexte mit lokalem Guard linten |
 | `npm run typecheck:all` | TypeScript prüfen |
 
