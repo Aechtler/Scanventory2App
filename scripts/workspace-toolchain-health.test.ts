@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import {
   collectMissingInstalledPackageRequirements,
+  collectWorkspaceDependencyOwners,
   collectMissingWorkspaceDependencyRequirements,
   collectMissingToolchainRequirements,
   collectOfflineCacheMissesFromLockfile,
@@ -156,17 +157,72 @@ test('collectMissingWorkspaceDependencyRequirements flags hollow direct workspac
   ]);
 });
 
+test('collectWorkspaceDependencyOwners maps external dependencies back to root and workspace packages', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/root',
+      private: true,
+      workspaces: ['packages/*'],
+      dependencies: {
+        react: '19.1.0',
+      },
+      devDependencies: {
+        typescript: '~5.9.2',
+      },
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'backend', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/backend',
+      dependencies: {
+        react: '19.1.0',
+        express: '^5.1.0',
+      },
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'mobile'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'mobile', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/mobile',
+      dependencies: {
+        expo: '~54.0.32',
+        react: '19.1.0',
+      },
+    }),
+  );
+
+  assert.deepEqual(collectWorkspaceDependencyOwners(repoRoot), {
+    expo: ['@scanapp/mobile'],
+    express: ['@scanapp/backend'],
+    react: ['@scanapp/backend', '@scanapp/mobile', '@scanapp/root'],
+    typescript: ['@scanapp/root'],
+  });
+});
+
 test('formatMissingToolchainRequirements renders a stable actionable message', () => {
-  const message = formatMissingToolchainRequirements([
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json', 'tsconfig.base'],
+      },
+      {
+        moduleDirectory: 'node_modules/@types/uuid',
+        missingFiles: ['package.json', 'index.d.ts'],
+      },
+    ],
     {
-      moduleDirectory: 'node_modules/expo',
-      missingFiles: ['package.json', 'tsconfig.base'],
+      workspaceDependencyOwners: {
+        expo: ['@scanapp/mobile'],
+      },
     },
-    {
-      moduleDirectory: 'node_modules/@types/uuid',
-      missingFiles: ['package.json', 'index.d.ts'],
-    },
-  ]);
+  );
 
   assert.equal(
     message,
@@ -174,6 +230,12 @@ test('formatMissingToolchainRequirements renders a stable actionable message', (
       'Workspace setup incomplete. Missing required package files:',
       '- node_modules/expo -> package.json, tsconfig.base',
       '- node_modules/@types/uuid -> package.json, index.d.ts',
+      '',
+      'Direct workspace dependency owners:',
+      '- expo -> @scanapp/mobile',
+      '',
+      'Additional hollow installed packages:',
+      '- @types/uuid',
       '',
       'Suggested next steps:',
       '- Restore the missing packages from cache or reinstall with network access.',
@@ -212,6 +274,9 @@ test('formatMissingToolchainRequirements appends offline cache misses when provi
       },
     ],
     {
+      workspaceDependencyOwners: {
+        expo: ['@scanapp/mobile'],
+      },
       offlineCacheMisses: [
         {
           packageName: 'uuid',
@@ -226,6 +291,9 @@ test('formatMissingToolchainRequirements appends offline cache misses when provi
     [
       'Workspace setup incomplete. Missing required package files:',
       '- node_modules/expo -> package.json, tsconfig.base',
+      '',
+      'Direct workspace dependency owners:',
+      '- expo -> @scanapp/mobile',
       '',
       'Offline npm cache misses detected:',
       '- uuid -> https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz',
@@ -395,6 +463,9 @@ test('formatMissingToolchainRequirements appends package-lock remediation when p
     [
       'Workspace setup incomplete. Missing required package files:',
       '- node_modules/expo -> package.json, tsconfig.base',
+      '',
+      'Additional hollow installed packages:',
+      '- expo',
       '',
       'Package-lock issue detected:',
       '- Missing root package-lock.json at /tmp/repo/package-lock.json',

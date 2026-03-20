@@ -5,6 +5,7 @@ import {
   collectMissingInstalledPackageRequirements,
   collectMissingWorkspaceDependencyRequirements,
   collectMissingToolchainRequirements,
+  collectWorkspaceDependencyOwners,
   collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
   formatMissingToolchainRequirements,
@@ -79,6 +80,8 @@ export async function runSetupWorkspaceToolchain(options = {}) {
       collectMissingWorkspaceDependencyRequirements,
     collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl =
       collectMissingInstalledPackageRequirements,
+    collectWorkspaceDependencyOwners: collectWorkspaceDependencyOwnersImpl =
+      collectWorkspaceDependencyOwners,
     restoreMissingToolchainRequirementsFromCache: restoreMissingToolchainRequirementsFromCacheImpl =
       restoreMissingToolchainRequirementsFromCache,
     collectOfflineCacheMissesFromLockfile: collectOfflineCacheMissesFromLockfileImpl =
@@ -92,6 +95,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
     writeStdout = (output) => process.stdout.write(output),
     writeStderr = (output) => process.stderr.write(output),
   } = options;
+  const workspaceDependencyOwners = collectWorkspaceDependencyOwnersImpl(targetRepoRoot);
 
   const { packageLock, issue: packageLockIssue } = loadPackageLockImpl(targetRepoRoot);
   const missingRequirementsBeforeInstall = mergeMissingRequirements(
@@ -107,6 +111,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
     consoleImpl.error(
       formatMissingToolchainRequirementsImpl(missingRequirementsBeforeInstall, {
         packageLockIssue,
+        workspaceDependencyOwners,
       }),
     );
     return { exitCode: 1 };
@@ -160,6 +165,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
           ),
           {
             offlineCacheMisses,
+            workspaceDependencyOwners,
           },
         ),
       );
@@ -181,6 +187,7 @@ export async function runSetupWorkspaceToolchain(options = {}) {
           missingRequirementsAfterInstall,
           { packageLock },
         ),
+        workspaceDependencyOwners,
       }),
     );
     return { exitCode: 1 };

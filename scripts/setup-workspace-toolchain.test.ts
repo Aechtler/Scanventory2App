@@ -7,6 +7,7 @@ test('runSetupWorkspaceToolchain exits early with actionable package-lock diagno
   const calls: string[] = [];
   const result = await runSetupWorkspaceToolchain({
     repoRoot: '/tmp/repo',
+    collectWorkspaceDependencyOwners: () => ({}),
     loadPackageLock: () => ({
       packageLock: null,
       issue: {
@@ -61,6 +62,7 @@ test('runSetupWorkspaceToolchain skips npm install when cache restoration resolv
   let collectCount = 0;
   const result = await runSetupWorkspaceToolchain({
     repoRoot: '/tmp/repo',
+    collectWorkspaceDependencyOwners: () => ({}),
     loadPackageLock: () => ({
       packageLock: { packages: {} },
       issue: null,
@@ -103,6 +105,9 @@ test('runSetupWorkspaceToolchain reports merged offline cache misses after npm i
   const calls: string[] = [];
   const result = await runSetupWorkspaceToolchain({
     repoRoot: '/tmp/repo',
+    collectWorkspaceDependencyOwners: () => ({
+      expo: ['@scanapp/mobile'],
+    }),
     loadPackageLock: () => ({
       packageLock: { packages: {} },
       issue: null,
@@ -141,6 +146,9 @@ test('runSetupWorkspaceToolchain reports merged offline cache misses after npm i
       },
     ],
     formatMissingToolchainRequirements: (_requirements, options) => {
+      assert.deepEqual(options?.workspaceDependencyOwners, {
+        expo: ['@scanapp/mobile'],
+      });
       assert.deepEqual(options?.offlineCacheMisses, [
         {
           packageName: 'expo',
@@ -192,6 +200,10 @@ test('runSetupWorkspaceToolchain merges missing direct workspace dependencies in
 
   const result = await runSetupWorkspaceToolchain({
     repoRoot: '/tmp/repo',
+    collectWorkspaceDependencyOwners: () => ({
+      expo: ['@scanapp/mobile'],
+      react: ['@scanapp/root', '@scanapp/mobile'],
+    }),
     loadPackageLock: () => ({
       packageLock: { packages: {} },
       issue: null,
@@ -210,8 +222,9 @@ test('runSetupWorkspaceToolchain merges missing direct workspace dependencies in
       observed.push(`offline:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
       return [];
     },
-    formatMissingToolchainRequirements: (missingRequirements) => {
+    formatMissingToolchainRequirements: (missingRequirements, options) => {
       observed.push(`format:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      observed.push(`owners:${JSON.stringify(options?.workspaceDependencyOwners)}`);
       return 'merged requirements';
     },
     runNpmInstall: () => ({
@@ -230,5 +243,6 @@ test('runSetupWorkspaceToolchain merges missing direct workspace dependencies in
     'restore:node_modules/expo,node_modules/react',
     'offline:node_modules/expo,node_modules/react',
     'format:node_modules/expo,node_modules/react',
+    'owners:{"expo":["@scanapp/mobile"],"react":["@scanapp/root","@scanapp/mobile"]}',
   ]);
 });

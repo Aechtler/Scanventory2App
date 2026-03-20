@@ -106,6 +106,18 @@ function listWorkspacePackageJsonPaths(repoRoot) {
   ];
 }
 
+function getWorkspacePackageLabel(packageJsonPath, packageJson, repoRoot) {
+  if (packageJsonPath === getRootPackageJsonPath(repoRoot)) {
+    return typeof packageJson.name === 'string' && packageJson.name.length > 0
+      ? packageJson.name
+      : '@root';
+  }
+
+  return typeof packageJson.name === 'string' && packageJson.name.length > 0
+    ? packageJson.name
+    : path.relative(repoRoot, path.dirname(packageJsonPath));
+}
+
 export function loadPackageLock(repoRoot) {
   const packageLockPath = getPackageLockPath(repoRoot);
 
@@ -291,6 +303,35 @@ export function collectMissingWorkspaceDependencyRequirements(repoRoot) {
     });
 }
 
+export function collectWorkspaceDependencyOwners(repoRoot) {
+  const ownersByDependency = new Map();
+
+  for (const packageJsonPath of listWorkspacePackageJsonPaths(repoRoot)) {
+    const packageJson = readJsonFile(packageJsonPath);
+    const ownerLabel = getWorkspacePackageLabel(packageJsonPath, packageJson, repoRoot);
+
+    for (const dependencyGroup of ['dependencies', 'devDependencies']) {
+      const dependencies = packageJson[dependencyGroup];
+
+      if (!dependencies || typeof dependencies !== 'object') {
+        continue;
+      }
+
+      for (const dependencyName of Object.keys(dependencies)) {
+        const existingOwners = ownersByDependency.get(dependencyName) ?? new Set();
+        existingOwners.add(ownerLabel);
+        ownersByDependency.set(dependencyName, existingOwners);
+      }
+    }
+  }
+
+  return Object.fromEntries(
+    [...ownersByDependency.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([dependencyName, owners]) => [dependencyName, [...owners].sort((left, right) => left.localeCompare(right))]),
+  );
+}
+
 export function extractOfflineInstallCacheMisses(installOutput) {
   if (!installOutput) {
     return [];
@@ -433,18 +474,48 @@ export function formatMissingToolchainRequirements(
   missingRequirements,
   options = {},
 ) {
-  const { offlineCacheMisses = [], packageLockIssue = null } = options;
+  const {
+    offlineCacheMisses = [],
+    packageLockIssue = null,
+    workspaceDependencyOwners = {},
+  } = options;
   const affectedPackages = [
     ...new Set(
       missingRequirements.map(({ moduleDirectory }) => packageNameFromModuleDirectory(moduleDirectory)),
     ),
   ];
+  const directWorkspacePackages = affectedPackages.filter(
+    (packageName) =>
+      Array.isArray(workspaceDependencyOwners[packageName]) &&
+      workspaceDependencyOwners[packageName].length > 0,
+  );
+  const transitivePackages = affectedPackages.filter(
+    (packageName) => !directWorkspacePackages.includes(packageName),
+  );
   const lines = [
     'Workspace setup incomplete. Missing required package files:',
     ...missingRequirements.map(
       ({ moduleDirectory, missingFiles }) => `- ${moduleDirectory} -> ${missingFiles.join(', ')}`,
     ),
   ];
+
+  if (directWorkspacePackages.length > 0) {
+    lines.push(
+      '',
+      'Direct workspace dependency owners:',
+      ...directWorkspacePackages.map(
+        (packageName) => `- ${packageName} -> ${workspaceDependencyOwners[packageName].join(', ')}`,
+      ),
+    );
+  }
+
+  if (transitivePackages.length > 0) {
+    lines.push(
+      '',
+      'Additional hollow installed packages:',
+      ...transitivePackages.map((packageName) => `- ${packageName}`),
+    );
+  }
 
   if (packageLockIssue) {
     lines.push('', 'Package-lock issue detected:', `- ${packageLockIssue.detail}`);

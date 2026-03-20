@@ -37,6 +37,7 @@ The next runnable-environment bootstrap cleanup is now implemented on `scanapp2`
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding missing-package detection to hollow installed `@types/*` directories so backend/mobile typecheck blockers are reported and cache-restored alongside the existing Expo/nativewind toolchain requirements.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, exporting the bootstrap orchestration behind a testable runner and adding direct Node coverage for package-lock diagnostics, cache-restore short-circuiting, and offline-install failure reporting while preserving the CLI entrypoint behavior.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding missing-package detection from the curated toolchain set to all direct root/mobile/backend workspace dependencies so hollow runtime packages are cache-restored or reported before typecheck stalls on hidden missing-module errors.
+The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, grouping missing packages by direct workspace owners versus additional hollow installed packages so setup failures now show what blocks backend, mobile, or only transitive/test dependencies at a glance.
 
 ## Analyzed
 
@@ -382,6 +383,7 @@ The next runnable-environment bootstrap cleanup is now implemented on `scanapp2`
 - `node ./scripts/setup-workspace-toolchain.mjs`
   - Still fails in this sandbox because the workspace cache is incomplete, but now reports the affected packages and concrete recovery steps directly
   - Now fails fast with an explicit hollow-package report after the offline reinstall attempt; current missing files now include the broader direct workspace dependency surface such as `@prisma/client`, `react`, `react-native`, Expo/mobile runtime packages, `bcryptjs`, `multer`, `uuid`, plus the hollow backend/test `@types/*` packages
+  - The failure output now separates direct workspace dependency owners (for example `@scanapp/mobile` vs `@scanapp/backend`) from additional hollow installed packages, making the remaining restore work easier to triage without a runnable install
 - `npm run test:targeted`
   - Passed
 
