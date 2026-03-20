@@ -45,6 +45,7 @@ The next runnable-environment bootstrap cleanup is now implemented on `scanapp2`
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, treating empty cached tarball reads as unresolved packages instead of crashing the workspace setup path.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root backend build entrypoint, routing `npm run build:backend` through the existing workspace-setup guard so missing local TypeScript/toolchain packages now fail with actionable setup diagnostics before raw `Cannot find module .../tsc` errors.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, preflighting unresolved lockfile-backed cache misses so doomed offline installs stop before they expand `node_modules` into hundreds of additional hollow transitive package directories.
+The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root mobile lint entrypoint, routing `npm run lint:mobile` through the existing workspace-setup guard so missing local TypeScript/toolchain packages now fail with actionable setup diagnostics before raw `Cannot find module 'typescript'` errors.
 
 ## Analyzed
 
