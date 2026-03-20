@@ -26,6 +26,7 @@ Run what is available in the current environment:
 ```bash
 npm run test:targeted
 npm run validate:manual-regression
+npm run manual-regression:report
 npm run typecheck:mobile
 npm run lint:mobile
 npm run typecheck:backend
@@ -197,6 +198,12 @@ For each run, capture:
 - command checks run and pass/fail/block status
 - manual sections completed
 - any regressions or blockers with exact file/flow context
+
+Before updating Trello, generate the current handoff skeleton with:
+
+```bash
+npm run manual-regression:report
+```
 
 If Trello is available, update the matching card/checklist with:
 

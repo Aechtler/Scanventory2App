@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: `npm run manual-regression:report` erzeugt jetzt einen datierten Batch-6-Handoff mit Branch- und Checklist-Metadaten fuer `Validation result` plus Trello-Felder; `scripts/manual-regression-report.test.ts`, `scripts/manual-regression-checklist.mjs` und `docs/manual-regression-checklist.md` guarden, dass dieser Report-Generator Teil der dokumentierten Runnable-Validation bleibt.
 - 2026-03-20: Workspace-Restore versucht bei fehlenden Cache-Tarballs jetzt zusaetzlich versionstreue lokal installierte Paketverzeichnisse aus bekannten npm/globalen Quellen wiederzuverwenden; `scripts/workspace-toolchain-health.test.ts` guardet sowohl den Match-Fall als auch den Schutz gegen falsch versionierte lokale Fallbacks, waehrend `npm run typecheck:backend` im Sandbox-Workspace weiterhin auf derselben echten 13-Paket-Liste bleibt.
 - 2026-03-20: `docs/manual-regression-checklist.md` traegt jetzt zusaetzlich ein konkretes `Validation result template`, und `scripts/manual-regression-checklist.mjs`/`.test.ts` guarden diese Handoff-Struktur mit, damit Batch-6-Validierungslaeufe ihre Umgebung, Command-Checks, manuellen Abschnitte und Blocker repo-konsistent festhalten.
 - 2026-03-20: Workspace-Restore-Diagnostik empfiehlt bei `npm run typecheck:backend` jetzt den kleinsten guarded Network-Retry `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run typecheck:backend` statt pauschal auf `setup:workspace` zurueckzuspringen; der reale Backend-Blocker bleibt die unveraenderte 13-Paket-Liste ohne lokal verfuegbare Tarballs.

@@ -36,6 +36,7 @@ const REQUIRED_TRELLO_FIELDS = [
 
 const REQUIRED_QUICK_COMMANDS = [
   'npm run validate:manual-regression',
+  'npm run manual-regression:report',
 ];
 
 function extractQuickCommandBlock(documentText) {

@@ -19,6 +19,7 @@ test('validateManualRegressionChecklist passes when documented scripts and secti
       scripts: {
         'test:targeted': 'node --test',
         'validate:manual-regression': 'node validate',
+        'manual-regression:report': 'node report',
         'typecheck:mobile': 'node mobile',
         'lint:mobile': 'node lint',
         'typecheck:backend': 'node backend',
@@ -38,6 +39,7 @@ Run what is available in the current environment:
 \`\`\`bash
 npm run test:targeted
 npm run validate:manual-regression
+npm run manual-regression:report
 npm run typecheck:mobile
 npm run lint:mobile
 npm run typecheck:backend
@@ -112,6 +114,7 @@ npm run typecheck:mobile
 
   assert.deepEqual(result, [
     'Checklist quick command checks should include: npm run validate:manual-regression',
+    'Checklist quick command checks should include: npm run manual-regression:report',
     'Documented npm script is missing from package.json: typecheck:mobile',
     'Checklist is missing required section: ## 2) Scan and analyze',
     'Checklist is missing required section: ## 3) Save, library, and detail flows',
