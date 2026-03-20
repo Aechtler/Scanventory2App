@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: `scripts/manual-regression-checklist.mjs` liest den ersten Bash-Block unter `## Quick command checks` jetzt auch dann korrekt, wenn davor erklaerender Text steht; zugleich guarden `scripts/manual-regression-checklist.test.ts` und `docs/manual-regression-checklist.md`, dass `npm run validate:manual-regression` selbst Teil der dokumentierten Quick-Checks bleibt.
 - 2026-03-20: `npm run typecheck:backend` bleibt nach einem fehlgeschlagenen `npm install --workspace=@scanapp/backend` jetzt auf den 13 direkten Backend-Blockern statt wieder in 400+ ownerless Hollow-Packages zu kippen; `scripts/setup-workspace-toolchain.mjs` laesst dafuer in workspace-scoped Post-Install-Diagnostik die generischen installed-package-Misses weg, abgesichert durch einen gezielten Red-Green-Test.
 - 2026-03-20: `docs/manual-regression-checklist.md` ist jetzt selbst per `npm run validate:manual-regression` und `scripts/manual-regression-checklist.test.ts` gegen Repo-Drift abgesichert; `npm run test:targeted` guardet damit sowohl die dokumentierten Quick-Checks als auch die geforderten Trello-Felder `Ziel/Umfang/Nachweise/Nächster Schritt/Validierung`.
 - 2026-03-20: `scripts/setup-workspace-toolchain.mjs` reicht angeforderte `workspaceNames` jetzt bis zum eigentlichen `npm install` durch; backend-/mobile-Guards versuchen dadurch zuerst den kleinsten `npm install --workspace=...`-Restore-Slice statt immer den kompletten Root-Install.

@@ -27,10 +27,22 @@ const REQUIRED_TRELLO_FIELDS = [
   'Validierung',
 ];
 
+const REQUIRED_QUICK_COMMANDS = [
+  'npm run validate:manual-regression',
+];
+
 function extractQuickCommandBlock(documentText) {
-  const match = documentText.match(
-    /## Quick command checks\s+```bash\n([\s\S]*?)```/u,
-  );
+  const quickChecksIndex = documentText.indexOf('## Quick command checks');
+
+  if (quickChecksIndex === -1) {
+    return [];
+  }
+
+  const afterHeading = documentText.slice(quickChecksIndex + '## Quick command checks'.length);
+  const nextSectionIndex = afterHeading.search(/\n## /u);
+  const quickChecksSection =
+    nextSectionIndex === -1 ? afterHeading : afterHeading.slice(0, nextSectionIndex);
+  const match = quickChecksSection.match(/```bash\n([\s\S]*?)```/u);
 
   if (!match) {
     return [];
@@ -68,6 +80,13 @@ export function validateManualRegressionChecklist(repoRoot) {
   const packageJson = readJsonFile(packageJsonPath);
   const documentText = fs.readFileSync(checklistPath, 'utf8');
   const scripts = packageJson.scripts ?? {};
+  const documentedQuickCommands = extractQuickCommandBlock(documentText);
+
+  for (const command of REQUIRED_QUICK_COMMANDS) {
+    if (!documentedQuickCommands.includes(command)) {
+      errors.push(`Checklist quick command checks should include: ${command}`);
+    }
+  }
 
   for (const scriptName of extractDocumentedScripts(documentText)) {
     if (!(scriptName in scripts)) {

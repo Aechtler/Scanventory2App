@@ -9,6 +9,7 @@ Batch 4 is implemented in code and pending runnable-environment validation.
 Batch 5 is implemented in code on `scanapp2`, including backend payload typing, delete-consistency hardening, normalized auth response envelopes, and auth-store deduplication.
 Batch 6 has started on `scanapp2` with a runnable manual regression checklist and a lightweight targeted node-test entrypoint for extracted helpers.
 The next Batch 6 validation cleanup is now implemented on `scanapp2`, adding an executable manual-regression checklist guard plus a Trello-ready update template so the documented validation flow stays in sync with real npm entrypoints.
+The next Batch 6 validation cleanup is now implemented on `scanapp2`, requiring `npm run validate:manual-regression` inside the documented quick checks and fixing the checklist parser to keep working when that section includes explanatory prose before the bash block.
 The first Batch 7 size-rule refactor is implemented on `scanapp2` for `packages/mobile/src/app/(tabs)/library.tsx`, extracting screen-local row helpers, empty states, and row-building pagination constants into the history feature.
 A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, covering centralized tab-bar colors, centralized animation presets, and missing shared-component barrel exports.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/shared/components/Animated.tsx`, splitting the shared animation helpers into focused component files behind a compatibility barrel.
@@ -221,6 +222,7 @@ The next runnable-environment restore cleanup is now implemented on `scanapp2` f
 - Added root script `npm run test:targeted` to run the extracted helper tests directly via Node's built-in test runner with TypeScript strip mode
 - Added `npm run validate:manual-regression` plus `scripts/manual-regression-checklist.mjs` so the Batch 6 checklist now fails fast when its documented quick-check scripts, required flow sections, recording bullets, or Trello handoff fields drift away from the repo
 - Added `scripts/manual-regression-checklist.test.ts` and wired it into `npm run test:targeted` so the runnable validation surface covers the checklist contract itself without requiring the mobile/backend runtime
+- Tightened `scripts/manual-regression-checklist.mjs` so it reads the first bash block inside `## Quick command checks` even when the section starts with explanatory prose, and now explicitly requires `npm run validate:manual-regression` to stay documented in that quick-check list
 
 ### Shared UI cleanup checkpoint
 - Centralized duplicate tab-bar inactive colors into shared `TAB_BAR_COLORS` constants and updated both tab-bar implementations to consume them
@@ -526,9 +528,9 @@ The next runnable-environment restore cleanup is now implemented on `scanapp2` f
 - `npm run typecheck:backend`
   - Still fails in this sandbox because the same 13 backend tarballs remain uncached, but the guarded restore path now attempts the backend-only workspace install slice before stopping on the truthful cache-miss report
 - `npm run validate:manual-regression`
-  - Passed; the manual checklist now matches the real repo scripts and includes the required Trello handoff fields
+  - Passed after requiring the checklist to document `npm run validate:manual-regression` itself and fixing the quick-check parser to handle explanatory prose before the fenced bash block
 - `npm run test:targeted`
-  - Passed (30 tests), including the new checklist contract guard for `docs/manual-regression-checklist.md`
+  - Passed (30 tests), including the updated checklist contract guard for the required self-validation command and the prose-tolerant quick-check parser
 
 ## What Remains
 

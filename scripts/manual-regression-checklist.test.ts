@@ -18,6 +18,7 @@ test('validateManualRegressionChecklist passes when documented scripts and secti
     JSON.stringify({
       scripts: {
         'test:targeted': 'node --test',
+        'validate:manual-regression': 'node validate',
         'typecheck:mobile': 'node mobile',
         'lint:mobile': 'node lint',
         'typecheck:backend': 'node backend',
@@ -32,8 +33,11 @@ test('validateManualRegressionChecklist passes when documented scripts and secti
 
 ## Quick command checks
 
+Run what is available in the current environment:
+
 \`\`\`bash
 npm run test:targeted
+npm run validate:manual-regression
 npm run typecheck:mobile
 npm run lint:mobile
 npm run typecheck:backend
@@ -66,7 +70,7 @@ npm run typecheck:backend
   assert.deepEqual(result, []);
 });
 
-test('validateManualRegressionChecklist reports missing scripts, sections, and Trello fields', () => {
+test('validateManualRegressionChecklist reports missing quick-check commands, sections, and Trello fields', () => {
   const repoRoot = createTempWorkspace();
 
   fs.writeFileSync(
@@ -85,6 +89,8 @@ test('validateManualRegressionChecklist reports missing scripts, sections, and T
 
 ## Quick command checks
 
+Run what is available in the current environment:
+
 \`\`\`bash
 npm run test:targeted
 npm run typecheck:mobile
@@ -98,6 +104,7 @@ npm run typecheck:mobile
   const result = validateManualRegressionChecklist(repoRoot);
 
   assert.deepEqual(result, [
+    'Checklist quick command checks should include: npm run validate:manual-regression',
     'Documented npm script is missing from package.json: typecheck:mobile',
     'Checklist is missing required section: ## 2) Scan and analyze',
     'Checklist is missing required section: ## 3) Save, library, and detail flows',

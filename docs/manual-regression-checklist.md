@@ -25,6 +25,7 @@ Run what is available in the current environment:
 
 ```bash
 npm run test:targeted
+npm run validate:manual-regression
 npm run typecheck:mobile
 npm run lint:mobile
 npm run typecheck:backend
