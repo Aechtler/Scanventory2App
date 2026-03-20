@@ -34,6 +34,7 @@ The next runnable-backend validation cleanup is now implemented on `scanapp2` fo
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding workspace bootstrap failures with explicit affected-package remediation so missing offline cache/toolchain packages are actionable instead of opaque.
 The next runnable-environment toolchain cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding best-effort cached-package restoration plus lockfile-driven offline cache-miss detection so hollow workspace installs now report every missing tarball instead of stopping at the first npm failure.
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, surfacing missing or malformed root `package-lock.json` files as actionable workspace-setup diagnostics instead of raw fs/JSON exceptions.
+The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, expanding missing-package detection to hollow installed `@types/*` directories so backend/mobile typecheck blockers are reported and cache-restored alongside the existing Expo/nativewind toolchain requirements.
 
 ## Analyzed
 
@@ -387,7 +388,7 @@ The next runnable-environment bootstrap cleanup is now implemented on `scanapp2`
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
-- Restore the uncached tarballs or repopulate the hollow package directories that `npm run setup:workspace` now reports explicitly before retrying mobile/backend typecheck
+- Restore the uncached tarballs or repopulate the hollow package directories that `npm run setup:workspace` now reports explicitly, including the missing `@types/*` packages, before retrying mobile/backend typecheck
 - Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step

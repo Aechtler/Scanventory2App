@@ -38,6 +38,10 @@ export const TOOLCHAIN_REQUIREMENTS = [
   },
 ];
 
+const TOOLCHAIN_REQUIREMENT_MAP = new Map(
+  TOOLCHAIN_REQUIREMENTS.map((requirement) => [requirement.moduleDirectory, requirement.requiredFiles]),
+);
+
 const require = createRequire(import.meta.url);
 const DEFAULT_NPM_CACHE_DIRECTORY = path.join(
   process.env.HOME ?? '/root',
@@ -95,6 +99,20 @@ export function loadPackageLock(repoRoot) {
 
 function getPackageLockEntry(packageLock, moduleDirectory) {
   return packageLock?.packages?.[moduleDirectory];
+}
+
+function listInstalledTypesModuleDirectories(repoRoot) {
+  const typesDirectory = path.join(repoRoot, 'node_modules', '@types');
+
+  if (!fs.existsSync(typesDirectory)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(typesDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => `node_modules/@types/${entry.name}`)
+    .sort((left, right) => left.localeCompare(right));
 }
 
 function loadBundledNpmModule(moduleName) {
@@ -161,6 +179,27 @@ async function extractPackageTarball(packageBuffer, moduleDirectoryPath) {
 
 export function collectMissingToolchainRequirements(repoRoot, requirements = TOOLCHAIN_REQUIREMENTS) {
   return requirements.flatMap(({ moduleDirectory, requiredFiles }) => {
+    const missingFiles = requiredFiles.filter(
+      (relativeFilePath) => !fs.existsSync(path.join(repoRoot, moduleDirectory, relativeFilePath)),
+    );
+
+    return missingFiles.length === 0 ? [] : [{ moduleDirectory, missingFiles }];
+  });
+}
+
+export function collectMissingInstalledPackageRequirements(
+  repoRoot,
+  options = {},
+) {
+  const { packageLock = readPackageLock(repoRoot) } = options;
+
+  return listInstalledTypesModuleDirectories(repoRoot).flatMap((moduleDirectory) => {
+    if (!getPackageLockEntry(packageLock, moduleDirectory)) {
+      return [];
+    }
+
+    const requiredFiles =
+      TOOLCHAIN_REQUIREMENT_MAP.get(moduleDirectory) ?? ['package.json', 'index.d.ts'];
     const missingFiles = requiredFiles.filter(
       (relativeFilePath) => !fs.existsSync(path.join(repoRoot, moduleDirectory, relativeFilePath)),
     );

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  collectMissingInstalledPackageRequirements,
   collectMissingToolchainRequirements,
   collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
@@ -45,6 +46,48 @@ test('collectMissingToolchainRequirements flags hollow package directories as mi
     {
       moduleDirectory: 'node_modules/expo',
       missingFiles: ['package.json', 'tsconfig.base'],
+    },
+  ]);
+});
+
+test('collectMissingInstalledPackageRequirements flags hollow installed packages beyond the fixed toolchain list', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/@types/react': {
+          version: '19.1.0',
+        },
+        'node_modules/@types/yargs': {
+          version: '17.0.33',
+        },
+      },
+    }),
+  );
+
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', '@types', 'react'), {
+    recursive: true,
+  });
+  fs.writeFileSync(
+    path.join(repoRoot, 'node_modules', '@types', 'react', 'package.json'),
+    '{"name":"@types/react"}',
+  );
+  fs.mkdirSync(path.join(repoRoot, 'node_modules', '@types', 'yargs'), {
+    recursive: true,
+  });
+
+  const missing = collectMissingInstalledPackageRequirements(repoRoot);
+
+  assert.deepEqual(missing, [
+    {
+      moduleDirectory: 'node_modules/@types/react',
+      missingFiles: ['index.d.ts'],
+    },
+    {
+      moduleDirectory: 'node_modules/@types/yargs',
+      missingFiles: ['package.json', 'index.d.ts'],
     },
   ]);
 });

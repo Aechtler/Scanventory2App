@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import {
+  collectMissingInstalledPackageRequirements,
   collectMissingToolchainRequirements,
   collectOfflineCacheMissesFromLockfile,
   extractOfflineInstallCacheMisses,
@@ -40,9 +41,38 @@ function mergeOfflineCacheMisses(...missGroups) {
   return mergedMisses;
 }
 
+function mergeMissingRequirements(...requirementGroups) {
+  const mergedRequirements = new Map();
+
+  for (const requirements of requirementGroups) {
+    for (const requirement of requirements) {
+      const existingRequirement = mergedRequirements.get(requirement.moduleDirectory);
+
+      if (!existingRequirement) {
+        mergedRequirements.set(requirement.moduleDirectory, {
+          moduleDirectory: requirement.moduleDirectory,
+          missingFiles: [...requirement.missingFiles],
+        });
+        continue;
+      }
+
+      existingRequirement.missingFiles = [
+        ...new Set([...existingRequirement.missingFiles, ...requirement.missingFiles]),
+      ];
+    }
+  }
+
+  return [...mergedRequirements.values()].sort((left, right) =>
+    left.moduleDirectory.localeCompare(right.moduleDirectory),
+  );
+}
+
 async function main() {
   const { packageLock, issue: packageLockIssue } = loadPackageLock(repoRoot);
-  const missingRequirementsBeforeInstall = collectMissingToolchainRequirements(repoRoot);
+  const missingRequirementsBeforeInstall = mergeMissingRequirements(
+    collectMissingToolchainRequirements(repoRoot),
+    packageLock ? collectMissingInstalledPackageRequirements(repoRoot, { packageLock }) : [],
+  );
   let unresolvedRequirements = missingRequirementsBeforeInstall;
 
   if (missingRequirementsBeforeInstall.length > 0 && packageLockIssue) {
@@ -94,15 +124,24 @@ async function main() {
 
       console.error(`Offline npm install failed with exit code ${installStatus}.`);
       console.error(
-        formatMissingToolchainRequirements(collectMissingToolchainRequirements(repoRoot), {
+        formatMissingToolchainRequirements(
+          mergeMissingRequirements(
+            collectMissingToolchainRequirements(repoRoot),
+            collectMissingInstalledPackageRequirements(repoRoot, { packageLock }),
+          ),
+          {
           offlineCacheMisses,
-        }),
+          },
+        ),
       );
       process.exit(1);
     }
   }
 
-  const missingRequirementsAfterInstall = collectMissingToolchainRequirements(repoRoot);
+  const missingRequirementsAfterInstall = mergeMissingRequirements(
+    collectMissingToolchainRequirements(repoRoot),
+    collectMissingInstalledPackageRequirements(repoRoot, { packageLock }),
+  );
 
   if (missingRequirementsAfterInstall.length > 0) {
     console.error(
