@@ -1,7 +1,9 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { AuthRequest } from './jwtAuth';
+import type { RequestWithRequestId } from './requestId';
 
 interface RequestLogDetails {
+  requestId: string;
   method: string;
   path: string;
   statusCode: number;
@@ -10,13 +12,14 @@ interface RequestLogDetails {
 }
 
 export function buildRequestLogLine({
+  requestId,
   method,
   path,
   statusCode,
   durationMs,
   userId,
 }: RequestLogDetails): string {
-  return `[Request] ${method} ${path} status=${statusCode} durationMs=${durationMs} user=${userId ?? 'anonymous'}`;
+  return `[Request] req=${requestId} ${method} ${path} status=${statusCode} durationMs=${durationMs} user=${userId ?? 'anonymous'}`;
 }
 
 export function requestLoggingMiddleware(
@@ -29,9 +32,11 @@ export function requestLoggingMiddleware(
   res.once('finish', () => {
     const durationMs = Number((process.hrtime.bigint() - startedAt) / BigInt(1_000_000));
     const authReq = req as AuthRequest;
+    const requestWithId = req as RequestWithRequestId;
 
     console.info(
       buildRequestLogLine({
+        requestId: requestWithId.requestId ?? 'missing',
         method: req.method,
         path: req.originalUrl || req.url,
         statusCode: res.statusCode,

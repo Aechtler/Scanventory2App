@@ -207,7 +207,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/backend/src/routes/apiDocs.ts`, `packages/backend/src/routes/docs.ts`
   - Behoben: `/api/docs/openapi.json` liefert jetzt eine gepflegte OpenAPI-3.1-Spezifikation fuer Auth-, Health-, Image- und Item-Endpunkte; `/api/docs` rendert dazu eine schlanke Swagger-UI-Ansicht, abgesichert durch einen gezielten Node-Test
 
-- [ ] **ARCH-08**: Kein Request-ID Tracing für Log-Korrelation
+- [x] **ARCH-08**: Kein Request-ID Tracing für Log-Korrelation
+  - `packages/backend/src/app.ts`, `packages/backend/src/middleware/requestId.ts`, `packages/backend/src/middleware/requestLogging.ts`
+  - Behoben: zentrale Request-ID-Middleware uebernimmt oder erzeugt jetzt `x-request-id`, spiegelt sie im Response und reichert die bestehenden Request-Logs fuer bessere Korrelation an
 
 ### Minor Issues
 

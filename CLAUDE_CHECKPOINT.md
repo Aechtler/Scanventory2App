@@ -24,6 +24,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for reque
 The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/routes/health.ts`, expanding `/api/health` from a server-only ping into DB, upload-directory, and disk-space dependency checks with a lightweight Node-tested response builder.
 The next backend compose architecture cleanup is now implemented on `scanapp2`, moving hardcoded Docker Compose Postgres credentials into env files with a lightweight regression test that rejects literal DB secrets in both compose manifests.
 The next backend architecture cleanup is now implemented on `scanapp2` for API documentation, adding a maintained OpenAPI 3.1 document at `/api/docs/openapi.json` plus a lightweight Swagger UI shell at `/api/docs` with targeted Node coverage.
+The next backend architecture cleanup is now implemented on `scanapp2` for request-ID tracing, adding a central middleware that preserves or generates `x-request-id`, echoes it in responses, and includes it in request logs with lightweight Node coverage.
 
 ## Analyzed
 
@@ -57,6 +58,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for API d
 - ARCH-05 backend health-check target in `packages/backend/src/routes/health.ts`, including the smallest injectable seam for DB, upload-directory, and disk-space probes that stays runnable in the dependency-limited workspace
 - ARCH-06 docker-compose credential target in `docker-compose.yml` and `packages/backend/docker-compose.yml`, including the smallest env-file wiring that removes literal Postgres credentials from checked-in compose manifests while keeping lightweight local startup documentation
 - ARCH-07 backend API documentation target in `packages/backend/src/routes`, including the smallest maintained OpenAPI document and Swagger UI exposure that can ship without adding heavy runtime dependencies
+- ARCH-08 backend request-correlation target in `packages/backend/src/middleware`, including the smallest app-level seam for preserving or generating `x-request-id` and carrying it through the existing request logger without adding heavy tracing infrastructure
 
 ## Created
 
@@ -109,6 +111,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for API d
 - `packages/backend/src/services/itemPayloads.test.ts`
 - `packages/mobile/src/features/history/store/state.ts`
 - `packages/backend/src/middleware/requestLogging.ts`
+- `packages/backend/src/middleware/requestId.ts`
 - `packages/backend/dockerComposeConfig.test.ts`
 - `packages/backend/src/middleware/requestLogging.test.ts`
 - `packages/backend/src/services/itemServiceFactory.ts`
@@ -260,6 +263,12 @@ The next backend architecture cleanup is now implemented on `scanapp2` for API d
 - Added `packages/backend/src/routes/apiDocs.ts` with a maintained OpenAPI 3.1 document builder that covers the current health, auth, image, and item endpoints plus shared request schemas and bearer auth metadata
 - Added `packages/backend/src/routes/docs.ts` and updated `packages/backend/src/routes/index.ts` so `/api/docs/openapi.json` serves the OpenAPI JSON and `/api/docs` serves a lightweight Swagger UI shell without introducing a new backend runtime dependency
 - Added `packages/backend/src/routes/docs.test.ts`, included it in `npm run test:targeted`, and documented the new local URLs in `README.md`
+
+### ARCH-08 backend request-id tracing
+- Added `packages/backend/src/middleware/requestId.ts` with a central middleware that reuses an incoming `x-request-id` when present and otherwise generates a UUID via Node's built-in `crypto.randomUUID()`
+- Updated `packages/backend/src/app.ts` so request IDs are assigned before request logging and all `/api` routes, and the response now echoes `x-request-id` for client-side correlation
+- Updated `packages/backend/src/middleware/requestLogging.ts` so each completed request log line now includes `req=<requestId>` alongside method, path, status, duration, and optional authenticated user context
+- Extended `packages/backend/src/middleware/requestLogging.test.ts` and kept it in `npm run test:targeted` so the log-line contract and middleware registration order stay guarded without requiring installed backend dependencies
 
 ## Validated
 
