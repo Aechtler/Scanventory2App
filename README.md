@@ -115,7 +115,9 @@ npm run db:seed
 | `npm run build:all` | Alles bauen |
 | `npm run setup:workspace` | Lokale Lint-/Typecheck-Toolchain pruefen und fehlende/hohle Cache-Pakete inkl. naechster Wiederherstellungsschritte explizit melden |
 | `npm run lint:mobile` | Mobile Quelltexte mit lokalem Guard linten |
-| `npm run typecheck:all` | TypeScript prüfen |
+| `npm run typecheck:mobile` | Mobile TypeScript-Pruefung erst nach `setup:workspace`-Guard ausfuehren, sonst mit konkreten Toolchain-Blockern abbrechen |
+| `npm run typecheck:backend` | Backend-TypeScript-Pruefung erst nach `setup:workspace`-Guard ausfuehren, sonst mit konkreten Toolchain-Blockern abbrechen |
+| `npm run typecheck:all` | Workspace-TypeScript pruefen |
 
 ## 🛠️ Tech Stack
 
@@ -189,6 +191,7 @@ npm run setup:workspace
 
 Wenn `npm run setup:workspace` fehlschlaegt, listet der Befehl jetzt die konkret betroffenen Pakete, ihre direkten Workspace-Owner und zusaetzliche hohle transitive Installationen getrennt auf. In einer eingeschraenkten Offline-Umgebung muss der fehlende npm-Cache zuerst wiederhergestellt oder einmal mit Netzwerkzugriff `npm install` ausgefuehrt werden.
 Fehlt die Root-`package-lock.json` oder ist sie defekt, meldet der Setup-Befehl das jetzt ebenfalls explizit und fordert zur Wiederherstellung bzw. Regenerierung der Lockfile auf, bevor weitere Offline-Restore-Schritte sinnvoll sind.
+Die Root-Befehle `npm run typecheck:mobile` und `npm run typecheck:backend` laufen jetzt ebenfalls zuerst durch diesen Guard, damit fehlende Expo-/Backend-Pakete nicht mehr nur als rohe `tsc`-Importfehler auftauchen.
 
 ---
 
