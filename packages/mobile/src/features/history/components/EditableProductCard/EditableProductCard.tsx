@@ -102,7 +102,3 @@ export function EditableProductCard({
     </View>
   );
 }
->
-    </View>
-  );
-}

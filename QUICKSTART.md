@@ -37,6 +37,7 @@ npm run dev:mobile
 ```bash
 # Install dependencies
 npm install
+npm run setup:workspace
 
 # Generate Prisma client
 cd packages/backend

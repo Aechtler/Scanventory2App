@@ -46,3 +46,45 @@ test('api route aggregator registers the docs router as a public route', () => {
   assert.match(routeSource, /import\s+docsRouter\s+from\s+'\.\/docs'/);
   assert.match(routeSource, /router\.use\('\/docs',\s*docsRouter\);/);
 });
+
+test('apiDocs route module stays as a thin orchestrator over focused helpers', () => {
+  const routeSource = readFileSync(path.join(currentDir, 'apiDocs.ts'), 'utf8');
+  const routeLineCount = routeSource.trimEnd().split('\n').length;
+
+  assert.ok(
+    routeLineCount <= 150,
+    `expected apiDocs.ts to stay reviewable, got ${routeLineCount} lines`
+  );
+  assert.match(routeSource, /from '\.\/apiDocs\/components(?:\.ts)?'/);
+  assert.match(routeSource, /from '\.\/apiDocs\/paths(?:\.ts)?'/);
+  assert.match(routeSource, /from '\.\/apiDocs\/swaggerHtml(?:\.ts)?'/);
+});
+
+test('apiDocs path builder stays split by route domain', () => {
+  const pathsSource = readFileSync(path.join(currentDir, 'apiDocs', 'paths.ts'), 'utf8');
+  const pathsLineCount = pathsSource.trimEnd().split('\n').length;
+
+  assert.ok(
+    pathsLineCount <= 150,
+    `expected paths.ts to stay reviewable, got ${pathsLineCount} lines`
+  );
+  assert.match(pathsSource, /from '\.\/paths\/authPaths(?:\.ts)?'/);
+  assert.match(pathsSource, /from '\.\/paths\/imagePaths(?:\.ts)?'/);
+  assert.match(pathsSource, /from '\.\/paths\/itemPaths(?:\.ts)?'/);
+});
+
+test('item path definitions stay split by collection, detail, and price helpers', () => {
+  const itemPathsSource = readFileSync(
+    path.join(currentDir, 'apiDocs', 'paths', 'itemPaths.ts'),
+    'utf8'
+  );
+  const itemPathsLineCount = itemPathsSource.trimEnd().split('\n').length;
+
+  assert.ok(
+    itemPathsLineCount <= 150,
+    `expected itemPaths.ts to stay reviewable, got ${itemPathsLineCount} lines`
+  );
+  assert.match(itemPathsSource, /from '\.\/itemPathsCollection(?:\.ts)?'/);
+  assert.match(itemPathsSource, /from '\.\/itemPathsDetail(?:\.ts)?'/);
+  assert.match(itemPathsSource, /from '\.\/itemPathsPriceUpdates(?:\.ts)?'/);
+});

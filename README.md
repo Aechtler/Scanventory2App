@@ -17,6 +17,7 @@ ScanApp/
 ```bash
 # Dependencies installieren
 npm install
+npm run setup:workspace
 
 # Prisma Client generieren
 cd packages/backend && npx prisma generate && cd ../..
@@ -45,6 +46,7 @@ cd ScanApp
 
 # Alle Dependencies installieren
 npm install
+npm run setup:workspace
 
 # Prisma Client generieren
 cd packages/backend
@@ -111,6 +113,8 @@ npm run db:seed
 | `npm run docker:logs` | Logs ansehen |
 | `npm run dev:mobile` | Mobile App starten |
 | `npm run build:all` | Alles bauen |
+| `npm run setup:workspace` | Lokale Lint-/Typecheck-Toolchain pruefen |
+| `npm run lint:mobile` | Mobile Quelltexte mit lokalem Guard linten |
 | `npm run typecheck:all` | TypeScript prüfen |
 
 ## 🛠️ Tech Stack
@@ -180,6 +184,7 @@ docker ps
 ```bash
 npm run clean
 npm install
+npm run setup:workspace
 ```
 
 ---
