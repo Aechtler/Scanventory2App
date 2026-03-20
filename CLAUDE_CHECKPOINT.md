@@ -20,6 +20,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, replacing direct Prisma construction in the service logic with an injectable `createItemService(prisma)` factory while preserving the existing route-facing API.
 The next mobile architecture cleanup is now implemented on `scanapp2` for `packages/mobile/src/features/history/store/historyStore.ts`, replacing hardcoded cache/sync side effects with an injectable `createHistoryStoreState(...)` seam while preserving the public persisted Zustand hook.
 The next backend schema architecture cleanup is now implemented on `scanapp2` for `packages/backend/prisma/schema.prisma`, adding the missing `ScannedItem` compound index on `userId + scannedAt` together with a lightweight schema regression test and Prisma migration.
+The next backend architecture cleanup is now implemented on `scanapp2` for request logging, adding a central Express middleware that logs method, path, status, timing, and optional JWT-derived user IDs with lightweight Node coverage.
 
 ## Analyzed
 
@@ -49,6 +50,7 @@ The next backend schema architecture cleanup is now implemented on `scanapp2` fo
 - ARCH-01 backend dependency-injection target in `itemService.ts`, including the smallest seam for replacing direct `PrismaClient` construction with an injectable service factory
 - ARCH-02 mobile dependency-injection target in `historyStore.ts`, including the smallest seam for replacing hardcoded cache/sync services with injected dependencies while keeping the app-facing Zustand API stable
 - ARCH-03 database indexing target in `packages/backend/prisma/schema.prisma`, including the missing `ScannedItem` compound index for user-filtered timeline reads and the smallest lightweight guard that can run without a live database
+- ARCH-04 backend request-logging target in `packages/backend/src/app.ts`, including the smallest central middleware that records method, path, status, duration, and optional authenticated user context without introducing request-ID scope yet
 
 ## Created
 
@@ -100,6 +102,8 @@ The next backend schema architecture cleanup is now implemented on `scanapp2` fo
 - `packages/backend/src/services/itemPayloads.ts`
 - `packages/backend/src/services/itemPayloads.test.ts`
 - `packages/mobile/src/features/history/store/state.ts`
+- `packages/backend/src/middleware/requestLogging.ts`
+- `packages/backend/src/middleware/requestLogging.test.ts`
 - `packages/backend/src/services/itemServiceFactory.ts`
 - `packages/backend/src/services/itemServiceFactory.test.ts`
 - `packages/backend/prisma/schema.test.ts`
@@ -229,6 +233,11 @@ The next backend schema architecture cleanup is now implemented on `scanapp2` fo
 - Added `packages/backend/prisma/migrations/20260320000000_add_scanned_item_user_scanned_at_index/migration.sql` to create `ScannedItem_userId_scannedAt_idx`
 - Added `packages/backend/prisma/schema.test.ts` and included it in `npm run test:targeted` so the schema and latest migration keep asserting the compound index without depending on Prisma CLI or a live Postgres instance
 
+### ARCH-04 backend request logging
+- Added `packages/backend/src/middleware/requestLogging.ts` with a central Express middleware that logs each completed request as method, path, HTTP status, duration in milliseconds, and either the authenticated `userId` or `anonymous`
+- Updated `packages/backend/src/app.ts` to register the request logger once at app level so it covers both public and JWT-protected `/api` routes while preserving the existing HTTPS and error-handler flow
+- Added `packages/backend/src/middleware/requestLogging.test.ts` and included it in `npm run test:targeted` so the log-line contract and middleware registration stay guarded without requiring installed backend dependencies
+
 ## Validated
 
 - `git diff --check`
@@ -252,6 +261,8 @@ The next backend schema architecture cleanup is now implemented on `scanapp2` fo
 - `node --test --experimental-strip-types packages/backend/src/services/itemServiceFactory.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/backend/prisma/schema.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/backend/src/middleware/requestLogging.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyDetail.test.ts`
   - Passed

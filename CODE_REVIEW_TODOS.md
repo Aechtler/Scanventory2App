@@ -191,8 +191,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/backend/prisma/schema.prisma`
   - Behoben: `ScannedItem` nutzt jetzt zusätzlich `@@index([userId, scannedAt])`; die zugehörige Prisma-Migration und ein leichter Schema-Guard-Test sichern den Index für user-gefilterte Timeline-Reads ab
 
-- [ ] **ARCH-04**: Kein Request-Logging Middleware
-  - Keine Logs für Method, Path, Timing, User, Status
+- [x] **ARCH-04**: Kein Request-Logging Middleware
+  - `packages/backend/src/app.ts`, `packages/backend/src/middleware/requestLogging.ts`
+  - Behoben: zentrale Express-Request-Logs erfassen jetzt Method, Path, Status, Timing und anonymen bzw. JWT-abgeleiteten `userId`; ein Node-Test guardet Log-Format und Middleware-Registrierung
 
 - [ ] **ARCH-05**: Health-Check prüft nur Server-Status
   - `packages/backend/src/routes/health.ts`

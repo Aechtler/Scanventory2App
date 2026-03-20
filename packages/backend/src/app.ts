@@ -7,6 +7,7 @@ import cors from 'cors';
 import apiRoutes from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { enforceHttpsMiddleware } from './middleware/https';
+import { requestLoggingMiddleware } from './middleware/requestLogging';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(cors({
   origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*',
 }));
 app.use(express.json());
+app.use(requestLoggingMiddleware);
 
 // API Routes
 app.use('/api', apiRoutes);
