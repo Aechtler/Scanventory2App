@@ -479,10 +479,15 @@ test('formatMissingToolchainRequirements renders a stable actionable message', (
       'Workspace-owned type-definition blockers:',
       '- @types/uuid (for uuid) -> @scanapp/backend',
       '',
+      'Affected workspaces by direct blocker count:',
+      '- @scanapp/backend -> 1 blocker: @types/uuid',
+      '- @scanapp/mobile -> 1 blocker: expo',
+      '',
       'Suggested next steps:',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
-      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile',
+      '- Smallest affected workspace first: npm install --workspace=@scanapp/backend',
+      '- To repair all affected workspaces together, run: npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile',
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: expo, @types/uuid',
@@ -646,6 +651,10 @@ test('formatMissingToolchainRequirements appends direct dependency lockfile issu
       '- uuid -> @scanapp/backend',
       '- babel-preset-expo -> @scanapp/mobile',
       '',
+      'Affected workspaces by direct blocker count:',
+      '- @scanapp/backend -> 1 blocker: uuid',
+      '- @scanapp/mobile -> 1 blocker: babel-preset-expo',
+      '',
       'Workspace dependency lockfile issues detected:',
       '- uuid -> locked 7.0.3 does not satisfy @scanapp/backend dependencies spec ^11.1.0',
       '- babel-preset-expo -> locked 14.0.6 does not satisfy @scanapp/mobile dependencies spec ^54.0.10',
@@ -658,10 +667,67 @@ test('formatMissingToolchainRequirements appends direct dependency lockfile issu
       '- Refresh the root package-lock.json so direct workspace dependency versions match package.json declarations.',
       '- Restore the missing packages from cache or reinstall with network access.',
       '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
-      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile',
+      '- Smallest affected workspace first: npm install --workspace=@scanapp/backend',
+      '- To repair all affected workspaces together, run: npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile',
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: uuid, babel-preset-expo',
+    ].join('\n'),
+  );
+});
+
+test('formatMissingToolchainRequirements summarizes multi-workspace blockers before combined reinstall guidance', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/expo',
+        missingFiles: ['package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/@types/uuid',
+        missingFiles: ['package.json', 'index.d.ts'],
+      },
+    ],
+    {
+      retryCommand: 'npm run typecheck:all',
+      workspaceDependencyOwners: {
+        expo: ['@scanapp/mobile'],
+        uuid: ['@scanapp/backend'],
+      },
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/expo -> package.json',
+      '- node_modules/uuid -> package.json',
+      '- node_modules/@types/uuid -> package.json, index.d.ts',
+      '',
+      'Direct workspace dependency owners:',
+      '- expo -> @scanapp/mobile',
+      '- uuid -> @scanapp/backend',
+      '',
+      'Workspace-owned type-definition blockers:',
+      '- @types/uuid (for uuid) -> @scanapp/backend',
+      '',
+      'Affected workspaces by direct blocker count:',
+      '- @scanapp/mobile -> 1 blocker: expo',
+      '- @scanapp/backend -> 2 blockers: @types/uuid, uuid',
+      '',
+      'Suggested next steps:',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- Smallest affected workspace first: npm install --workspace=@scanapp/mobile',
+      '- To repair all affected workspaces together, run: npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile',
+      '- As a fallback, run: npm install',
+      '- Then rerun the guarded check: npm run typecheck:all',
+      '- Likely affected packages: expo, uuid, @types/uuid',
     ].join('\n'),
   );
 });

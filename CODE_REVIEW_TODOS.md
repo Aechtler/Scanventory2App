@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: Aggregate Runnable-environment-Diagnostik gruppiert `npm run typecheck:all`-Blocker jetzt zusaetzlich nach Workspace und priorisiert den kleineren Restore-Slice zuerst; der aktuelle Guard zeigt damit direkt `@scanapp/backend` mit 13 Blockern vor `@scanapp/mobile` mit 33 Blockern.
 - 2026-03-20: `npm run typecheck:all` macht jetzt zuerst einen gemeinsamen `setup:workspace`-Preflight fuer `@scanapp/mobile` und `@scanapp/backend`; bei weiter fehlenden Tarballs bleibt der Aggregate-Guard dadurch auf der echten direkten 45-Paket-Blockerliste statt nach dem ersten Fehlversuch in 500+ hohle Transitiv-Pakete zu kippen.
 - 2026-03-20: `npm run typecheck:all` laeuft jetzt bewusst ueber mobile und backend weiter und gibt am Ende eine knappe Workspace-Zusammenfassung aus; die verbleibenden Blocker sind echte fehlende/offline nicht gecachte Tarballs in beiden Workspaces statt eines vorzeitig abgebrochenen ersten Fehlers.
 - 2026-03-20: Runnable-environment Guard-Diagnostik zeigt jetzt zusätzlich workspace-spezifische `npm install --workspace=...`-Hinweise fuer mobile/backend Validierung; der verbleibende Blocker sind weiterhin fehlende/offline nicht gecachte Tarballs, nicht mehr unklare Reparaturschritte.

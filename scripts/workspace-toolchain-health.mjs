@@ -98,6 +98,43 @@ function collectAffectedWorkspaceOwners(
   ])].sort((left, right) => left.localeCompare(right));
 }
 
+function collectAffectedWorkspaceBlockers(
+  directWorkspacePackages,
+  workspaceOwnedTypePackages,
+  workspaceDependencyOwners,
+) {
+  const blockersByWorkspace = new Map();
+
+  for (const packageName of directWorkspacePackages) {
+    for (const owner of workspaceDependencyOwners[packageName] ?? []) {
+      const blockers = blockersByWorkspace.get(owner) ?? new Set();
+      blockers.add(packageName);
+      blockersByWorkspace.set(owner, blockers);
+    }
+  }
+
+  for (const { packageName, dependencyName } of workspaceOwnedTypePackages) {
+    for (const owner of workspaceDependencyOwners[dependencyName] ?? []) {
+      const blockers = blockersByWorkspace.get(owner) ?? new Set();
+      blockers.add(packageName);
+      blockersByWorkspace.set(owner, blockers);
+    }
+  }
+
+  return [...blockersByWorkspace.entries()]
+    .map(([workspaceName, blockers]) => ({
+      workspaceName,
+      blockers: [...blockers].sort((left, right) => left.localeCompare(right)),
+    }))
+    .sort((left, right) => {
+      if (left.blockers.length !== right.blockers.length) {
+        return left.blockers.length - right.blockers.length;
+      }
+
+      return left.workspaceName.localeCompare(right.workspaceName);
+    });
+}
+
 function getModuleDirectoryFromPackageName(packageName) {
   return path.join('node_modules', ...packageName.split('/'));
 }
@@ -768,6 +805,11 @@ export function formatMissingToolchainRequirements(
     workspaceOwnedTypePackages,
     workspaceDependencyOwners,
   );
+  const affectedWorkspaceBlockers = collectAffectedWorkspaceBlockers(
+    directWorkspacePackages,
+    workspaceOwnedTypePackages,
+    workspaceDependencyOwners,
+  );
   const transitivePackages = affectedPackages.filter(
     (packageName) =>
       !directWorkspacePackages.includes(packageName) &&
@@ -804,6 +846,16 @@ export function formatMissingToolchainRequirements(
       ...workspaceOwnedTypePackages.map(
         ({ packageName, dependencyName }) =>
           `- ${packageName} (for ${dependencyName}) -> ${workspaceDependencyOwners[dependencyName].join(', ')}`,
+      ),
+    );
+  }
+
+  if (affectedWorkspaceBlockers.length > 1) {
+    lines.push(
+      '',
+      'Affected workspaces by direct blocker count:',
+      ...affectedWorkspaceBlockers.map(({ workspaceName, blockers }) =>
+        `- ${workspaceName} -> ${blockers.length} blocker${blockers.length === 1 ? '' : 's'}: ${blockers.join(', ')}`,
       ),
     );
   }
@@ -877,11 +929,22 @@ export function formatMissingToolchainRequirements(
   );
 
   if (affectedWorkspaceOwners.length > 0) {
-    lines.push(
-      `- To repair only the affected workspaces first, run: npm install ${affectedWorkspaceOwners
-        .map((workspaceName) => `--workspace=${workspaceName}`)
-        .join(' ')}`,
-    );
+    if (affectedWorkspaceBlockers.length > 1) {
+      lines.push(
+        `- Smallest affected workspace first: npm install --workspace=${affectedWorkspaceBlockers[0].workspaceName}`,
+      );
+      lines.push(
+        `- To repair all affected workspaces together, run: npm install ${affectedWorkspaceOwners
+          .map((workspaceName) => `--workspace=${workspaceName}`)
+          .join(' ')}`,
+      );
+    } else {
+      lines.push(
+        `- To repair only the affected workspaces first, run: npm install ${affectedWorkspaceOwners
+          .map((workspaceName) => `--workspace=${workspaceName}`)
+          .join(' ')}`,
+      );
+    }
   }
 
   lines.push('- As a fallback, run: npm install', `- Then rerun the guarded check: ${retryCommand}`);
