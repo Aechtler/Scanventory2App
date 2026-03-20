@@ -18,6 +18,7 @@ The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packag
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/app/history/[id].tsx`, keeping the route screen focused on store/routing wiring while moving header actions, market/quicklink rendering, not-found UI, and detail-state helpers into focused siblings.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, keeping the public service API stable while moving create/update payload normalization into focused helper builders.
 The next backend architecture cleanup is now implemented on `scanapp2` for `packages/backend/src/services/itemService.ts`, replacing direct Prisma construction in the service logic with an injectable `createItemService(prisma)` factory while preserving the existing route-facing API.
+The next mobile architecture cleanup is now implemented on `scanapp2` for `packages/mobile/src/features/history/store/historyStore.ts`, replacing hardcoded cache/sync side effects with an injectable `createHistoryStoreState(...)` seam while preserving the public persisted Zustand hook.
 
 ## Analyzed
 
@@ -45,6 +46,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 - Batch 7 next size-rule target in `history/[id].tsx`, including extraction boundaries between route wiring, header actions, market/quicklink section rendering, and detail-state bootstrap helpers
 - Batch 7 next size-rule target in `itemService.ts`, including extraction boundaries between Prisma CRUD orchestration and payload normalization for create/price update flows
 - ARCH-01 backend dependency-injection target in `itemService.ts`, including the smallest seam for replacing direct `PrismaClient` construction with an injectable service factory
+- ARCH-02 mobile dependency-injection target in `historyStore.ts`, including the smallest seam for replacing hardcoded cache/sync services with injected dependencies while keeping the app-facing Zustand API stable
 
 ## Created
 
@@ -95,6 +97,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 - `packages/backend/src/routes/items/update.ts`
 - `packages/backend/src/services/itemPayloads.ts`
 - `packages/backend/src/services/itemPayloads.test.ts`
+- `packages/mobile/src/features/history/store/state.ts`
 - `packages/backend/src/services/itemServiceFactory.ts`
 - `packages/backend/src/services/itemServiceFactory.test.ts`
 - `packages/mobile/src/features/history/utils/historyDetail.ts`
@@ -212,6 +215,11 @@ The next backend architecture cleanup is now implemented on `scanapp2` for `pack
 - Extracted injectable backend item-service orchestration into `packages/backend/src/services/itemServiceFactory.ts`
 - Updated `packages/backend/src/services/itemService.ts` to keep exporting the existing route-facing functions while delegating through a default Prisma-backed factory instance
 - Added `packages/backend/src/services/itemServiceFactory.test.ts` so the service logic can be exercised with injected stubs instead of a live Prisma client
+
+### ARCH-02 mobile dependency injection
+- Extracted injectable history-store behavior into `packages/mobile/src/features/history/store/state.ts`
+- Updated `packages/mobile/src/features/history/store/historyStore.ts` to keep exporting the existing persisted Zustand hook while supplying the default cache/sync dependency bundle
+- Extended `packages/mobile/src/features/history/store/historyStore.test.ts` so add/update/remove flows prove the store uses injected cache and sync collaborators instead of hardcoded services
 
 ## Validated
 

@@ -10,6 +10,7 @@ import {
   updateHistoryItemPrices,
 } from './actions.ts';
 import { getHistoryItemById } from './selectors.ts';
+import { createHistoryStoreState } from './state.ts';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -137,4 +138,93 @@ test('updateHistoryItemPrices updates the matching item and selectors find it by
   });
 
   assert.equal(getHistoryItemById(updatedItems, 'keep')?.priceStats.avgPrice, 1.5);
+});
+
+test('createHistoryStoreState uses injected cache and sync dependencies', async () => {
+  const calls: string[] = [];
+  let currentState: ReturnType<typeof createHistoryStoreState>;
+
+  const setState = (
+    update:
+      | Partial<ReturnType<typeof createHistoryStoreState>>
+      | ((state: ReturnType<typeof createHistoryStoreState>) => Partial<ReturnType<typeof createHistoryStoreState>>),
+  ) => {
+    const nextPartial = typeof update === 'function' ? update(currentState) : update;
+    currentState = { ...currentState, ...nextPartial };
+  };
+
+  const getState = () => currentState;
+
+  currentState = createHistoryStoreState(setState, getState, {
+    cacheImage: async (uri) => {
+      calls.push(`cache:${uri}`);
+      return `cached:${uri}`;
+    },
+    removeCachedImage: async (uri) => {
+      calls.push(`remove-cache:${uri}`);
+    },
+    clearImageCache: async () => {
+      calls.push('clear-cache');
+    },
+    syncNewItem: async (imageUri) => {
+      calls.push(`sync-new:${imageUri}`);
+      return 'server-item-1';
+    },
+    syncPrices: async (serverId) => {
+      calls.push(`sync-prices:${serverId}`);
+      return true;
+    },
+    syncMarketValue: async (serverId) => {
+      calls.push(`sync-market-value:${serverId}`);
+      return true;
+    },
+    syncItemUpdate: async (serverId) => {
+      calls.push(`sync-update:${serverId}`);
+      return true;
+    },
+    syncDeleteItem: async (serverId) => {
+      calls.push(`sync-delete:${serverId}`);
+      return true;
+    },
+    createId: () => 'scan-di-test',
+    now: () => '2026-03-20T08:00:00.000Z',
+  });
+
+  const itemId = await currentState.addItem({
+    imageUri: 'file:///tmp/injected.jpg',
+    productName: 'Injected Item',
+    category: 'Console',
+    brand: 'Nintendo',
+    condition: 'Used',
+    confidence: 0.7,
+    searchQuery: 'injected item',
+    priceStats: { minPrice: 50, maxPrice: 70, avgPrice: 60, medianPrice: 60 },
+  });
+
+  assert.equal(itemId, 'scan-di-test');
+  assert.equal(currentState.items[0]?.cachedImageUri, 'cached:file:///tmp/injected.jpg');
+  assert.equal(currentState.items[0]?.serverId, 'server-item-1');
+  assert.equal(currentState.items[0]?.syncStatus, 'synced');
+
+  currentState.updateItemPrices(
+    itemId,
+    { minPrice: 55, maxPrice: 75, avgPrice: 65, medianPrice: 65 },
+    [],
+  );
+  currentState.updateMarketValue(itemId, { summary: 'Growing demand' });
+  currentState.updateItem(itemId, { productName: 'Injected Item Updated' });
+  currentState.removeItem(itemId);
+  currentState.clearHistory();
+
+  assert.deepEqual(calls, [
+    'cache:file:///tmp/injected.jpg',
+    'sync-new:file:///tmp/injected.jpg',
+    'sync-prices:server-item-1',
+    'sync-market-value:server-item-1',
+    'sync-update:server-item-1',
+    'remove-cache:cached:file:///tmp/injected.jpg',
+    'sync-delete:server-item-1',
+    'clear-cache',
+  ]);
+  assert.equal(currentState.items.length, 0);
 });

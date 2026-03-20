@@ -183,8 +183,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/backend/src/services/itemService.ts`
   - Behoben: `itemService` nutzt jetzt ein `createItemService(prisma)`-Pattern über eine injizierbare Factory; die Default-Prisma-Instanz bleibt für die App bestehen, aber die Kernlogik ist jetzt ohne Prisma-Laufzeit gezielt testbar
 
-- [ ] **ARCH-02**: Dependency Injection fehlt im historyStore
-  - `syncNewItem`, `syncPrices` sind hardcoded → nicht testbar
+- [x] **ARCH-02**: Dependency Injection fehlt im historyStore
+  - `packages/mobile/src/features/history/store/historyStore.ts`
+  - Behoben: die Zustand-Wiring-Datei nutzt jetzt einen injizierbaren `createHistoryStoreState(...)`-Seam; Cache- und Sync-Nebenwirkungen sind damit ohne Expo-/Backend-Runtime gezielt testbar
 
 - [ ] **ARCH-03**: Fehlende Datenbank-Compound-Indexes
   - `packages/backend/prisma/schema.prisma`
