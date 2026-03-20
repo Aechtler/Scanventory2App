@@ -28,6 +28,7 @@ The next backend architecture cleanup is now implemented on `scanapp2` for reque
 The next minor shared-UI cleanup is now implemented on `scanapp2` for `packages/mobile/src/shared/components/CardSlider/CardSlider.tsx`, replacing the wrapper `index` key with child-derived stable keys backed by a lightweight Node-tested helper.
 The next minor shared-hook cleanup is now implemented on `scanapp2` for `packages/mobile/src/shared/hooks/useAsync.ts`, introducing an explicit exported `UseAsyncResult<T, Args>` return contract backed by a lightweight Node signature guard.
 The next minor market aggregation cleanup is now implemented on `scanapp2` for `packages/mobile/src/features/market/services/marketAggregator.ts`, replacing synthetic linear price interpolation with real platform-listing aggregation plus a controlled stats fallback backed by targeted Node coverage.
+The next backend logging cleanup is now implemented on `scanapp2` for `packages/backend/src/middleware/errorHandler.ts`, replacing raw stack-trace logging with sanitized request-correlated error lines backed by lightweight Node coverage.
 
 ## Analyzed
 
@@ -288,6 +289,11 @@ The next minor market aggregation cleanup is now implemented on `scanapp2` for `
 - Updated `packages/mobile/src/features/market/services/marketAggregator.ts` to delegate combined stat calculation to the helper, keeping the existing `searchAllMarkets(...)` API stable
 - Added `packages/mobile/src/features/market/services/marketAggregator.test.ts` and included it in `npm run test:targeted` so non-linear listing distributions and the no-listings fallback stay covered in this dependency-limited workspace
 
+### MINOR-05 backend sanitized error logging
+- Added `packages/backend/src/middleware/errorLogging.ts` as a small pure helper that builds request-correlated backend error log lines without emitting raw stack traces
+- Updated `packages/backend/src/middleware/errorHandler.ts` so the central Express error handler now logs `requestId`, error name, and a redacted message instead of `err.stack`
+- Added `packages/backend/src/middleware/errorLogging.test.ts` and included it in `npm run test:targeted` so stack-trace omission and credential redaction stay covered without requiring installed backend dependencies
+
 ## Validated
 
 - `git diff --check`
@@ -321,6 +327,8 @@ The next minor market aggregation cleanup is now implemented on `scanapp2` for `
 - `node --test --experimental-strip-types packages/backend/prisma/schema.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/backend/src/middleware/requestLogging.test.ts`
+  - Passed
+- `node --test --experimental-strip-types packages/backend/src/middleware/errorLogging.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/history/utils/historyDetail.test.ts`
   - Passed

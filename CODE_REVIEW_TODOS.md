@@ -1,7 +1,7 @@
 # ScanApp - Code Review TODO Liste
 
 > Erstellt: 2026-02-11 | Reviewer: Claude Code (Senior Engineer Review)
-> Aktualisiert: 2026-03-19 | Erledigte Punkte entfernt
+> Aktualisiert: 2026-03-20 | Erledigte Punkte entfernt
 
 ---
 
@@ -225,9 +225,9 @@ _Keine offenen P0-Issues mehr! 🎉_
   - `packages/mobile/src/features/market/services/marketAggregator.ts:71-75`
   - Behoben: Aggregation nutzt jetzt reale Plattform-Listings fuer Median/Verteilung und faellt bei fehlenden Listings nur noch kontrolliert auf plattformspezifische Stats zurueck
 
-- [ ] **MINOR-05**: Error Stack Traces in Logs
+- [x] **MINOR-05**: Error Stack Traces in Logs
   - `packages/backend/src/middleware/errorHandler.ts:14`
-  - Könnte sensible Infos leaken (DB-Connection-Strings, Pfade)
+  - Behoben: zentrales Backend-Error-Logging nutzt jetzt eine sanitisierte Log-Zeile mit `requestId`, Error-Namen und redigierter Message statt roher Stack-Traces
 
 ---
 
@@ -238,8 +238,8 @@ _Keine offenen P0-Issues mehr! 🎉_
 | P0 - Critical | 0 | ✅ Alle erledigt |
 | P1 - High | 0 | ✅ Alle aktuell erfassten P1-Punkte erledigt |
 | P2 - Medium | 8 | Offen |
-| P3 - Low | 12 | Offen |
-| **Gesamt** | **20** | - |
+| P3 - Low | 11 | Offen |
+| **Gesamt** | **19** | - |
 
 | Kategorie | Anzahl |
 |-----------|--------|
@@ -251,7 +251,7 @@ _Keine offenen P0-Issues mehr! 🎉_
 | Type Safety | 0 |
 | Code-Qualität | 0 |
 | Architektur | 8 |
-| Minor | 4 |
+| Minor | 3 |
 
 ---
 

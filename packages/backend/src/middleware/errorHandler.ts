@@ -5,14 +5,17 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { ApiResponse } from '../types';
+import { buildErrorLogLine } from './errorLogging';
+import type { RequestWithRequestId } from './requestId';
 
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
-  console.error('[Error]', err.message, err.stack);
+  const requestWithId = req as RequestWithRequestId;
+  console.error(buildErrorLogLine(err, requestWithId.requestId ?? 'missing'));
 
   if (err instanceof multer.MulterError) {
     const isUnexpectedFile = err.code === 'LIMIT_UNEXPECTED_FILE';
