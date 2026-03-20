@@ -83,6 +83,10 @@ function formatWorkspaceOwnedPackageLine(packageName, workspaceDependencyOwners)
   return `- ${packageName}${dependencyLabel} -> ${owners.join(', ')}`;
 }
 
+function getNetworkEnabledRetryCommand(retryCommand) {
+  return `SCANAPP_ALLOW_NETWORK_INSTALL=1 ${retryCommand}`;
+}
+
 function collectAffectedWorkspaceOwners(
   directWorkspacePackages,
   workspaceOwnedTypePackages,
@@ -925,8 +929,15 @@ export function formatMissingToolchainRequirements(
 
   lines.push(
     '- Restore the missing packages from cache or reinstall with network access.',
-    '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
   );
+
+  if (retryCommand === 'npm run setup:workspace') {
+    lines.push('- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace');
+  } else {
+    lines.push(
+      `- If network access is available, rerun the guarded check with network installs enabled: ${getNetworkEnabledRetryCommand(retryCommand)}`,
+    );
+  }
 
   if (affectedWorkspaceOwners.length > 0) {
     if (affectedWorkspaceBlockers.length > 1) {
