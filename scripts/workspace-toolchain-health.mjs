@@ -192,6 +192,26 @@ function getPackageLockEntry(packageLock, moduleDirectory) {
   return packageLock?.packages?.[moduleDirectory];
 }
 
+function getWorkspacePackageDirectory(packageJsonPath, repoRoot) {
+  if (packageJsonPath === getRootPackageJsonPath(repoRoot)) {
+    return '';
+  }
+
+  return path.relative(repoRoot, path.dirname(packageJsonPath));
+}
+
+function getDirectDependencyLockEntryCandidates(packageName, ownerPackageDirectory) {
+  const moduleDirectory = getModuleDirectoryFromPackageName(packageName);
+  const candidates = [];
+
+  if (ownerPackageDirectory) {
+    candidates.push(path.join(ownerPackageDirectory, moduleDirectory));
+  }
+
+  candidates.push(moduleDirectory);
+  return [...new Set(candidates)];
+}
+
 function isTopLevelInstalledModuleDirectory(moduleDirectory) {
   const modulePathParts = moduleDirectory.split('/');
 
@@ -359,7 +379,9 @@ export function collectWorkspaceDependencyLockIssues(
   );
   const declarationsByDependency = new Map();
 
-  for (const { ownerLabel, packageJson } of workspaceManifests) {
+  for (const { ownerLabel, packageJsonPath, packageJson } of workspaceManifests) {
+    const ownerPackageDirectory = getWorkspacePackageDirectory(packageJsonPath, repoRoot);
+
     for (const dependencyGroup of ['dependencies', 'devDependencies']) {
       const dependencies = packageJson[dependencyGroup];
 
@@ -375,6 +397,7 @@ export function collectWorkspaceDependencyLockIssues(
         const declarations = declarationsByDependency.get(dependencyName) ?? [];
         declarations.push({
           owner: ownerLabel,
+          ownerPackageDirectory,
           dependencyGroup,
           spec,
         });
@@ -386,36 +409,61 @@ export function collectWorkspaceDependencyLockIssues(
   return [...declarationsByDependency.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
     .flatMap(([packageName, declarations]) => {
-      const lockfileVersion =
-        getPackageLockEntry(packageLock, getModuleDirectoryFromPackageName(packageName))?.version ?? null;
+      const missingDeclarations = [];
+      const mismatchedDeclarations = [];
 
-      if (typeof lockfileVersion !== 'string' || lockfileVersion.length === 0) {
-        return [
-          {
-            packageName,
-            issue: 'missing-lock-entry',
-            lockfileVersion: null,
-            declarations,
-          },
-        ];
+      for (const declaration of declarations) {
+        const lockfileCandidates = getDirectDependencyLockEntryCandidates(
+          packageName,
+          declaration.ownerPackageDirectory,
+        )
+          .map((moduleDirectory) => ({
+            moduleDirectory,
+            version: getPackageLockEntry(packageLock, moduleDirectory)?.version ?? null,
+          }))
+          .filter(({ version }) => typeof version === 'string' && version.length > 0);
+
+        if (lockfileCandidates.length === 0) {
+          missingDeclarations.push(declaration);
+          continue;
+        }
+
+        if (
+          typeof declaration.spec === 'string' &&
+          semver.validRange(declaration.spec) &&
+          !lockfileCandidates.some(({ version }) =>
+            semver.satisfies(version, declaration.spec, { includePrerelease: true }),
+          )
+        ) {
+          mismatchedDeclarations.push({
+            ...declaration,
+            lockfileVersion: lockfileCandidates[0]?.version ?? null,
+          });
+        }
       }
 
-      const mismatchedDeclarations = declarations.filter(({ spec }) =>
-        typeof spec === 'string' &&
-        semver.validRange(spec) &&
-        !semver.satisfies(lockfileVersion, spec, { includePrerelease: true }),
-      );
-
-      return mismatchedDeclarations.length > 0
-        ? [
-            {
-              packageName,
-              issue: 'version-mismatch',
-              lockfileVersion,
-              declarations: mismatchedDeclarations,
-            },
-          ]
-        : [];
+      return [
+        ...(missingDeclarations.length > 0
+          ? [
+              {
+                packageName,
+                issue: 'missing-lock-entry',
+                lockfileVersion: null,
+                declarations: missingDeclarations,
+              },
+            ]
+          : []),
+        ...(mismatchedDeclarations.length > 0
+          ? [
+              {
+                packageName,
+                issue: 'version-mismatch',
+                lockfileVersion: mismatchedDeclarations[0]?.lockfileVersion ?? null,
+                declarations: mismatchedDeclarations,
+              },
+            ]
+          : []),
+      ];
     });
 }
 
@@ -617,15 +665,15 @@ function pushSummarizedSection(lines, title, entries, { maxListedEntries, overfl
 }
 
 function formatDependencyLockIssueEntry({ packageName, issue, lockfileVersion, declarations }) {
-  return declarations.map(({ owner, dependencyGroup, spec }) => ({
+  return declarations.map(({ owner, dependencyGroup, spec, lockfileVersion: declarationLockfileVersion }) => ({
     detail:
       issue === 'missing-lock-entry'
         ? `- ${packageName} -> missing root package-lock entry for ${owner} ${dependencyGroup} spec ${spec}`
-        : `- ${packageName} -> locked ${lockfileVersion} does not satisfy ${owner} ${dependencyGroup} spec ${spec}`,
+        : `- ${packageName} -> locked ${declarationLockfileVersion ?? lockfileVersion} does not satisfy ${owner} ${dependencyGroup} spec ${spec}`,
     remediation:
       issue === 'missing-lock-entry'
         ? `- ${packageName} -> add a root package-lock entry satisfying ${owner} ${dependencyGroup} ${spec}`
-        : `- ${packageName} -> replace locked ${lockfileVersion} with a version satisfying ${owner} ${dependencyGroup} ${spec}`,
+        : `- ${packageName} -> replace locked ${declarationLockfileVersion ?? lockfileVersion} with a version satisfying ${owner} ${dependencyGroup} ${spec}`,
   }));
 }
 

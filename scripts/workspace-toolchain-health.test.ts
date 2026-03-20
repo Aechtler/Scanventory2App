@@ -324,6 +324,7 @@ test('collectWorkspaceDependencyLockIssues reports missing lock entries and stal
       declarations: [
         {
           owner: '@scanapp/backend',
+          ownerPackageDirectory: 'packages/backend',
           dependencyGroup: 'devDependencies',
           spec: '^4.19.0',
         },
@@ -336,8 +337,65 @@ test('collectWorkspaceDependencyLockIssues reports missing lock entries and stal
       declarations: [
         {
           owner: '@scanapp/backend',
+          ownerPackageDirectory: 'packages/backend',
           dependencyGroup: 'dependencies',
           spec: '^11.1.0',
+          lockfileVersion: '7.0.3',
+        },
+      ],
+    },
+  ]);
+});
+
+test('collectWorkspaceDependencyLockIssues prefers workspace-local lock entries before stale hoisted versions', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/root',
+      private: true,
+      workspaces: ['packages/*'],
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'backend', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/backend',
+      dependencies: {
+        uuid: '^11.1.0',
+      },
+      devDependencies: {
+        tsx: '^4.19.0',
+      },
+    }),
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/uuid': {
+          version: '7.0.3',
+        },
+        'packages/backend/node_modules/uuid': {
+          version: '11.1.0',
+        },
+      },
+    }),
+  );
+
+  assert.deepEqual(collectWorkspaceDependencyLockIssues(repoRoot), [
+    {
+      packageName: 'tsx',
+      issue: 'missing-lock-entry',
+      lockfileVersion: null,
+      declarations: [
+        {
+          owner: '@scanapp/backend',
+          ownerPackageDirectory: 'packages/backend',
+          dependencyGroup: 'devDependencies',
+          spec: '^4.19.0',
         },
       ],
     },
