@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import {
   collectMissingInstalledPackageRequirements,
+  collectWorkspaceDependencyLockIssues,
   collectWorkspaceDependencyOwners,
   collectMissingWorkspaceDependencyRequirements,
   collectMissingToolchainRequirements,
@@ -280,6 +281,69 @@ test('collectWorkspaceDependencyOwners maps external dependencies back to root a
   });
 });
 
+test('collectWorkspaceDependencyLockIssues reports missing lock entries and stale locked versions for direct workspace dependencies', () => {
+  const repoRoot = createTempRepo();
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/root',
+      private: true,
+      workspaces: ['packages/*'],
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'backend', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/backend',
+      dependencies: {
+        uuid: '^11.1.0',
+      },
+      devDependencies: {
+        tsx: '^4.19.0',
+      },
+    }),
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/uuid': {
+          version: '7.0.3',
+        },
+      },
+    }),
+  );
+
+  assert.deepEqual(collectWorkspaceDependencyLockIssues(repoRoot), [
+    {
+      packageName: 'tsx',
+      issue: 'missing-lock-entry',
+      lockfileVersion: null,
+      declarations: [
+        {
+          owner: '@scanapp/backend',
+          dependencyGroup: 'devDependencies',
+          spec: '^4.19.0',
+        },
+      ],
+    },
+    {
+      packageName: 'uuid',
+      issue: 'version-mismatch',
+      lockfileVersion: '7.0.3',
+      declarations: [
+        {
+          owner: '@scanapp/backend',
+          dependencyGroup: 'dependencies',
+          spec: '^11.1.0',
+        },
+      ],
+    },
+  ]);
+});
+
 test('formatMissingToolchainRequirements renders a stable actionable message', () => {
   const message = formatMissingToolchainRequirements(
     [
@@ -416,6 +480,78 @@ test('formatMissingToolchainRequirements appends offline cache misses when provi
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: expo',
+    ].join('\n'),
+  );
+});
+
+test('formatMissingToolchainRequirements appends direct dependency lockfile issues when provided', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/babel-preset-expo',
+        missingFiles: ['package.json'],
+      },
+    ],
+    {
+      workspaceDependencyOwners: {
+        uuid: ['@scanapp/backend'],
+        'babel-preset-expo': ['@scanapp/mobile'],
+      },
+      dependencyLockIssues: [
+        {
+          packageName: 'uuid',
+          issue: 'version-mismatch',
+          lockfileVersion: '7.0.3',
+          declarations: [
+            {
+              owner: '@scanapp/backend',
+              dependencyGroup: 'dependencies',
+              spec: '^11.1.0',
+            },
+          ],
+        },
+        {
+          packageName: 'babel-preset-expo',
+          issue: 'version-mismatch',
+          lockfileVersion: '14.0.6',
+          declarations: [
+            {
+              owner: '@scanapp/mobile',
+              dependencyGroup: 'dependencies',
+              spec: '^54.0.10',
+            },
+          ],
+        },
+      ],
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/uuid -> package.json',
+      '- node_modules/babel-preset-expo -> package.json',
+      '',
+      'Direct workspace dependency owners:',
+      '- uuid -> @scanapp/backend',
+      '- babel-preset-expo -> @scanapp/mobile',
+      '',
+      'Workspace dependency lockfile issues detected:',
+      '- uuid -> locked 7.0.3 does not satisfy @scanapp/backend dependencies spec ^11.1.0',
+      '- babel-preset-expo -> locked 14.0.6 does not satisfy @scanapp/mobile dependencies spec ^54.0.10',
+      '',
+      'Suggested next steps:',
+      '- Refresh the root package-lock.json so direct workspace dependency versions match package.json declarations.',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- As a fallback, run: npm install',
+      '- Then rerun the guarded check: npm run setup:workspace',
+      '- Likely affected packages: uuid, babel-preset-expo',
     ].join('\n'),
   );
 });

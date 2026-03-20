@@ -140,6 +140,18 @@ function getWorkspacePackageLabel(packageJsonPath, packageJson, repoRoot) {
     : path.relative(repoRoot, path.dirname(packageJsonPath));
 }
 
+function listWorkspacePackageManifests(repoRoot) {
+  return listWorkspacePackageJsonPaths(repoRoot).map((packageJsonPath) => {
+    const packageJson = readJsonFile(packageJsonPath);
+
+    return {
+      packageJsonPath,
+      packageJson,
+      ownerLabel: getWorkspacePackageLabel(packageJsonPath, packageJson, repoRoot),
+    };
+  });
+}
+
 export function loadPackageLock(repoRoot) {
   const packageLockPath = getPackageLockPath(repoRoot);
 
@@ -331,12 +343,86 @@ export function collectMissingWorkspaceDependencyRequirements(repoRoot) {
     });
 }
 
+export function collectWorkspaceDependencyLockIssues(
+  repoRoot,
+  options = {},
+) {
+  const {
+    packageLock = readPackageLock(repoRoot),
+    semver = loadBundledNpmModule('semver'),
+  } = options;
+  const workspaceManifests = listWorkspacePackageManifests(repoRoot);
+  const workspacePackageNames = new Set(
+    workspaceManifests
+      .map(({ packageJson }) => packageJson.name)
+      .filter((packageName) => typeof packageName === 'string' && packageName.length > 0),
+  );
+  const declarationsByDependency = new Map();
+
+  for (const { ownerLabel, packageJson } of workspaceManifests) {
+    for (const dependencyGroup of ['dependencies', 'devDependencies']) {
+      const dependencies = packageJson[dependencyGroup];
+
+      if (!dependencies || typeof dependencies !== 'object') {
+        continue;
+      }
+
+      for (const [dependencyName, spec] of Object.entries(dependencies)) {
+        if (workspacePackageNames.has(dependencyName)) {
+          continue;
+        }
+
+        const declarations = declarationsByDependency.get(dependencyName) ?? [];
+        declarations.push({
+          owner: ownerLabel,
+          dependencyGroup,
+          spec,
+        });
+        declarationsByDependency.set(dependencyName, declarations);
+      }
+    }
+  }
+
+  return [...declarationsByDependency.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .flatMap(([packageName, declarations]) => {
+      const lockfileVersion =
+        getPackageLockEntry(packageLock, getModuleDirectoryFromPackageName(packageName))?.version ?? null;
+
+      if (typeof lockfileVersion !== 'string' || lockfileVersion.length === 0) {
+        return [
+          {
+            packageName,
+            issue: 'missing-lock-entry',
+            lockfileVersion: null,
+            declarations,
+          },
+        ];
+      }
+
+      const mismatchedDeclarations = declarations.filter(({ spec }) =>
+        typeof spec === 'string' &&
+        semver.validRange(spec) &&
+        !semver.satisfies(lockfileVersion, spec, { includePrerelease: true }),
+      );
+
+      return mismatchedDeclarations.length > 0
+        ? [
+            {
+              packageName,
+              issue: 'version-mismatch',
+              lockfileVersion,
+              declarations: mismatchedDeclarations,
+            },
+          ]
+        : [];
+    });
+}
+
 export function collectWorkspaceDependencyOwners(repoRoot) {
   const ownersByDependency = new Map();
 
-  for (const packageJsonPath of listWorkspacePackageJsonPaths(repoRoot)) {
-    const packageJson = readJsonFile(packageJsonPath);
-    const ownerLabel = getWorkspacePackageLabel(packageJsonPath, packageJson, repoRoot);
+  for (const { packageJson, ownerLabel } of listWorkspacePackageManifests(repoRoot)) {
 
     for (const dependencyGroup of ['dependencies', 'devDependencies']) {
       const dependencies = packageJson[dependencyGroup];
@@ -536,6 +622,7 @@ export function formatMissingToolchainRequirements(
 ) {
   const {
     maxListedEntries = 25,
+    dependencyLockIssues = [],
     offlineCacheMisses = [],
     packageLockIssue = null,
     retryCommand = 'npm run setup:workspace',
@@ -622,6 +709,25 @@ export function formatMissingToolchainRequirements(
 
   pushSummarizedSection(
     lines,
+    'Workspace dependency lockfile issues detected:',
+    dependencyLockIssues.flatMap(({ packageName, issue, lockfileVersion, declarations }) =>
+      declarations.map(
+        ({ owner, dependencyGroup, spec }) =>
+          `- ${packageName} -> ${
+            issue === 'missing-lock-entry'
+              ? `missing root package-lock entry for ${owner} ${dependencyGroup} spec ${spec}`
+              : `locked ${lockfileVersion} does not satisfy ${owner} ${dependencyGroup} spec ${spec}`
+          }`,
+      ),
+    ),
+    {
+      maxListedEntries,
+      overflowLabel: 'lockfile issues',
+    },
+  );
+
+  pushSummarizedSection(
+    lines,
     'Offline npm cache misses detected:',
     offlineCacheMisses.map(({ packageName, tarballUrl }) => `- ${packageName} -> ${tarballUrl}`),
     {
@@ -637,6 +743,12 @@ export function formatMissingToolchainRequirements(
 
   if (packageLockIssue) {
     lines.push('- Restore or regenerate the root package-lock.json before retrying workspace setup.');
+  }
+
+  if (dependencyLockIssues.length > 0) {
+    lines.push(
+      '- Refresh the root package-lock.json so direct workspace dependency versions match package.json declarations.',
+    );
   }
 
   lines.push(

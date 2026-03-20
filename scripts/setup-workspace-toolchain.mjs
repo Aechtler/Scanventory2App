@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   collectMissingInstalledPackageRequirements,
   collectMissingWorkspaceDependencyRequirements,
+  collectWorkspaceDependencyLockIssues,
   collectMissingToolchainRequirements,
   collectWorkspaceDependencyOwners,
   collectOfflineCacheMissesFromLockfile,
@@ -158,6 +159,8 @@ export async function runSetupWorkspaceToolchain(options = {}) {
       collectMissingWorkspaceDependencyRequirements,
     collectMissingInstalledPackageRequirements: collectMissingInstalledPackageRequirementsImpl =
       collectMissingInstalledPackageRequirements,
+    collectWorkspaceDependencyLockIssues: collectWorkspaceDependencyLockIssuesImpl =
+      collectWorkspaceDependencyLockIssues,
     collectWorkspaceDependencyOwners: collectWorkspaceDependencyOwnersImpl =
       collectWorkspaceDependencyOwners,
     restoreMissingToolchainRequirementsFromCache: restoreMissingToolchainRequirementsFromCacheImpl =
@@ -196,11 +199,29 @@ export async function runSetupWorkspaceToolchain(options = {}) {
     workspaceNames,
   );
   let unresolvedRequirements = missingRequirementsBeforeInstall;
+  const dependencyLockIssues = collectWorkspaceDependencyLockIssuesImpl(targetRepoRoot, {
+    packageLock,
+  }).filter(({ packageName }) =>
+    missingRequirementsBeforeInstall.some(
+      ({ moduleDirectory }) => packageNameFromModuleDirectory(moduleDirectory) === packageName,
+    ),
+  );
 
   if (missingRequirementsBeforeInstall.length > 0 && packageLockIssue) {
     consoleImpl.error(
       formatMissingToolchainRequirementsImpl(missingRequirementsBeforeInstall, {
         packageLockIssue,
+        retryCommand,
+        workspaceDependencyOwners: filteredWorkspaceDependencyOwners,
+      }),
+    );
+    return { exitCode: 1 };
+  }
+
+  if (missingRequirementsBeforeInstall.length > 0 && dependencyLockIssues.length > 0) {
+    consoleImpl.error(
+      formatMissingToolchainRequirementsImpl(missingRequirementsBeforeInstall, {
+        dependencyLockIssues,
         retryCommand,
         workspaceDependencyOwners: filteredWorkspaceDependencyOwners,
       }),

@@ -24,6 +24,7 @@ test('runSetupWorkspaceToolchain exits early with actionable package-lock diagno
     ],
     collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     formatMissingToolchainRequirements: (requirements, options) => {
       calls.push('format');
       assert.deepEqual(requirements, [
@@ -57,6 +58,93 @@ test('runSetupWorkspaceToolchain exits early with actionable package-lock diagno
   assert.deepEqual(calls, ['format', 'error:package-lock issue']);
 });
 
+test('runSetupWorkspaceToolchain exits early when missing workspace packages are backed by stale lockfile versions', async () => {
+  const calls: string[] = [];
+  const result = await runSetupWorkspaceToolchain({
+    repoRoot: '/tmp/repo',
+    collectWorkspaceDependencyOwners: () => ({
+      uuid: ['@scanapp/backend'],
+    }),
+    loadPackageLock: () => ({
+      packageLock: { packages: {} },
+      issue: null,
+    }),
+    collectMissingToolchainRequirements: () => [],
+    collectMissingWorkspaceDependencyRequirements: () => [
+      {
+        moduleDirectory: 'node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+    ],
+    collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [
+      {
+        packageName: 'uuid',
+        issue: 'version-mismatch',
+        lockfileVersion: '7.0.3',
+        declarations: [
+          {
+            owner: '@scanapp/backend',
+            dependencyGroup: 'dependencies',
+            spec: '^11.1.0',
+          },
+        ],
+      },
+      {
+        packageName: 'expo',
+        issue: 'version-mismatch',
+        lockfileVersion: '54.0.20',
+        declarations: [
+          {
+            owner: '@scanapp/mobile',
+            dependencyGroup: 'dependencies',
+            spec: '~54.0.32',
+          },
+        ],
+      },
+    ],
+    formatMissingToolchainRequirements: (requirements, options) => {
+      calls.push('format');
+      assert.deepEqual(requirements, [
+        {
+          moduleDirectory: 'node_modules/uuid',
+          missingFiles: ['package.json'],
+        },
+      ]);
+      assert.deepEqual(options?.dependencyLockIssues, [
+        {
+          packageName: 'uuid',
+          issue: 'version-mismatch',
+          lockfileVersion: '7.0.3',
+          declarations: [
+            {
+              owner: '@scanapp/backend',
+              dependencyGroup: 'dependencies',
+              spec: '^11.1.0',
+            },
+          ],
+        },
+      ]);
+      return 'stale lockfile issue';
+    },
+    restoreMissingToolchainRequirementsFromCache: async () => {
+      calls.push('restore');
+      return { restoredPackages: [], unresolvedRequirements: [] };
+    },
+    runNpmInstall: () => {
+      calls.push('install');
+      return { status: 0, stdout: '', stderr: '' };
+    },
+    console: {
+      log: () => calls.push('log'),
+      error: (message: string) => calls.push(`error:${message}`),
+    },
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(calls, ['format', 'error:stale lockfile issue']);
+});
+
 test('runSetupWorkspaceToolchain skips npm install when cache restoration resolves missing requirements', async () => {
   const calls: string[] = [];
   let collectCount = 0;
@@ -80,6 +168,7 @@ test('runSetupWorkspaceToolchain skips npm install when cache restoration resolv
     },
     collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: ['expo'],
       unresolvedRequirements: [],
@@ -120,6 +209,7 @@ test('runSetupWorkspaceToolchain reports merged offline cache misses after npm i
     ],
     collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: [],
       unresolvedRequirements: [
@@ -205,6 +295,7 @@ test('runSetupWorkspaceToolchain skips offline npm install when unresolved requi
     collectMissingToolchainRequirements: () => unresolvedRequirements,
     collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: [],
       unresolvedRequirements,
@@ -285,6 +376,7 @@ test('runSetupWorkspaceToolchain scopes unresolved requirement diagnostics to th
       },
     ],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: [],
       unresolvedRequirements: [
@@ -410,6 +502,7 @@ test('runSetupWorkspaceToolchain merges missing direct workspace dependencies in
     collectMissingToolchainRequirements: () => [requirements[0]!],
     collectMissingWorkspaceDependencyRequirements: () => [requirements[1]!],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async (_repoRoot, missingRequirements) => {
       observed.push(`restore:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
       return {
@@ -496,6 +589,7 @@ test('runSetupWorkspaceToolchain retries cache restoration for newly hollow pack
     },
     collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async (_repoRoot, missingRequirements) => {
       observed.push(`restore:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
 
@@ -574,6 +668,7 @@ test('runSetupWorkspaceToolchain falls back to online npm install when cache mis
     },
     collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: [],
       unresolvedRequirements: [
@@ -635,6 +730,7 @@ test('runSetupWorkspaceToolchain retries with online npm install after offline i
     },
     collectMissingWorkspaceDependencyRequirements: () => [],
     collectMissingInstalledPackageRequirements: () => [],
+    collectWorkspaceDependencyLockIssues: () => [],
     restoreMissingToolchainRequirementsFromCache: async () => ({
       restoredPackages: [],
       unresolvedRequirements: [
