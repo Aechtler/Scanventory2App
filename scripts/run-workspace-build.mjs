@@ -1,0 +1,51 @@
+import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+import { runSetupWorkspaceToolchain } from './setup-workspace-toolchain.mjs';
+
+const repoRoot = path.resolve(import.meta.dirname, '..');
+
+const WORKSPACE_BUILD_COMMANDS = {
+  backend: ['npm', ['run', 'build', '--workspace=@scanapp/backend']],
+};
+
+function defaultRunWorkspaceCommand(workspace) {
+  const [command, args] = WORKSPACE_BUILD_COMMANDS[workspace];
+
+  return spawnSync(command, args, {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+}
+
+export async function runWorkspaceBuild(workspace, options = {}) {
+  const {
+    runSetupWorkspaceToolchain: runSetupWorkspaceToolchainImpl = runSetupWorkspaceToolchain,
+    runWorkspaceCommand: runWorkspaceCommandImpl = defaultRunWorkspaceCommand,
+  } = options;
+
+  const setupResult = await runSetupWorkspaceToolchainImpl();
+
+  if ((setupResult?.exitCode ?? 1) !== 0) {
+    return { exitCode: setupResult.exitCode ?? 1 };
+  }
+
+  const result = runWorkspaceCommandImpl(workspace);
+  return { exitCode: result.status ?? 1 };
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const workspace = process.argv[2];
+
+  if (!(workspace in WORKSPACE_BUILD_COMMANDS)) {
+    console.error('Usage: node ./scripts/run-workspace-build.mjs <backend>');
+    process.exit(1);
+  }
+
+  const result = await runWorkspaceBuild(workspace);
+
+  if (result.exitCode !== 0) {
+    process.exit(result.exitCode);
+  }
+}

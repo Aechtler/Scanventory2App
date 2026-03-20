@@ -7,6 +7,7 @@ const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const rootPackageJsonPath = path.join(repoRoot, 'package.json');
 const mobilePackageJsonPath = path.join(import.meta.dirname, 'package.json');
 const lintScriptPath = path.join(repoRoot, 'scripts', 'lint-mobile.mjs');
+const buildScriptPath = path.join(repoRoot, 'scripts', 'run-workspace-build.mjs');
 const typecheckScriptPath = path.join(repoRoot, 'scripts', 'run-workspace-typecheck.mjs');
 const setupScriptPath = path.join(repoRoot, 'scripts', 'setup-workspace-toolchain.mjs');
 
@@ -26,6 +27,10 @@ test('workspace setup exposes a repeatable lint/typecheck bootstrap entrypoint',
     'node ./scripts/setup-workspace-toolchain.mjs',
   );
   assert.equal(
+    rootPackageJson.scripts?.['build:backend'],
+    'node ./scripts/run-workspace-build.mjs backend',
+  );
+  assert.equal(
     rootPackageJson.scripts?.['typecheck:mobile'],
     'node ./scripts/run-workspace-typecheck.mjs mobile',
   );
@@ -34,6 +39,7 @@ test('workspace setup exposes a repeatable lint/typecheck bootstrap entrypoint',
     'node ./scripts/run-workspace-typecheck.mjs backend',
   );
   assert.equal(fs.existsSync(setupScriptPath), true);
+  assert.equal(fs.existsSync(buildScriptPath), true);
   assert.equal(fs.existsSync(typecheckScriptPath), true);
 });
 
