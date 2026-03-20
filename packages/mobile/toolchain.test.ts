@@ -12,6 +12,8 @@ const typecheckScriptPath = path.join(repoRoot, 'scripts', 'run-workspace-typech
 const setupScriptPath = path.join(repoRoot, 'scripts', 'setup-workspace-toolchain.mjs');
 
 type PackageJson = {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   scripts?: Record<string, string>;
 };
 
@@ -52,4 +54,20 @@ test('mobile workspace points lint to the repo-local runner', () => {
     'node ../../node_modules/typescript/bin/tsc --noEmit',
   );
   assert.equal(fs.existsSync(lintScriptPath), true);
+});
+
+test('mobile workspace keeps babel-preset-expo aligned between manifest and root lockfile', () => {
+  const mobilePackageJson = readPackageJson(mobilePackageJsonPath);
+  const packageLock = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'package-lock.json'), 'utf8'),
+  ) as {
+    packages?: Record<string, { version?: string }>;
+  };
+
+  assert.equal(mobilePackageJson.dependencies?.['babel-preset-expo'], '^54.0.10');
+  assert.equal(mobilePackageJson.devDependencies?.['babel-preset-expo'], undefined);
+  assert.equal(
+    packageLock.packages?.['node_modules/babel-preset-expo']?.version,
+    '54.0.10',
+  );
 });

@@ -48,7 +48,6 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "babel-plugin-module-resolver": "^5.0.2",
-    "babel-preset-expo": "~14.0.6",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2"
   },
