@@ -545,6 +545,10 @@ test('formatMissingToolchainRequirements appends direct dependency lockfile issu
       '- uuid -> locked 7.0.3 does not satisfy @scanapp/backend dependencies spec ^11.1.0',
       '- babel-preset-expo -> locked 14.0.6 does not satisfy @scanapp/mobile dependencies spec ^54.0.10',
       '',
+      'Lockfile packages to refresh:',
+      '- uuid -> replace locked 7.0.3 with a version satisfying @scanapp/backend dependencies ^11.1.0',
+      '- babel-preset-expo -> replace locked 14.0.6 with a version satisfying @scanapp/mobile dependencies ^54.0.10',
+      '',
       'Suggested next steps:',
       '- Refresh the root package-lock.json so direct workspace dependency versions match package.json declarations.',
       '- Restore the missing packages from cache or reinstall with network access.',
@@ -552,6 +556,61 @@ test('formatMissingToolchainRequirements appends direct dependency lockfile issu
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run setup:workspace',
       '- Likely affected packages: uuid, babel-preset-expo',
+    ].join('\n'),
+  );
+});
+
+test('formatMissingToolchainRequirements calls out missing root lockfile entries to regenerate', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/tsx',
+        missingFiles: ['package.json'],
+      },
+    ],
+    {
+      workspaceDependencyOwners: {
+        tsx: ['@scanapp/backend'],
+      },
+      dependencyLockIssues: [
+        {
+          packageName: 'tsx',
+          issue: 'missing-lock-entry',
+          lockfileVersion: null,
+          declarations: [
+            {
+              owner: '@scanapp/backend',
+              dependencyGroup: 'devDependencies',
+              spec: '^4.19.0',
+            },
+          ],
+        },
+      ],
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/tsx -> package.json',
+      '',
+      'Direct workspace dependency owners:',
+      '- tsx -> @scanapp/backend',
+      '',
+      'Workspace dependency lockfile issues detected:',
+      '- tsx -> missing root package-lock entry for @scanapp/backend devDependencies spec ^4.19.0',
+      '',
+      'Lockfile packages to refresh:',
+      '- tsx -> add a root package-lock entry satisfying @scanapp/backend devDependencies ^4.19.0',
+      '',
+      'Suggested next steps:',
+      '- Refresh the root package-lock.json so direct workspace dependency versions match package.json declarations.',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- As a fallback, run: npm install',
+      '- Then rerun the guarded check: npm run setup:workspace',
+      '- Likely affected packages: tsx',
     ].join('\n'),
   );
 });

@@ -616,6 +616,19 @@ function pushSummarizedSection(lines, title, entries, { maxListedEntries, overfl
   }
 }
 
+function formatDependencyLockIssueEntry({ packageName, issue, lockfileVersion, declarations }) {
+  return declarations.map(({ owner, dependencyGroup, spec }) => ({
+    detail:
+      issue === 'missing-lock-entry'
+        ? `- ${packageName} -> missing root package-lock entry for ${owner} ${dependencyGroup} spec ${spec}`
+        : `- ${packageName} -> locked ${lockfileVersion} does not satisfy ${owner} ${dependencyGroup} spec ${spec}`,
+    remediation:
+      issue === 'missing-lock-entry'
+        ? `- ${packageName} -> add a root package-lock entry satisfying ${owner} ${dependencyGroup} ${spec}`
+        : `- ${packageName} -> replace locked ${lockfileVersion} with a version satisfying ${owner} ${dependencyGroup} ${spec}`,
+  }));
+}
+
 export function formatMissingToolchainRequirements(
   missingRequirements,
   options = {},
@@ -710,19 +723,24 @@ export function formatMissingToolchainRequirements(
   pushSummarizedSection(
     lines,
     'Workspace dependency lockfile issues detected:',
-    dependencyLockIssues.flatMap(({ packageName, issue, lockfileVersion, declarations }) =>
-      declarations.map(
-        ({ owner, dependencyGroup, spec }) =>
-          `- ${packageName} -> ${
-            issue === 'missing-lock-entry'
-              ? `missing root package-lock entry for ${owner} ${dependencyGroup} spec ${spec}`
-              : `locked ${lockfileVersion} does not satisfy ${owner} ${dependencyGroup} spec ${spec}`
-          }`,
-      ),
+    dependencyLockIssues.flatMap((issue) =>
+      formatDependencyLockIssueEntry(issue).map(({ detail }) => detail),
     ),
     {
       maxListedEntries,
       overflowLabel: 'lockfile issues',
+    },
+  );
+
+  pushSummarizedSection(
+    lines,
+    'Lockfile packages to refresh:',
+    dependencyLockIssues.flatMap((issue) =>
+      formatDependencyLockIssueEntry(issue).map(({ remediation }) => remediation),
+    ),
+    {
+      maxListedEntries,
+      overflowLabel: 'lockfile refresh entries',
     },
   );
 

@@ -53,6 +53,7 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs` and `scripts/run-workspace-typecheck.mjs`, scoping `npm run typecheck:mobile` and `npm run typecheck:backend` blocker reports to the requested workspace so package restoration can proceed in smaller backend/mobile slices instead of one combined monorepo list.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/run-workspace-lint.mjs` and `scripts/run-workspace-build.mjs`, scoping `npm run lint:mobile` and `npm run build:backend` blocker reports to the requested workspace so guarded validation stays focused on the active mobile or backend restore slice.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs` and `scripts/workspace-toolchain-health.mjs`, preflighting stale or missing root lockfile entries for missing direct workspace dependencies so backend/mobile restore failures now call out `uuid`/`babel-preset-expo` package-lock drift before misleading cache-miss remediation.
+The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, adding a dedicated `Lockfile packages to refresh` section so guarded backend/mobile validation now shows the exact stale root lockfile entries that must be regenerated before the next restore pass.
 
 ## Analyzed
 
@@ -442,6 +443,10 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
   - Now reports only backend-owned blockers plus shared `typescript`, keeping backend restore work isolated from mobile noise
 - `node --test --experimental-strip-types scripts/workspace-toolchain-health.test.ts scripts/setup-workspace-toolchain.test.ts`
   - Passed
+- `node ./scripts/run-workspace-typecheck.mjs backend`
+  - Still fails in this sandbox because backend workspace packages remain uncached or hollow, but now includes a dedicated `Lockfile packages to refresh` section for the stale root `uuid` entry
+- `node ./scripts/run-workspace-typecheck.mjs mobile`
+  - Still fails in this sandbox because mobile workspace packages remain uncached or hollow, but now includes a dedicated `Lockfile packages to refresh` section for the stale root `babel-preset-expo` entry
 - `npm run typecheck:backend`
   - Still fails in this sandbox because backend tarballs remain uncached, but now preflights the stale root lockfile entry for `uuid` (`^11.1.0` requested vs locked `7.0.3`)
 - `npm run typecheck:mobile`
@@ -458,4 +463,4 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 
 ## Exact Next Step
 
-Regenerate the root `package-lock.json` in a network-enabled environment so it resolves `uuid` for backend and `babel-preset-expo` for mobile to versions that satisfy the declared workspace specs, then rerun `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` followed by the scoped `npm run typecheck:backend` and `npm run typecheck:mobile` guards.
+Regenerate the root `package-lock.json` in a network-enabled environment so it replaces the stale `uuid` and `babel-preset-expo` entries with versions that satisfy the declared backend/mobile workspace specs, then rerun `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` followed by the scoped `npm run typecheck:backend` and `npm run typecheck:mobile` guards.
