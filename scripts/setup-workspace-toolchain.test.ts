@@ -442,7 +442,7 @@ test('runSetupWorkspaceToolchain scopes unresolved requirement diagnostics to th
       ]);
       assert.deepEqual(options?.workspaceDependencyOwners, {
         express: ['@scanapp/backend'],
-        typescript: ['@scanapp/backend', '@scanapp/mobile'],
+        typescript: ['@scanapp/backend'],
       });
       assert.deepEqual(options?.offlineCacheMisses, [
         {

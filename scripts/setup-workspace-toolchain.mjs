@@ -107,9 +107,12 @@ function filterWorkspaceDependencyOwners(workspaceDependencyOwners, workspaceNam
   }
 
   return Object.fromEntries(
-    Object.entries(workspaceDependencyOwners).filter(([, owners]) =>
-      owners.some((owner) => workspaceNames.includes(owner)),
-    ),
+    Object.entries(workspaceDependencyOwners)
+      .map(([packageName, owners]) => [
+        packageName,
+        owners.filter((owner) => workspaceNames.includes(owner)),
+      ])
+      .filter(([, owners]) => owners.length > 0),
   );
 }
 

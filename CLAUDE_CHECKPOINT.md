@@ -51,6 +51,7 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 The next runnable-environment bootstrap cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, adding an opt-in `SCANAPP_ALLOW_NETWORK_INSTALL=1` fallback so known uncached or offline-failed workspace packages can retry through a normal `npm install` instead of stopping at offline-cache diagnostics when network access is available.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, updating the suggested remediation flow to prefer `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace` before the plain `npm install` fallback so setup output, README guidance, and the guarded bootstrap path stay aligned.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs` and `scripts/run-workspace-typecheck.mjs`, scoping `npm run typecheck:mobile` and `npm run typecheck:backend` blocker reports to the requested workspace so package restoration can proceed in smaller backend/mobile slices instead of one combined monorepo list.
+The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs`, filtering shared dependency owners down to the requested workspace slice so `npm run typecheck:backend` no longer recommends `@scanapp/mobile` when shared blockers like `typescript` are missing.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for `scripts/run-workspace-lint.mjs` and `scripts/run-workspace-build.mjs`, scoping `npm run lint:mobile` and `npm run build:backend` blocker reports to the requested workspace so guarded validation stays focused on the active mobile or backend restore slice.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/setup-workspace-toolchain.mjs` and `scripts/workspace-toolchain-health.mjs`, preflighting stale or missing root lockfile entries for missing direct workspace dependencies so backend/mobile restore failures now call out `uuid`/`babel-preset-expo` package-lock drift before misleading cache-miss remediation.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, adding a dedicated `Lockfile packages to refresh` section so guarded backend/mobile validation now shows the exact stale root lockfile entries that must be regenerated before the next restore pass.
@@ -499,6 +500,10 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
   - Passed after adding a regression guard for multi-workspace blocker summaries and preserving the existing aggregate setup/typecheck wiring
 - `npm run typecheck:all`
   - Still fails in this sandbox because the same 45 direct mobile/backend tarballs remain uncached, but the guarded output now adds `Affected workspaces by direct blocker count`, showing `@scanapp/backend` as the smallest restore slice (13 blockers) before `@scanapp/mobile` (33 blockers)
+- `node --test --experimental-strip-types scripts/setup-workspace-toolchain.test.ts scripts/workspace-toolchain-health.test.ts`
+  - Passed after narrowing scoped workspace owner reporting so backend-only restore guidance no longer leaks shared `typescript` ownership from `@scanapp/mobile`
+- `npm run typecheck:backend`
+  - Still fails in this sandbox because backend tarballs remain uncached, but the guarded output now correctly recommends only `npm install --workspace=@scanapp/backend` for the backend restore slice instead of misdirecting to `@scanapp/mobile`
 
 ## What Remains
 

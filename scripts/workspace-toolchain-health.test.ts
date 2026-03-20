@@ -776,6 +776,49 @@ test('formatMissingToolchainRequirements suggests a workspace-scoped reinstall w
   );
 });
 
+test('formatMissingToolchainRequirements keeps shared dependency owners scoped to the requested workspace slice', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/typescript',
+        missingFiles: ['lib/typescript.js', 'package.json'],
+      },
+      {
+        moduleDirectory: 'node_modules/uuid',
+        missingFiles: ['package.json'],
+      },
+    ],
+    {
+      retryCommand: 'npm run typecheck:backend',
+      workspaceDependencyOwners: {
+        typescript: ['@scanapp/backend'],
+        uuid: ['@scanapp/backend'],
+      },
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/typescript -> lib/typescript.js, package.json',
+      '- node_modules/uuid -> package.json',
+      '',
+      'Direct workspace dependency owners:',
+      '- typescript -> @scanapp/backend',
+      '- uuid -> @scanapp/backend',
+      '',
+      'Suggested next steps:',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, run: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend',
+      '- As a fallback, run: npm install',
+      '- Then rerun the guarded check: npm run typecheck:backend',
+      '- Likely affected packages: typescript, uuid',
+    ].join('\n'),
+  );
+});
+
 test('formatMissingToolchainRequirements calls out missing root lockfile entries to regenerate', () => {
   const message = formatMissingToolchainRequirements(
     [
