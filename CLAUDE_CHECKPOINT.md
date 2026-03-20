@@ -63,6 +63,7 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck runner, keeping `npm run typecheck:all` sequential but no longer stopping after the first workspace failure so mobile and backend blocker diagnostics plus a final summary stay visible in one pass.
 The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate typecheck runner, adding a shared `setup:workspace` preflight plus per-workspace `skipSetup` handoff so aggregate failures stay on the real direct mobile/backend blocker list instead of expanding into hundreds of hollow transitive packages after the first offline install attempt.
 The next runnable-environment diagnostics cleanup is now implemented on `scanapp2` for `scripts/workspace-toolchain-health.mjs`, grouping aggregate `npm run typecheck:all` blockers by affected workspace count so the guarded output now points to the smallest restore slice first (`@scanapp/backend` before `@scanapp/mobile`) instead of only showing one combined reinstall command.
+The next runnable-environment validation cleanup is now implemented on `scanapp2` for the root aggregate build entrypoint, routing `npm run build:all` through the shared workspace-setup guard so missing backend toolchain packages now fail with actionable restore diagnostics plus a concise `Workspace build summary` instead of a raw `Cannot find module .../typescript/bin/tsc` crash.
 
 ## Analyzed
 
@@ -371,6 +372,11 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 - Hardened `scripts/workspace-toolchain-health.mjs` so cache entries that resolve without tarball bytes are treated like cache misses instead of crashing extraction
 - Expanded `scripts/setup-workspace-toolchain.test.ts` and `scripts/workspace-toolchain-health.test.ts` with targeted regressions for the post-install restore pass and empty-cache-read handling
 
+### Aggregate backend build guard
+- Added `scripts/run-workspace-build-all.mjs` as a small aggregate build runner that performs one shared `setup:workspace` preflight, then hands off to guarded per-workspace builds with `skipSetup`
+- Updated `scripts/run-workspace-build.mjs` with the same `skipSetup` seam already used by the aggregate typecheck runner so shared setup does not run twice
+- Retargeted root `build:all` to the guarded runner, added `scripts/run-workspace-build-all.test.ts`, and expanded `scripts/run-workspace-build.test.ts` plus `npm run test:targeted` so the aggregate build summary and skip-setup behavior stay covered in the dependency-limited workspace
+
 ## Validated
 
 - `git diff --check`
@@ -389,6 +395,10 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/shared/components/Animated.test.ts`
   - Passed
+- `node --test --experimental-strip-types scripts/run-workspace-build-all.test.ts scripts/run-workspace-build.test.ts`
+  - Passed
+- `npm run build:all`
+  - Failed as expected in this sandbox because 13 backend tarballs remain uncached or hollow, but now stops at the guarded workspace-setup diagnostics and ends with `Workspace build summary: backend failed (exit 1)` instead of a raw `Cannot find module .../typescript/bin/tsc` crash
 - `node --test --experimental-strip-types packages/mobile/src/shared/components/CardSlider/cardSliderKeys.test.ts`
   - Passed
 - `node --test --experimental-strip-types packages/mobile/src/features/market/services/ebay/search.test.ts`
@@ -511,9 +521,10 @@ The next runnable-environment diagnostics cleanup is now implemented on `scanapp
 - Restore Trello sync once local board credentials/instructions are available in the workspace or environment
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
 - Restore the uncached tarballs or repopulate the hollow package directories that the workspace-scoped `npm run lint:mobile`, `npm run build:backend`, `npm run typecheck:mobile`, and `npm run typecheck:backend` guards now report explicitly, using the new blocker-count summary to start with the smallest useful restore slice first (`@scanapp/backend` before `@scanapp/mobile`); environments with network access can still use `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`
+- Use the guarded `npm run build:all` output to restore the backend build slice first when validating aggregate builds, since it now reports the same 13 direct backend blockers without dropping into raw TypeScript module-resolution noise
 - Use the now-aggregated `npm run typecheck:all` output to repair both workspace blocker sets in one pass once a network-enabled or cache-complete environment is available
 - Continue with the next highest-value cleanup or runnable-environment validation now that ARCH-01 is complete and the remaining backend architecture backlog has narrowed
 
 ## Exact Next Step
 
-Use the new blocker-count summary in a network-enabled environment to repopulate the remaining tarballs by smallest restore slice first: `npm install --workspace=@scanapp/backend`, then `npm install --workspace=@scanapp/backend --workspace=@scanapp/mobile` (or `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`), followed by `npm run typecheck:all`, `npm run typecheck:backend`, and `npm run lint:mobile`.
+Use the guarded backend restore slice in a network-enabled environment to repopulate the remaining tarballs first: `npm install --workspace=@scanapp/backend` (or `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`), then rerun `npm run build:all` and `npm run typecheck:backend` before expanding back to `npm run typecheck:all` and `npm run lint:mobile`.

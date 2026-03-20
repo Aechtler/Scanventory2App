@@ -67,3 +67,22 @@ test('runWorkspaceBuild scopes workspace setup diagnostics to backend', async ()
     retryCommand: 'npm run build:backend',
   });
 });
+
+test('runWorkspaceBuild skips setup when shared preflight already passed', async () => {
+  const calls: string[] = [];
+
+  const result = await runWorkspaceBuild('backend', {
+    skipSetup: true,
+    runSetupWorkspaceToolchain: async () => {
+      calls.push('setup');
+      return { exitCode: 0 };
+    },
+    runWorkspaceCommand: (workspace) => {
+      calls.push(`workspace:${workspace}`);
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(calls, ['workspace:backend']);
+});

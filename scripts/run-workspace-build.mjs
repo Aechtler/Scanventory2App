@@ -25,17 +25,20 @@ function defaultRunWorkspaceCommand(workspace) {
 
 export async function runWorkspaceBuild(workspace, options = {}) {
   const {
+    skipSetup = false,
     runSetupWorkspaceToolchain: runSetupWorkspaceToolchainImpl = runSetupWorkspaceToolchain,
     runWorkspaceCommand: runWorkspaceCommandImpl = defaultRunWorkspaceCommand,
   } = options;
 
-  const setupResult = await runSetupWorkspaceToolchainImpl({
-    workspaceNames: [WORKSPACE_PACKAGE_NAMES[workspace]],
-    retryCommand: `npm run build:${workspace}`,
-  });
+  if (!skipSetup) {
+    const setupResult = await runSetupWorkspaceToolchainImpl({
+      workspaceNames: [WORKSPACE_PACKAGE_NAMES[workspace]],
+      retryCommand: `npm run build:${workspace}`,
+    });
 
-  if ((setupResult?.exitCode ?? 1) !== 0) {
-    return { exitCode: setupResult.exitCode ?? 1 };
+    if ((setupResult?.exitCode ?? 1) !== 0) {
+      return { exitCode: setupResult.exitCode ?? 1 };
+    }
   }
 
   const result = runWorkspaceCommandImpl(workspace);

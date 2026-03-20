@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: `npm run build:all` laeuft jetzt ueber einen gemeinsamen Runnable-environment-Guard statt direkt in `Cannot find module .../typescript/bin/tsc` zu crashen; der aktuelle Output zeigt den echten Backend-Restore-Slice mit 13 direkten Blockern plus knapper `Workspace build summary`.
 - 2026-03-20: Workspace-spezifische Guard-Diagnostik filtert Shared-Dependency-Owner jetzt auf den angeforderten Restore-Slice; `npm run typecheck:backend` empfiehlt dadurch bei fehlendem `typescript` nicht mehr irrefuehrend `@scanapp/mobile`, sondern korrekt nur `npm install --workspace=@scanapp/backend`.
 - 2026-03-20: Aggregate Runnable-environment-Diagnostik gruppiert `npm run typecheck:all`-Blocker jetzt zusaetzlich nach Workspace und priorisiert den kleineren Restore-Slice zuerst; der aktuelle Guard zeigt damit direkt `@scanapp/backend` mit 13 Blockern vor `@scanapp/mobile` mit 33 Blockern.
 - 2026-03-20: `npm run typecheck:all` macht jetzt zuerst einen gemeinsamen `setup:workspace`-Preflight fuer `@scanapp/mobile` und `@scanapp/backend`; bei weiter fehlenden Tarballs bleibt der Aggregate-Guard dadurch auf der echten direkten 45-Paket-Blockerliste statt nach dem ersten Fehlversuch in 500+ hohle Transitiv-Pakete zu kippen.
