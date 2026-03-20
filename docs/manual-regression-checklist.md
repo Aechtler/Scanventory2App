@@ -1,6 +1,6 @@
 # Manual Regression Checklist
 
-_Last updated: 2026-03-19_
+_Last updated: 2026-03-20_
 
 This is the minimum repeatable manual verification pass for the current Scanventory2App state on `scanapp2`.
 
@@ -202,3 +202,11 @@ If Trello is available, update the matching card/checklist with:
 - what was validated
 - what is still blocked by environment/tooling
 - whether Batch 6 is ready to move forward
+
+## Trello update template
+
+- Ziel
+- Umfang
+- Nachweise
+- Nächster Schritt
+- Validierung

@@ -8,6 +8,7 @@ Batch 3 is implemented in code and pending runnable-environment validation.
 Batch 4 is implemented in code and pending runnable-environment validation.
 Batch 5 is implemented in code on `scanapp2`, including backend payload typing, delete-consistency hardening, normalized auth response envelopes, and auth-store deduplication.
 Batch 6 has started on `scanapp2` with a runnable manual regression checklist and a lightweight targeted node-test entrypoint for extracted helpers.
+The next Batch 6 validation cleanup is now implemented on `scanapp2`, adding an executable manual-regression checklist guard plus a Trello-ready update template so the documented validation flow stays in sync with real npm entrypoints.
 The first Batch 7 size-rule refactor is implemented on `scanapp2` for `packages/mobile/src/app/(tabs)/library.tsx`, extracting screen-local row helpers, empty states, and row-building pagination constants into the history feature.
 A follow-up shared-UI cleanup checkpoint is now implemented on `scanapp2`, covering centralized tab-bar colors, centralized animation presets, and missing shared-component barrel exports.
 The next Batch 7 size-rule refactor is now implemented on `scanapp2` for `packages/mobile/src/shared/components/Animated.tsx`, splitting the shared animation helpers into focused component files behind a compatibility barrel.
@@ -118,6 +119,8 @@ The next runnable-environment restore cleanup is now implemented on `scanapp2` f
 - `packages/mobile/src/features/analyze/utils/productImageLoading.ts`
 - `packages/mobile/src/features/analyze/utils/productImageLoading.test.ts`
 - `docs/manual-regression-checklist.md`
+- `scripts/manual-regression-checklist.mjs`
+- `scripts/manual-regression-checklist.test.ts`
 - shared `TAB_BAR_COLORS` and `ANIMATION_PRESETS` in `packages/mobile/src/shared/constants/index.ts`
 - `packages/mobile/src/features/history/utils/libraryRows.ts`
 - `packages/mobile/src/features/history/components/LibraryListItem.tsx`
@@ -215,6 +218,8 @@ The next runnable-environment restore cleanup is now implemented on `scanapp2` f
 ### Batch 6
 - Added `docs/manual-regression-checklist.md` as the minimum repeatable auth/scan/analyze/save/upload/sync/delete verification pass before the larger size refactors
 - Added root script `npm run test:targeted` to run the extracted helper tests directly via Node's built-in test runner with TypeScript strip mode
+- Added `npm run validate:manual-regression` plus `scripts/manual-regression-checklist.mjs` so the Batch 6 checklist now fails fast when its documented quick-check scripts, required flow sections, recording bullets, or Trello handoff fields drift away from the repo
+- Added `scripts/manual-regression-checklist.test.ts` and wired it into `npm run test:targeted` so the runnable validation surface covers the checklist contract itself without requiring the mobile/backend runtime
 
 ### Shared UI cleanup checkpoint
 - Centralized duplicate tab-bar inactive colors into shared `TAB_BAR_COLORS` constants and updated both tab-bar implementations to consume them
@@ -519,11 +524,15 @@ The next runnable-environment restore cleanup is now implemented on `scanapp2` f
   - Passed after adding a regression guard that the setup runner forwards requested workspace package names into the actual npm install attempt for backend/mobile restore slices
 - `npm run typecheck:backend`
   - Still fails in this sandbox because the same 13 backend tarballs remain uncached, but the guarded restore path now attempts the backend-only workspace install slice before stopping on the truthful cache-miss report
+- `npm run validate:manual-regression`
+  - Passed; the manual checklist now matches the real repo scripts and includes the required Trello handoff fields
+- `npm run test:targeted`
+  - Passed (30 tests), including the new checklist contract guard for `docs/manual-regression-checklist.md`
 
 ## What Remains
 
 - Run the Batch 6 manual regression checklist in a runnable device/backend environment
-- Restore Trello sync once local board credentials/instructions are available in the workspace or environment
+- Restore Trello sync once local board credentials/instructions are available in the workspace or environment; the local checklist now already carries the required `Ziel/Umfang/Nachweise/Nächster Schritt/Validierung` template for the next manual sync
 - Finish restoring the remaining cached/npm-installable workspace packages so mobile/backend typecheck can complete without missing-module errors
 - Restore the uncached tarballs or repopulate the hollow package directories that the workspace-scoped `npm run lint:mobile`, `npm run build:backend`, `npm run typecheck:mobile`, and `npm run typecheck:backend` guards now report explicitly, using the new blocker-count summary to start with the smallest useful restore slice first (`@scanapp/backend` before `@scanapp/mobile`); environments with network access can still use `SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run setup:workspace`
 - Use the guarded `npm run build:all` output to restore the backend build slice first when validating aggregate builds, since it now reports the same 13 direct backend blockers without dropping into raw TypeScript module-resolution noise

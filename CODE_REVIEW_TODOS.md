@@ -14,6 +14,7 @@
 
 ## Statusnotiz
 
+- 2026-03-20: `docs/manual-regression-checklist.md` ist jetzt selbst per `npm run validate:manual-regression` und `scripts/manual-regression-checklist.test.ts` gegen Repo-Drift abgesichert; `npm run test:targeted` guardet damit sowohl die dokumentierten Quick-Checks als auch die geforderten Trello-Felder `Ziel/Umfang/Nachweise/Nächster Schritt/Validierung`.
 - 2026-03-20: `scripts/setup-workspace-toolchain.mjs` reicht angeforderte `workspaceNames` jetzt bis zum eigentlichen `npm install` durch; backend-/mobile-Guards versuchen dadurch zuerst den kleinsten `npm install --workspace=...`-Restore-Slice statt immer den kompletten Root-Install.
 - 2026-03-20: `npm run build:all` laeuft jetzt ueber einen gemeinsamen Runnable-environment-Guard statt direkt in `Cannot find module .../typescript/bin/tsc` zu crashen; der aktuelle Output zeigt den echten Backend-Restore-Slice mit 13 direkten Blockern plus knapper `Workspace build summary`.
 - 2026-03-20: Workspace-spezifische Guard-Diagnostik filtert Shared-Dependency-Owner jetzt auf den angeforderten Restore-Slice; `npm run typecheck:backend` empfiehlt dadurch bei fehlendem `typescript` nicht mehr irrefuehrend `@scanapp/mobile`, sondern korrekt nur `npm install --workspace=@scanapp/backend`.
