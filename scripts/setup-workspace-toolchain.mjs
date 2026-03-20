@@ -8,6 +8,7 @@ import {
   collectMissingToolchainRequirements,
   collectWorkspaceDependencyOwners,
   collectOfflineCacheMissesFromLockfile,
+  collectLocalInstalledPackageFallbackCandidates,
   extractOfflineInstallCacheMisses,
   formatMissingToolchainRequirements,
   loadPackageLock,
@@ -181,6 +182,9 @@ export async function runSetupWorkspaceToolchain(options = {}) {
       collectWorkspaceDependencyLockIssues,
     collectWorkspaceDependencyOwners: collectWorkspaceDependencyOwnersImpl =
       collectWorkspaceDependencyOwners,
+    collectLocalInstalledPackageFallbackCandidates:
+      collectLocalInstalledPackageFallbackCandidatesImpl =
+        collectLocalInstalledPackageFallbackCandidates,
     restoreMissingToolchainRequirementsFromCache: restoreMissingToolchainRequirementsFromCacheImpl =
       restoreMissingToolchainRequirementsFromCache,
     collectOfflineCacheMissesFromLockfile: collectOfflineCacheMissesFromLockfileImpl =
@@ -262,6 +266,8 @@ export async function runSetupWorkspaceToolchain(options = {}) {
     }
   }
 
+  let localInstalledFallbackCandidates = [];
+
   if (unresolvedRequirements.length > 0) {
     const preinstallOfflineCacheMisses = await collectOfflineCacheMissesFromLockfileImpl(
       targetRepoRoot,
@@ -287,8 +293,14 @@ export async function runSetupWorkspaceToolchain(options = {}) {
           'Offline cache misses detected for unresolved workspace packages; retrying with network install...',
         );
       } else {
+        localInstalledFallbackCandidates = await collectLocalInstalledPackageFallbackCandidatesImpl(
+          targetRepoRoot,
+          unresolvedRequirements,
+          { packageLock },
+        );
         consoleImpl.error(
           formatMissingToolchainRequirementsImpl(unresolvedRequirements, {
+            localInstalledFallbackCandidates,
             offlineCacheMisses: filteredPreinstallOfflineCacheMisses,
             retryCommand,
             workspaceDependencyOwners: filteredWorkspaceDependencyOwners,
@@ -388,12 +400,18 @@ export async function runSetupWorkspaceToolchain(options = {}) {
           workspaceNames,
         ),
       );
+      localInstalledFallbackCandidates = await collectLocalInstalledPackageFallbackCandidatesImpl(
+        targetRepoRoot,
+        finalUnresolvedRequirements,
+        { packageLock },
+      );
 
       consoleImpl.error(
         `${installMode === 'offline' ? 'Offline' : 'Network'} npm install failed with exit code ${installStatus}.`,
       );
       consoleImpl.error(
         formatMissingToolchainRequirementsImpl(finalUnresolvedRequirements, {
+          localInstalledFallbackCandidates,
           offlineCacheMisses,
           retryCommand,
           workspaceDependencyOwners: filteredWorkspaceDependencyOwners,
@@ -418,8 +436,14 @@ export async function runSetupWorkspaceToolchain(options = {}) {
   );
 
   if (missingRequirementsAfterInstall.length > 0) {
+    localInstalledFallbackCandidates = await collectLocalInstalledPackageFallbackCandidatesImpl(
+      targetRepoRoot,
+      missingRequirementsAfterInstall,
+      { packageLock },
+    );
     consoleImpl.error(
       formatMissingToolchainRequirementsImpl(missingRequirementsAfterInstall, {
+        localInstalledFallbackCandidates,
         offlineCacheMisses: filterOfflineCacheMissesForWorkspaces(
           await collectOfflineCacheMissesFromLockfileImpl(
             targetRepoRoot,

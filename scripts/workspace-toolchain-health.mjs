@@ -276,6 +276,45 @@ function listWorkspacePackageManifests(repoRoot) {
   });
 }
 
+function collectWorkspaceDependencyDeclarations(repoRoot) {
+  const workspaceManifests = listWorkspacePackageManifests(repoRoot);
+  const workspacePackageNames = new Set(
+    workspaceManifests
+      .map(({ packageJson }) => packageJson.name)
+      .filter((packageName) => typeof packageName === 'string' && packageName.length > 0),
+  );
+  const declarationsByDependency = new Map();
+
+  for (const { ownerLabel, packageJsonPath, packageJson } of workspaceManifests) {
+    const ownerPackageDirectory = getWorkspacePackageDirectory(packageJsonPath, repoRoot);
+
+    for (const dependencyGroup of ['dependencies', 'devDependencies']) {
+      const dependencies = packageJson[dependencyGroup];
+
+      if (!dependencies || typeof dependencies !== 'object') {
+        continue;
+      }
+
+      for (const [dependencyName, spec] of Object.entries(dependencies)) {
+        if (workspacePackageNames.has(dependencyName)) {
+          continue;
+        }
+
+        const declarations = declarationsByDependency.get(dependencyName) ?? [];
+        declarations.push({
+          owner: ownerLabel,
+          ownerPackageDirectory,
+          dependencyGroup,
+          spec,
+        });
+        declarationsByDependency.set(dependencyName, declarations);
+      }
+    }
+  }
+
+  return declarationsByDependency;
+}
+
 export function loadPackageLock(repoRoot) {
   const packageLockPath = getPackageLockPath(repoRoot);
 
@@ -574,40 +613,7 @@ export function collectWorkspaceDependencyLockIssues(
     packageLock = readPackageLock(repoRoot),
     semver = loadBundledNpmModule('semver'),
   } = options;
-  const workspaceManifests = listWorkspacePackageManifests(repoRoot);
-  const workspacePackageNames = new Set(
-    workspaceManifests
-      .map(({ packageJson }) => packageJson.name)
-      .filter((packageName) => typeof packageName === 'string' && packageName.length > 0),
-  );
-  const declarationsByDependency = new Map();
-
-  for (const { ownerLabel, packageJsonPath, packageJson } of workspaceManifests) {
-    const ownerPackageDirectory = getWorkspacePackageDirectory(packageJsonPath, repoRoot);
-
-    for (const dependencyGroup of ['dependencies', 'devDependencies']) {
-      const dependencies = packageJson[dependencyGroup];
-
-      if (!dependencies || typeof dependencies !== 'object') {
-        continue;
-      }
-
-      for (const [dependencyName, spec] of Object.entries(dependencies)) {
-        if (workspacePackageNames.has(dependencyName)) {
-          continue;
-        }
-
-        const declarations = declarationsByDependency.get(dependencyName) ?? [];
-        declarations.push({
-          owner: ownerLabel,
-          ownerPackageDirectory,
-          dependencyGroup,
-          spec,
-        });
-        declarationsByDependency.set(dependencyName, declarations);
-      }
-    }
-  }
+  const declarationsByDependency = collectWorkspaceDependencyDeclarations(repoRoot);
 
   return [...declarationsByDependency.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
@@ -668,6 +674,112 @@ export function collectWorkspaceDependencyLockIssues(
           : []),
       ];
     });
+}
+
+export async function collectLocalInstalledPackageFallbackCandidates(
+  repoRoot,
+  missingRequirements,
+  options = {},
+) {
+  const {
+    packageLock = loadPackageLock(repoRoot).packageLock,
+    semver = loadBundledNpmModule('semver'),
+    installedPackageSearchRoots = DEFAULT_INSTALLED_PACKAGE_SEARCH_ROOTS,
+    findInstalledPackageSourceDirectories:
+      findInstalledPackageSourceDirectoriesImpl = (packageName) =>
+        findInstalledPackageSourceDirectories(packageName, {
+          searchRoots: installedPackageSearchRoots,
+        }),
+  } = options;
+  let declarationsByDependency;
+
+  try {
+    declarationsByDependency = collectWorkspaceDependencyDeclarations(repoRoot);
+  } catch {
+    return [];
+  }
+
+  const candidatesByPackage = new Map();
+
+  for (const requirement of missingRequirements) {
+    const packageName = packageNameFromModuleDirectory(requirement.moduleDirectory);
+    const packageLockEntry = getPackageLockEntry(packageLock, requirement.moduleDirectory);
+    const lockedVersion =
+      packageLockEntry && typeof packageLockEntry.version === 'string'
+        ? packageLockEntry.version
+        : null;
+    const compatibleDeclarations = declarationsByDependency.get(packageName) ?? [];
+
+    if (compatibleDeclarations.length === 0) {
+      continue;
+    }
+
+    const sourceDirectories = await findInstalledPackageSourceDirectoriesImpl(packageName, {
+      expectedVersion: lockedVersion,
+      moduleDirectory: requirement.moduleDirectory,
+    });
+    const candidateEntries = candidatesByPackage.get(packageName) ?? [];
+    const seenCandidates = new Set(
+      candidateEntries.map(({ version, sourceDirectory }) => `${version}:${sourceDirectory}`),
+    );
+
+    for (const sourceDirectory of sourceDirectories) {
+      const version = readPackageVersion(sourceDirectory);
+
+      if (!version || (lockedVersion && version === lockedVersion)) {
+        continue;
+      }
+
+      const declarations = compatibleDeclarations.filter(
+        ({ spec }) =>
+          typeof spec === 'string' &&
+          semver.validRange(spec) &&
+          semver.satisfies(version, spec, { includePrerelease: true }),
+      );
+
+      if (declarations.length === 0) {
+        continue;
+      }
+
+      const candidateKey = `${version}:${sourceDirectory}`;
+
+      if (seenCandidates.has(candidateKey)) {
+        continue;
+      }
+
+      seenCandidates.add(candidateKey);
+      candidateEntries.push({
+        version,
+        sourceDirectory,
+        declarations: declarations.map(({ owner, dependencyGroup, spec }) => ({
+          owner,
+          dependencyGroup,
+          spec,
+        })),
+      });
+    }
+
+    if (candidateEntries.length > 0) {
+      candidateEntries.sort((left, right) => {
+        const versionComparison = semver.rcompare(left.version, right.version);
+
+        if (versionComparison !== 0) {
+          return versionComparison;
+        }
+
+        return left.sourceDirectory.localeCompare(right.sourceDirectory);
+      });
+      candidatesByPackage.set(packageName, {
+        packageName,
+        lockedVersion,
+        candidates: candidateEntries,
+      });
+    }
+  }
+
+  return [...candidatesByPackage.values()].sort((left, right) =>
+    left.packageName.localeCompare(right.packageName),
+  );
 }
 
 export function collectWorkspaceDependencyOwners(repoRoot) {
@@ -918,6 +1030,7 @@ export function formatMissingToolchainRequirements(
     maxListedEntries = 25,
     dependencyLockIssues = [],
     offlineCacheMisses = [],
+    localInstalledFallbackCandidates = [],
     packageLockIssue = null,
     retryCommand = 'npm run setup:workspace',
     workspaceDependencyOwners = {},
@@ -1052,6 +1165,24 @@ export function formatMissingToolchainRequirements(
     {
       maxListedEntries,
       overflowLabel: 'cache misses',
+    },
+  );
+
+  pushSummarizedSection(
+    lines,
+    'Semver-compatible local fallback candidates:',
+    localInstalledFallbackCandidates.flatMap(({ packageName, lockedVersion, candidates }) =>
+      candidates.map(({ version, sourceDirectory, declarations }) => {
+        const declarationSummary = declarations
+          .map(({ owner, dependencyGroup, spec }) => `${owner} ${dependencyGroup} ${spec}`)
+          .join(', ');
+
+        return `- ${packageName} -> ${version} at ${sourceDirectory} (satisfies ${declarationSummary}${lockedVersion ? `; lockfile has ${lockedVersion}` : ''})`;
+      }),
+    ),
+    {
+      maxListedEntries,
+      overflowLabel: 'local candidates',
     },
   );
 

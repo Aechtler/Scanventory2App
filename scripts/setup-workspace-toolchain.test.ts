@@ -585,9 +585,32 @@ test('runSetupWorkspaceToolchain keeps workspace-scoped post-install diagnostics
       observed.push(`offline:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
       return [];
     },
+    collectLocalInstalledPackageFallbackCandidates: async (_repoRoot, missingRequirements) => {
+      observed.push(`candidates:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
+      return [
+        {
+          packageName: 'typescript',
+          lockedVersion: '5.9.3',
+          candidates: [
+            {
+              version: '5.9.3',
+              sourceDirectory: '/tmp/typescript',
+              declarations: [
+                {
+                  owner: '@scanapp/backend',
+                  dependencyGroup: 'devDependencies',
+                  spec: '~5.9.2',
+                },
+              ],
+            },
+          ],
+        },
+      ];
+    },
     formatMissingToolchainRequirements: (missingRequirements, options) => {
       observed.push(`format:${missingRequirements.map(({ moduleDirectory }) => moduleDirectory).join(',')}`);
       observed.push(`owners:${JSON.stringify(options?.workspaceDependencyOwners)}`);
+      observed.push(`local:${JSON.stringify(options?.localInstalledFallbackCandidates)}`);
       return 'workspace-scoped failure';
     },
     runNpmInstall: () => ({
@@ -608,9 +631,11 @@ test('runSetupWorkspaceToolchain keeps workspace-scoped post-install diagnostics
     'log:Installing workspace dependencies for lint/typecheck...',
     'restore:node_modules/typescript,node_modules/uuid',
     'offline:node_modules/typescript,node_modules/uuid',
+    'candidates:node_modules/typescript,node_modules/uuid',
     'error:Offline npm install failed with exit code 1.',
     'format:node_modules/typescript,node_modules/uuid',
     'owners:{"typescript":["@scanapp/backend"],"uuid":["@scanapp/backend"]}',
+    'local:[{"packageName":"typescript","lockedVersion":"5.9.3","candidates":[{"version":"5.9.3","sourceDirectory":"/tmp/typescript","declarations":[{"owner":"@scanapp/backend","dependencyGroup":"devDependencies","spec":"~5.9.2"}]}]}]',
     'error:workspace-scoped failure',
   ]);
 });

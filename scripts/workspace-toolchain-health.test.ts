@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  collectLocalInstalledPackageFallbackCandidates,
   collectMissingInstalledPackageRequirements,
   collectWorkspaceDependencyLockIssues,
   collectWorkspaceDependencyOwners,
@@ -594,6 +595,86 @@ test('formatMissingToolchainRequirements appends offline cache misses when provi
   );
 });
 
+test('collectLocalInstalledPackageFallbackCandidates reports semver-compatible local package directories', async () => {
+  const repoRoot = createTempRepo();
+  const sourceDirectory = path.join(
+    createTempRepo(),
+    'usr',
+    'lib',
+    'node_modules',
+    'openclaw',
+    'node_modules',
+    'express-rate-limit',
+  );
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'package-lock.json'),
+    JSON.stringify({
+      packages: {
+        'node_modules/express-rate-limit': {
+          version: '8.2.1',
+        },
+      },
+    }),
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/root',
+      private: true,
+      workspaces: ['packages/*'],
+    }),
+  );
+  fs.mkdirSync(path.join(repoRoot, 'packages', 'backend'), { recursive: true });
+  fs.writeFileSync(
+    path.join(repoRoot, 'packages', 'backend', 'package.json'),
+    JSON.stringify({
+      name: '@scanapp/backend',
+      dependencies: {
+        'express-rate-limit': '^8.2.1',
+      },
+    }),
+  );
+  fs.mkdirSync(sourceDirectory, { recursive: true });
+  fs.writeFileSync(
+    path.join(sourceDirectory, 'package.json'),
+    JSON.stringify({ name: 'express-rate-limit', version: '8.3.1' }),
+  );
+
+  const candidates = await collectLocalInstalledPackageFallbackCandidates(
+    repoRoot,
+    [
+      {
+        moduleDirectory: 'node_modules/express-rate-limit',
+        missingFiles: ['package.json'],
+      },
+    ],
+    {
+      findInstalledPackageSourceDirectories: async () => [sourceDirectory],
+    },
+  );
+
+  assert.deepEqual(candidates, [
+    {
+      packageName: 'express-rate-limit',
+      lockedVersion: '8.2.1',
+      candidates: [
+        {
+          version: '8.3.1',
+          sourceDirectory,
+          declarations: [
+            {
+              owner: '@scanapp/backend',
+              dependencyGroup: 'dependencies',
+              spec: '^8.2.1',
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+});
+
 test('formatMissingToolchainRequirements appends direct dependency lockfile issues when provided', () => {
   const message = formatMissingToolchainRequirements(
     [
@@ -772,6 +853,64 @@ test('formatMissingToolchainRequirements suggests a workspace-scoped reinstall w
       '- As a fallback, run: npm install',
       '- Then rerun the guarded check: npm run typecheck:backend',
       '- Likely affected packages: uuid, @types/uuid',
+    ].join('\n'),
+  );
+});
+
+test('formatMissingToolchainRequirements appends semver-compatible local fallback candidates when provided', () => {
+  const message = formatMissingToolchainRequirements(
+    [
+      {
+        moduleDirectory: 'node_modules/express-rate-limit',
+        missingFiles: ['package.json'],
+      },
+    ],
+    {
+      retryCommand: 'npm run typecheck:backend',
+      workspaceDependencyOwners: {
+        'express-rate-limit': ['@scanapp/backend'],
+      },
+      localInstalledFallbackCandidates: [
+        {
+          packageName: 'express-rate-limit',
+          lockedVersion: '8.2.1',
+          candidates: [
+            {
+              version: '8.3.1',
+              sourceDirectory: '/usr/lib/node_modules/openclaw/node_modules/express-rate-limit',
+              declarations: [
+                {
+                  owner: '@scanapp/backend',
+                  dependencyGroup: 'dependencies',
+                  spec: '^8.2.1',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  );
+
+  assert.equal(
+    message,
+    [
+      'Workspace setup incomplete. Missing required package files:',
+      '- node_modules/express-rate-limit -> package.json',
+      '',
+      'Direct workspace dependency owners:',
+      '- express-rate-limit -> @scanapp/backend',
+      '',
+      'Semver-compatible local fallback candidates:',
+      '- express-rate-limit -> 8.3.1 at /usr/lib/node_modules/openclaw/node_modules/express-rate-limit (satisfies @scanapp/backend dependencies ^8.2.1; lockfile has 8.2.1)',
+      '',
+      'Suggested next steps:',
+      '- Restore the missing packages from cache or reinstall with network access.',
+      '- If network access is available, rerun the guarded check with network installs enabled: SCANAPP_ALLOW_NETWORK_INSTALL=1 npm run typecheck:backend',
+      '- To repair only the affected workspaces first, run: npm install --workspace=@scanapp/backend',
+      '- As a fallback, run: npm install',
+      '- Then rerun the guarded check: npm run typecheck:backend',
+      '- Likely affected packages: express-rate-limit',
     ].join('\n'),
   );
 });
