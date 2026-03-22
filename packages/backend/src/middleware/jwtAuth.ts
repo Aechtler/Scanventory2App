@@ -1,3 +1,8 @@
+/**
+ * JWT Auth Middleware - verifiziert Supabase JWT Tokens
+ * Ersetzt jsonwebtoken.verify() durch supabase.auth.getUser()
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../services/authService';
 import { ApiResponse } from '../types';
@@ -12,58 +17,65 @@ export interface AuthRequest<P = RequestParams> extends Request<P> {
 }
 
 /**
- * JWT Auth middleware - verify JWT token
+ * JWT Auth middleware - verifiziert den Supabase Bearer Token
  */
 export function jwtAuthMiddleware(
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ): void {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      const response: ApiResponse<never> = {
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'No token provided' },
-      };
+  const authHeader = req.headers.authorization;
 
-      res.status(401).json(response);
-      return;
-    }
-
-    const token = authHeader.substring(7);
-    const payload = verifyToken(token);
-
-    req.user = payload;
-    next();
-  } catch (_error) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     const response: ApiResponse<never> = {
       success: false,
-      error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' },
+      error: { code: 'UNAUTHORIZED', message: 'No token provided' },
     };
-
     res.status(401).json(response);
+    return;
   }
+
+  const token = authHeader.substring(7);
+
+  // Async-Verifizierung via Supabase
+  verifyToken(token)
+    .then((payload) => {
+      req.user = payload;
+      next();
+    })
+    .catch(() => {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' },
+      };
+      res.status(401).json(response);
+    });
 }
 
 /**
- * Optional JWT auth middleware - doesn't fail if no token
+ * Optional JWT auth middleware - schlägt nicht fehl wenn kein Token vorhanden
  */
 export function optionalJwtAuthMiddleware(
   req: AuthRequest,
   _res: Response,
   next: NextFunction
 ): void {
-  try {
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      const payload = verifyToken(token);
-      req.user = payload;
-    }
-  } catch (_error) {
-    // Token invalid, but that's okay for optional auth
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    next();
+    return;
   }
 
-  next();
+  const token = authHeader.substring(7);
+
+  verifyToken(token)
+    .then((payload) => {
+      req.user = payload;
+      next();
+    })
+    .catch(() => {
+      // Token ungültig, aber optional → trotzdem weitermachen
+      next();
+    });
 }

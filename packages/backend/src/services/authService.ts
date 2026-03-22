@@ -1,15 +1,9 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { prisma } from './itemService';
+/**
+ * Auth Service - Benutzer-Authentifizierung via Supabase Auth
+ * Ersetzt bcrypt + jsonwebtoken durch Supabase Auth
+ */
 
-const JWT_SECRET = (() => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret && process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET environment variable is required in production');
-  }
-  return secret || 'scanapp-dev-secret-key';
-})();
-const JWT_EXPIRES_IN = '30d';
+import { supabaseAdmin } from './supabaseClient';
 
 export interface TokenPayload {
   userId: string;
@@ -24,123 +18,97 @@ export interface AuthResult {
     isAdmin: boolean;
   };
   token: string;
+  refreshToken?: string;
 }
 
 /**
- * Hash password with bcrypt
- */
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
-}
-
-/**
- * Compare password with hash
- */
-export async function comparePassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-
-/**
- * Generate JWT token
- */
-export function generateToken(userId: string, email: string): string {
-  const payload: TokenPayload = { userId, email };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-}
-
-/**
- * Verify JWT token
- */
-export function verifyToken(token: string): TokenPayload {
-  return jwt.verify(token, JWT_SECRET) as TokenPayload;
-}
-
-/**
- * Register new user
+ * Neuen User registrieren via Supabase Auth.
+ * Supabase erstellt den User in auth.users, der DB-Trigger
+ * spiegelt ihn automatisch in die public.User Tabelle.
  */
 export async function registerUser(
   email: string,
   password: string,
   name?: string
 ): Promise<AuthResult> {
-  // Check if user already exists
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true, // Auto-confirm (kein Email-Verify nötig für native App)
+    user_metadata: { name: name ?? null },
   });
 
-  if (existingUser) {
-    throw new Error('User with this email already exists');
+  if (error) {
+    if (error.message.includes('already registered') || error.message.includes('already exists')) {
+      throw new Error('User with this email already exists');
+    }
+    throw new Error(`Registration failed: ${error.message}`);
   }
 
-  // Hash password
-  const hashedPassword = await hashPassword(password);
+  if (!data.user) throw new Error('Registration failed: no user returned');
 
-  // Create user
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name: name || null,
-    },
-  });
-
-  // Generate token
-  const token = generateToken(user.id, user.email);
-
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      isAdmin: user.isAdmin,
-    },
-    token,
-  };
+  // Login direkt nach Registrierung um Token zu bekommen
+  return loginUser(email, password);
 }
 
 /**
- * Login user
+ * User einloggen via Supabase Auth.
+ * Gibt Supabase JWT access_token zurück (wird vom Backend als Bearer Token akzeptiert).
  */
 export async function loginUser(
   email: string,
   password: string
 ): Promise<AuthResult> {
-  // Find user
-  const user = await prisma.user.findUnique({
-    where: { email },
+  const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+    email,
+    password,
   });
 
-  if (!user) {
+  if (error) {
     throw new Error('Invalid email or password');
   }
 
-  // Check password
-  const isValid = await comparePassword(password, user.password);
-  if (!isValid) {
-    throw new Error('Invalid email or password');
-  }
+  if (!data.user || !data.session) throw new Error('Login failed: no session returned');
 
-  // Generate token
-  const token = generateToken(user.id, user.email);
+  // Profil-Daten aus public.User nachladen (isAdmin, name)
+  const profile = await getUserById(data.user.id).catch(() => null);
 
   return {
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      isAdmin: user.isAdmin,
+      id: data.user.id,
+      email: data.user.email!,
+      name: profile?.name ?? data.user.user_metadata?.name ?? null,
+      isAdmin: profile?.isAdmin ?? false,
     },
-    token,
+    token: data.session.access_token,
+    refreshToken: data.session.refresh_token,
   };
 }
 
 /**
- * Get user by ID
+ * Verifiziert einen Supabase JWT Token und gibt die User-Payload zurück.
+ * Wird von der Auth-Middleware aufgerufen.
+ */
+export async function verifyToken(token: string): Promise<TokenPayload> {
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+
+  if (error || !data.user) {
+    throw new Error('Invalid or expired token');
+  }
+
+  return {
+    userId: data.user.id,
+    email: data.user.email!,
+  };
+}
+
+/**
+ * User-Profil aus der public.User Tabelle laden
  */
 export async function getUserById(userId: string) {
+  // Prisma-Import aus itemService (wie bisher)
+  const { prisma } = await import('./itemService');
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -152,9 +120,6 @@ export async function getUserById(userId: string) {
     },
   });
 
-  if (!user) {
-    throw new Error('User not found');
-  }
-
+  if (!user) throw new Error('User not found');
   return user;
 }

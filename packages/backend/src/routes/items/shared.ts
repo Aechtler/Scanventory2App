@@ -57,13 +57,11 @@ export function getPaginationParams(query: QueryParams): { page: number; limit: 
 export function cleanupSavedImage(
   imageFilename: string,
   context: string,
-  deleteImage: (filename: string) => void
+  deleteImage: (filename: string) => Promise<void> | void
 ): void {
-  try {
-    deleteImage(imageFilename);
-  } catch (error) {
+  Promise.resolve(deleteImage(imageFilename)).catch((error) => {
     console.error(`Failed to clean up saved image after ${context}:`, error);
-  }
+  });
 }
 
 export function requireAuthenticatedUserId(

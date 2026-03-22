@@ -13,6 +13,13 @@ function requireEnv(name: string): string {
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   apiKey: requireEnv('API_KEY'),
-  uploadDir: process.env.UPLOAD_DIR || './uploads',
   databaseUrl: requireEnv('DATABASE_URL'),
+
+  // Supabase
+  supabaseUrl: requireEnv('SUPABASE_URL'),
+  supabaseServiceRoleKey: requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+
+  // uploadDir wird nicht mehr benötigt (Supabase Storage)
+  // Nur noch für eventuelle Rückwärtskompatibilität
+  uploadDir: process.env.UPLOAD_DIR ?? './uploads',
 } as const;

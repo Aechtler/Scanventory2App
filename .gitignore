@@ -65,3 +65,6 @@ packages/backend/.env
 # Workspaces
 packages/*/node_modules/
 packages/*/dist/
+
+# Supabase Self-hosted Secrets
+supabase/self-hosted/.env

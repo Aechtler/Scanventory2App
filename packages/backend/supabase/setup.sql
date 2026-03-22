@@ -1,0 +1,4 @@
+-- Diese Datei wurde verschoben nach:
+-- /supabase/migrations/20260322000002_auth_trigger_rls.sql
+--
+-- Bitte dort nachschauen.

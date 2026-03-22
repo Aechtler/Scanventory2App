@@ -1,11 +1,12 @@
 /**
- * Image Service - Bild-Speicherung und -Verwaltung
+ * Image Service - Bild-Speicherung via Supabase Storage
+ * Ersetzt lokales Filesystem (uploads/) durch Supabase Storage Bucket 'item-images'
  */
 
-import fs from 'fs';
-import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { config } from '../config';
+import { supabaseAdmin } from './supabaseClient';
+
+const BUCKET = 'item-images';
 
 const MIME_TYPE_TO_EXTENSION: Record<string, string> = {
   'image/jpeg': '.jpg',
@@ -13,40 +14,66 @@ const MIME_TYPE_TO_EXTENSION: Record<string, string> = {
   'image/webp': '.webp',
 };
 
-function ensureUploadDir(): void {
-  if (!fs.existsSync(config.uploadDir)) {
-    fs.mkdirSync(config.uploadDir, { recursive: true });
-  }
+function getSafeExtension(mimetype: string, originalname: string): string {
+  return MIME_TYPE_TO_EXTENSION[mimetype] || originalname.split('.').pop()?.toLowerCase() || '.jpg';
 }
 
-function getSafeExtension(file: Express.Multer.File): string {
-  return MIME_TYPE_TO_EXTENSION[file.mimetype] || path.extname(file.originalname).toLowerCase() || '.jpg';
-}
-
-/** Speichert eine hochgeladene Datei und gibt den Dateinamen zurueck */
-export function saveImage(file: Express.Multer.File): string {
-  ensureUploadDir();
-  const ext = getSafeExtension(file);
+/**
+ * Lädt ein Bild in Supabase Storage hoch und gibt den Storage-Pfad zurück.
+ * Multer muss auf memoryStorage() konfiguriert sein.
+ */
+export async function saveImage(file: Express.Multer.File): Promise<string> {
+  const ext = getSafeExtension(file.mimetype, file.originalname);
   const filename = `${uuidv4()}${ext}`;
-  const destPath = path.join(config.uploadDir, filename);
-  fs.renameSync(file.path, destPath);
+
+  const { error } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .upload(filename, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+
+  if (error) {
+    throw new Error(`Supabase Storage Upload fehlgeschlagen: ${error.message}`);
+  }
+
   return filename;
 }
 
-/** Gibt den absoluten Pfad zu einem Bild zurueck */
+/**
+ * Gibt die öffentliche URL für ein Bild zurück (CDN-URL von Supabase)
+ */
+export function getImageUrl(filename: string): string {
+  const { data } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(filename);
+  return data.publicUrl;
+}
+
+/**
+ * @deprecated Verwende getImageUrl() statt getImagePath().
+ * Nur für Rückwärtskompatibilität während der Migration.
+ */
 export function getImagePath(filename: string): string {
-  return path.join(config.uploadDir, filename);
+  return getImageUrl(filename);
 }
 
-/** Prueft ob ein Bild existiert */
-export function imageExists(filename: string): boolean {
-  return fs.existsSync(getImagePath(filename));
+/**
+ * Prüft ob ein Bild im Supabase Storage existiert
+ */
+export async function imageExists(filename: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .list('', { search: filename });
+
+  if (error) return false;
+  return (data ?? []).some((f) => f.name === filename);
 }
 
-/** Loescht ein Bild vom Filesystem */
-export function deleteImage(filename: string): void {
-  const filePath = getImagePath(filename);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
+/**
+ * Löscht ein Bild aus Supabase Storage
+ */
+export async function deleteImage(filename: string): Promise<void> {
+  const { error } = await supabaseAdmin.storage.from(BUCKET).remove([filename]);
+  if (error) {
+    throw new Error(`Supabase Storage Löschen fehlgeschlagen: ${error.message}`);
   }
 }
