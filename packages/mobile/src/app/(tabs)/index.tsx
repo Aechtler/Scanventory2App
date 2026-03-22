@@ -4,12 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Icons } from '../../shared/components/Icons';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
+import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
 
 /**
  * Scan Tab - Kamera-Scan oder Bild-Upload
  */
 export default function ScanTab() {
   const colors = useThemeColors();
+  const tabBarPadding = useTabBarPadding();
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -64,7 +66,7 @@ export default function ScanTab() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 px-6 pt-8">
+      <View className="flex-1 px-6 pt-8" style={{ paddingBottom: tabBarPadding }}>
         <View className="gap-4">
           <Pressable
             onPress={openCamera}

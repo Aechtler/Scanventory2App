@@ -33,7 +33,7 @@ const LIGHT_COLORS: ThemeColors = {
   primaryLight: '#409CFF',
   accent: '#FF2D55',              // iOS systemPink
   surfaceOverlay: 'rgba(242, 242, 247, 0.92)',
-  tabBarBackground: 'rgba(255, 255, 255, 0.88)',
+  tabBarBackground: 'rgba(255, 255, 255, 0.65)',
 };
 
 /** iOS Dark Mode – True Black (OLED) + Apple Blue */
@@ -48,7 +48,7 @@ const DARK_COLORS: ThemeColors = {
   primaryLight: '#409CFF',
   accent: '#FF375F',              // iOS systemPink dark
   surfaceOverlay: 'rgba(28, 28, 30, 0.92)',
-  tabBarBackground: 'rgba(28, 28, 30, 0.92)',
+  tabBarBackground: 'rgba(28, 28, 30, 0.75)',
 };
 
 export function useThemeColors(): ThemeColors {

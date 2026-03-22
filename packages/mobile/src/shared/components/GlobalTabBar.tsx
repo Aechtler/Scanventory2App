@@ -146,7 +146,6 @@ export function GlobalTabBar() {
         styles.container,
         {
           bottom: 0,
-          paddingBottom: insets.bottom,
           shadowColor: colors.primary,
           borderColor: scheme === 'dark'
             ? 'rgba(255, 255, 255, 0.06)'
@@ -156,8 +155,8 @@ export function GlobalTabBar() {
       ]}
       pointerEvents={tabBarHidden ? 'none' : 'box-none'}
     >
-      <BlurView intensity={60} tint={scheme} style={styles.blur}>
-        <View style={[styles.inner, { backgroundColor: colors.tabBarBackground }]}>
+      <BlurView intensity={75} tint={scheme} style={styles.blur}>
+        <View style={[styles.inner, { backgroundColor: colors.tabBarBackground, paddingBottom: insets.bottom }]}>
           {TABS.map((tab) => (
             <GlobalTabItem
               key={tab.route}

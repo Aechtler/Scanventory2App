@@ -9,6 +9,7 @@ import { FadeInView } from '../../shared/components/Animated';
 import { Icons } from '../../shared/components/Icons';
 import { ThemeSelector } from '../../shared/components/ThemeSelector';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
+import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
 import Constants from 'expo-constants';
 
 /**
@@ -20,6 +21,7 @@ export default function ProfileTab() {
   const totalValue = calculateTotalValue(items);
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
   const colors = useThemeColors();
+  const tabBarPadding = useTabBarPadding();
 
   const handleLogout = () => {
     Alert.alert('Abmelden', 'Möchtest du dich wirklich abmelden?', [
@@ -91,7 +93,7 @@ export default function ProfileTab() {
         </FadeInView>
 
         {/* App Version */}
-        <View className="mt-auto mb-24 items-center">
+        <View className="items-center" style={{ paddingBottom: tabBarPadding, marginTop: 'auto' }}>
           <Text className="text-foreground-secondary/50 text-xs">ScanApp v{appVersion}</Text>
         </View>
       </View>

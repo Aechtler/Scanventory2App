@@ -12,6 +12,7 @@ import {
   LibraryFilteredEmptyState,
 } from '../../features/history/components/LibraryEmptyStates';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
+import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
 import {
   buildLibraryRows,
   LIBRARY_PAGE_SIZE,
@@ -29,6 +30,7 @@ export default function LibraryTab() {
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const colors = useThemeColors();
+  const tabBarPadding = useTabBarPadding();
 
   const {
     filters,
@@ -98,7 +100,7 @@ export default function LibraryTab() {
           <FlashList
             data={libraryRows}
             keyExtractor={(item: LibraryRow) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 120 }}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: tabBarPadding }}
             renderItem={renderItem}
 
             onEndReached={loadMore}

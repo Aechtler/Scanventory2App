@@ -12,12 +12,14 @@ import { HistoryDetailHeaderActions } from '../../features/history/components/Hi
 import { HistoryDetailMarketSection } from '../../features/history/components/HistoryDetailMarketSection';
 import { buildHistoryDetailState } from '../../features/history/utils/historyDetail';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
+import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
 
 /**
  * History Detail Screen - Zeigt Item mit Preisen, Quicklinks und Edit-Navigation
  */
 export default function HistoryDetailScreen() {
   const colors = useThemeColors();
+  const tabBarPadding = useTabBarPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const item = useHistoryStore((state) => id ? state.items.find((i) => i.id === id) : undefined) ?? null;
   const removeItem = useHistoryStore((state) => state.removeItem);
@@ -127,7 +129,7 @@ export default function HistoryDetailScreen() {
     <>
       <Stack.Screen options={{ title: 'Details', headerBackTitle: 'Verlauf', headerRight: () => <HistoryDetailHeaderActions onDelete={handleDelete} /> }} />
       <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
-        <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 96 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
+        <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: tabBarPadding }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
           <HistoryDetailHeader item={item} onPriceBadgePress={() => setPriceSheetVisible(true)} />
           <HistoryDetailMarketSection
             links={platformLinks}
