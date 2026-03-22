@@ -24,3 +24,5 @@ export {
   Skeleton,
 } from './Skeleton';
 export { ThemeSelector } from './ThemeSelector';
+export { StatusBanner } from './StatusBanner';
+export type { StatusBannerProps, StatusBannerVariant, StatusBannerAction } from './StatusBanner';

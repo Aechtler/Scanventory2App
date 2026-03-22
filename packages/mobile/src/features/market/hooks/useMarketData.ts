@@ -7,7 +7,8 @@
 
 import { useState, useCallback } from 'react';
 import { searchMarket, PriceStats, MarketListing } from '@/features/market/services/ebay';
-import { getMarketValue, MarketValueResult } from '@/features/market/services/perplexity';
+import { getMarketValue, MarketValueResult, PerplexityErrorType } from '@/features/market/services/perplexity';
+import { PerplexityTokenError } from '@/features/market/services/perplexity/api';
 
 export interface MarketDataState {
   // eBay data
@@ -18,6 +19,7 @@ export interface MarketDataState {
   // AI Market Value
   marketValue: MarketValueResult | null;
   marketValueLoading: boolean;
+  marketValueError: PerplexityErrorType | null;
 }
 
 export interface MarketDataActions {
@@ -55,6 +57,7 @@ export function useMarketData(options?: {
   // AI Market Value state
   const [marketValue, setMarketValueState] = useState<MarketValueResult | null>(null);
   const [marketValueLoading, setMarketValueLoading] = useState(false);
+  const [marketValueError, setMarketValueError] = useState<PerplexityErrorType | null>(null);
 
   /**
    * Load eBay price data and listings
@@ -94,6 +97,7 @@ export function useMarketData(options?: {
     }
 
     setMarketValueLoading(true);
+    setMarketValueError(null);
     if (forceRefresh) {
       setMarketValueState(null);
     }
@@ -107,6 +111,11 @@ export function useMarketData(options?: {
       }
     } catch (err) {
       console.error('[useMarketData] Market value loading error:', err);
+      if (err instanceof PerplexityTokenError) {
+        setMarketValueError('TOKEN_EXPIRED');
+      } else {
+        setMarketValueError('UNKNOWN');
+      }
     } finally {
       setMarketValueLoading(false);
     }
@@ -156,6 +165,7 @@ export function useMarketData(options?: {
     ebayLoading,
     marketValue,
     marketValueLoading,
+    marketValueError,
     loadEbayData,
     loadMarketValue,
     loadAllData,

@@ -7,7 +7,7 @@ import { useThemeColors } from '../../shared/hooks/useThemeColors';
 import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
 
 /**
- * Scan Tab - Kamera-Scan oder Bild-Upload
+ * Scan Tab - Kamera-Scan, Bild-Upload oder QR/Barcode-Scan
  */
 export default function ScanTab() {
   const colors = useThemeColors();
@@ -64,10 +64,15 @@ export default function ScanTab() {
     }
   };
 
+  const openQRScanner = () => {
+    router.push('/qr-scan');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-6 pt-8" style={{ paddingBottom: tabBarPadding }}>
         <View className="gap-4">
+          {/* Kamera – primäre Aktion */}
           <Pressable
             onPress={openCamera}
             className="bg-primary-500 rounded-2xl p-6 active:bg-primary-600"
@@ -85,24 +90,43 @@ export default function ScanTab() {
             </View>
           </Pressable>
 
-          <Pressable
-            onPress={pickImage}
-            className="bg-background-card rounded-2xl p-6 border border-border active:bg-background-elevated"
-          >
-            <View className="items-center">
-              <View className="mb-4">
-                <Icons.Image size={48} color={colors.textSecondary} />
+          {/* Zweite Reihe: Galerie + QR nebeneinander */}
+          <View className="flex-row gap-4">
+            <Pressable
+              onPress={pickImage}
+              className="flex-1 bg-background-card rounded-2xl p-5 border border-border active:bg-background-elevated"
+            >
+              <View className="items-center">
+                <View className="mb-3">
+                  <Icons.Image size={36} color={colors.textSecondary} />
+                </View>
+                <Text className="text-foreground text-base font-semibold mb-1">
+                  Galerie
+                </Text>
+                <Text className="text-foreground-secondary text-xs text-center">
+                  Vorhandenes Bild wählen
+                </Text>
               </View>
-              <Text className="text-foreground text-xl font-semibold mb-1">
-                Galerie
-              </Text>
-              <Text className="text-foreground-secondary text-center">
-                Wähle ein vorhandenes Bild
-              </Text>
-            </View>
-          </Pressable>
-        </View>
+            </Pressable>
 
+            <Pressable
+              onPress={openQRScanner}
+              className="flex-1 bg-background-card rounded-2xl p-5 border border-border active:bg-background-elevated"
+            >
+              <View className="items-center">
+                <View className="mb-3">
+                  <Icons.QrCode size={36} color={colors.textSecondary} />
+                </View>
+                <Text className="text-foreground text-base font-semibold mb-1">
+                  QR / Barcode
+                </Text>
+                <Text className="text-foreground-secondary text-xs text-center">
+                  EAN, QR-Code scannen
+                </Text>
+              </View>
+            </Pressable>
+          </View>
+        </View>
       </View>
     </SafeAreaView>
   );

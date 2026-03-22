@@ -3,7 +3,16 @@
  * Handles communication with Perplexity AI for market value research
  */
 
-import { PERPLEXITY_CONFIG, MarketValueResult } from '@/features/market/services/perplexity/types';
+import { PERPLEXITY_CONFIG, MarketValueResult, PerplexityError } from '@/features/market/services/perplexity/types';
+
+/** Wird geworfen wenn der API-Token abgelaufen oder ungültig ist (HTTP 401 / 403) */
+export class PerplexityTokenError extends Error implements PerplexityError {
+  readonly type = 'TOKEN_EXPIRED' as const;
+  constructor(public readonly status: number) {
+    super(`Perplexity API-Token abgelaufen oder ungültig (HTTP ${status})`);
+    this.name = 'PerplexityTokenError';
+  }
+}
 import { SYSTEM_PROMPT, createUserPrompt } from '@/features/market/services/perplexity/prompts';
 
 /**
@@ -70,6 +79,10 @@ export async function getMarketValue(
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[Perplexity] API error:', response.status, errorText);
+      // Token abgelaufen oder ungültig → spezifische Exception für UI-Feedback
+      if (response.status === 401 || response.status === 403) {
+        throw new PerplexityTokenError(response.status);
+      }
       return null;
     }
     

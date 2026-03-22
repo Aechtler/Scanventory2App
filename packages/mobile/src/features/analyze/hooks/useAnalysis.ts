@@ -24,9 +24,10 @@ export interface UseAnalysisReturn {
   selectedMatch: VisionMatch | null;
   platformLinks: PlatformLink[];
   error: string | null;
-  
+
   // Actions
   runAnalysis: (imageUri: string) => Promise<void>;
+  runManualAnalysis: (query: string, gtin?: string) => void;
   handleMatchSelect: (index: number, result?: VisionResult) => void;
   handleManualSearch: (query: string) => void;
   reset: () => void;
@@ -118,6 +119,27 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
     }
   }, [visionResult, currentImageUri, handleMatchSelectInternal]);
 
+  /**
+   * Startet eine Analyse ohne Bild – z.B. nach einem QR/Barcode-Scan.
+   * Zeigt sofort die Produkt-Auswahl mit dem gescannten Begriff an.
+   */
+  const runManualAnalysis = useCallback((query: string, gtin?: string) => {
+    setState('analyzing');
+    setError(null);
+
+    const manualMatch = createManualVisionMatch(query);
+    // GTIN aus dem Barcode direkt übernehmen wenn vorhanden
+    const enrichedMatch: VisionMatch = gtin ? { ...manualMatch, gtin } : manualMatch;
+
+    const result: VisionResult = {
+      matches: [enrichedMatch],
+      selectedIndex: null,
+    };
+
+    setVisionResult(result);
+    setState('selecting');
+  }, []);
+
   const reset = useCallback(() => {
     setState('idle');
     setVisionResult(null);
@@ -134,6 +156,7 @@ export function useAnalysis(options?: UseAnalysisOptions): UseAnalysisReturn {
     platformLinks,
     error,
     runAnalysis,
+    runManualAnalysis,
     handleMatchSelect,
     handleManualSearch,
     reset,

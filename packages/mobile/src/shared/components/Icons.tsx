@@ -56,6 +56,8 @@ import {
   List,
   Plus,
   MessageCircle,
+  QrCode,
+  Flashlight,
 } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -145,6 +147,8 @@ export const Icons = {
   List: (props: IconProps) => <List {...defaultProps} {...props} />,
   Plus: (props: IconProps) => <Plus {...defaultProps} {...props} />,
   MessageCircle: (props: IconProps) => <MessageCircle {...defaultProps} {...props} />,
+  QrCode: (props: IconProps) => <QrCode {...defaultProps} {...props} />,
+  Flashlight: (props: IconProps) => <Flashlight {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper

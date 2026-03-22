@@ -5,8 +5,9 @@ export type {
   ScanStatus,
 } from './types';
 
-// Components werden hier exportiert wenn erstellt
-// export { ScanCamera } from './components/ScanCamera';
+// Components
+export { QRScannerOverlay } from './components/QRScannerOverlay';
 
-// Hooks werden hier exportiert wenn erstellt
-// export { useScan } from './hooks/useScan';
+// Hooks
+export { useQRScanner } from './hooks';
+export type { QRScanResult, QRScanResultType } from './hooks';

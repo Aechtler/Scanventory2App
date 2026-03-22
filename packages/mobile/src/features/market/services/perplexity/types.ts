@@ -2,6 +2,13 @@
  * Perplexity Service Types
  */
 
+export type PerplexityErrorType = 'TOKEN_EXPIRED' | 'NETWORK' | 'UNKNOWN';
+
+export interface PerplexityError {
+  type: PerplexityErrorType;
+  status?: number;
+}
+
 export interface MarketValueResult {
   estimatedPrice: string;
   priceRange: string;

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View, Text } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
+import { Icons } from '../shared/components/Icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore } from '../features/history/store/historyStore';
 import {
@@ -13,9 +14,14 @@ import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionS
 
 /**
  * Analyse Screen - Bilderkennung, automatisches Speichern, Weiterleitung zur Edit-Seite
+ * Unterstützt sowohl Bild-Analyse (imageUri) als auch direkten QR/Barcode-Flow (searchQuery)
  */
 export default function AnalyzeScreen() {
-  const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
+  const { imageUri, searchQuery, gtin } = useLocalSearchParams<{
+    imageUri?: string;
+    searchQuery?: string;
+    gtin?: string;
+  }>();
   const addItem = useHistoryStore((state) => state.addItem);
   const isSaving = useRef(false);
 
@@ -25,23 +31,30 @@ export default function AnalyzeScreen() {
     selectedMatch,
     error,
     runAnalysis,
+    runManualAnalysis,
     handleMatchSelect,
     handleManualSearch,
   } = useAnalysis();
 
-  // Run analysis when image changes
+  // Bild-Analyse oder QR/Barcode-Flow starten
   useEffect(() => {
     if (imageUri) {
       runAnalysis(imageUri);
+    } else if (searchQuery) {
+      // QR/Barcode: direkt manuelle Analyse ohne Bild
+      runManualAnalysis(
+        decodeURIComponent(searchQuery),
+        gtin && gtin.length > 0 ? gtin : undefined,
+      );
     }
-  }, [imageUri]);
+  }, [imageUri, searchQuery]);
 
   // Auto-save and navigate to edit page when match is selected
   useEffect(() => {
-    if (selectedMatch && state === 'complete' && imageUri && !isSaving.current) {
+    if (selectedMatch && state === 'complete' && !isSaving.current) {
       isSaving.current = true;
       addItem({
-        imageUri: decodeURIComponent(imageUri),
+        imageUri: imageUri ? decodeURIComponent(imageUri) : '',
         productName: selectedMatch.productName,
         category: selectedMatch.category,
         brand: selectedMatch.brand,
@@ -75,8 +88,21 @@ export default function AnalyzeScreen() {
       />
       <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
         <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-          {/* Image Header */}
-          <AnalysisImageHeader imageUri={imageUri || null} />
+          {/* Image Header – nur bei Bild-Analyse anzeigen */}
+          {imageUri ? (
+            <AnalysisImageHeader imageUri={imageUri} />
+          ) : searchQuery ? (
+            // QR/Barcode-Flow: Icon-Badge statt Bild
+            <View className="items-center justify-center mb-6 py-8 bg-background-card rounded-2xl border border-border">
+              <Icons.QrCode size={56} color="#6366f1" />
+              <Text className="text-foreground text-base font-semibold mt-3">
+                {decodeURIComponent(searchQuery)}
+              </Text>
+              <Text className="text-foreground-secondary text-xs mt-1">
+                {gtin ? `EAN/GTIN: ${gtin}` : 'QR-Code gescannt'}
+              </Text>
+            </View>
+          ) : null}
 
           {/* Loading State */}
           {(state === 'analyzing' || (state === 'complete' && selectedMatch)) && (

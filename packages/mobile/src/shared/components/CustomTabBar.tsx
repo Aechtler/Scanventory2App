@@ -90,7 +90,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const scheme = useResolvedColorScheme();
-  const bottomPadding = Math.max(insets.bottom - 8, 8);
   const inactiveColor = scheme === 'dark'
     ? TAB_BAR_COLORS.inactiveDark
     : TAB_BAR_COLORS.inactiveLight;
@@ -100,7 +99,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
       style={[
         styles.container,
         {
-          bottom: bottomPadding,
           shadowColor: colors.primary,
           borderColor: scheme === 'dark'
             ? 'rgba(99, 102, 241, 0.1)'
@@ -109,7 +107,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
       ]}
     >
       <BlurView intensity={60} tint={scheme} style={styles.blur}>
-        <View style={[styles.inner, { backgroundColor: colors.tabBarBackground }]}>
+        <View style={[styles.inner, { backgroundColor: colors.tabBarBackground, paddingBottom: insets.bottom }]}>
           {state.routes.map((route, index) => {
             const isFocused = state.index === index;
 
@@ -149,22 +147,24 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    borderRadius: 24,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     elevation: 8,
-    borderWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   blur: {
     flex: 1,
   },
   inner: {
     flexDirection: 'row',
-    paddingVertical: 10,
+    paddingTop: 10,
     paddingHorizontal: 8,
   },
   tabItem: {

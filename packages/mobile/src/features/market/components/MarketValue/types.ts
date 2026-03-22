@@ -2,11 +2,12 @@
  * Market Value Component Types
  */
 
-import { MarketValueResult } from '../../services/perplexity';
+import { MarketValueResult, PerplexityErrorType } from '../../services/perplexity';
 
 export interface MarketValueCardProps {
   result: MarketValueResult | null;
   isLoading: boolean;
+  error?: PerplexityErrorType | null;
   onRefresh?: () => void;
 }
 
