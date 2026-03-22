@@ -1,4 +1,4 @@
-import type { ApiResponse } from '../types/index.ts';
+import type { ApiResponse } from '../types/index';
 
 export type HealthCheckStatus = 'ok' | 'error';
 export type HealthRouteStatus = 'ok' | 'degraded';
@@ -46,13 +46,13 @@ export async function buildHealthResponse(
   const [databaseResult, uploadDirResult, diskSpaceResult] = await Promise.all([
     dependencies.checkDatabase()
       .then<HealthDependencyResult>(() => ({ status: 'ok' }))
-      .catch((error: unknown) => ({
+      .catch((error: unknown): HealthDependencyResult => ({
         status: 'error',
         message: getErrorMessage(error),
       })),
     dependencies.checkUploadDirWritable()
       .then<HealthDependencyResult>(() => ({ status: 'ok' }))
-      .catch((error: unknown) => ({
+      .catch((error: unknown): HealthDependencyResult => ({
         status: 'error',
         message: getErrorMessage(error),
       })),
@@ -75,7 +75,7 @@ export async function buildHealthResponse(
           minFreeBytes: minFreeDiskBytes,
         };
       })
-      .catch((error: unknown) => ({
+      .catch((error: unknown): DiskSpaceHealthDependencyResult => ({
         status: 'error',
         freeBytes: 0,
         totalBytes: 0,

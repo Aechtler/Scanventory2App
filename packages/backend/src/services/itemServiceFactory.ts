@@ -4,13 +4,13 @@ import type {
   MarketValueResult,
   PaginatedResponse,
   PriceStats,
-} from '../types/index.ts';
+} from '../types/index';
 import {
   buildCreateItemData,
   buildKleinanzeigenPriceUpdateData,
   buildMarketValueUpdateData,
   buildPriceUpdateData,
-} from './itemPayloads.ts';
+} from './itemPayloads';
 
 type DeleteLookupResult = { imageFilename: string; userId: string } | null;
 type DeleteResult = { imageFilename: string } | null;

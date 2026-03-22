@@ -12,7 +12,8 @@ function toJsonOrNull(value: unknown): Prisma.InputJsonValue | typeof Prisma.DbN
 export { prisma };
 export const createItemService = createItemServiceFactory;
 
-const itemService = createItemServiceFactory(prisma, {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const itemService = createItemServiceFactory(prisma as any, {
   toJsonOrNull,
   isRecordNotFoundError: (error) =>
     error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025',
@@ -23,7 +24,7 @@ export async function getItems(
   page: number = 1,
   limit: number = 20
 ): Promise<PaginatedResponse<Prisma.ScannedItemGetPayload<object>>> {
-  return itemService.getItems(userId, page, limit);
+  return itemService.getItems(userId, page, limit) as Promise<PaginatedResponse<Prisma.ScannedItemGetPayload<object>>>;
 }
 
 export async function getItemById(id: string, userId: string) {

@@ -134,7 +134,7 @@ export function getCreateItemBodyValidationError(
     return 'confidence must be a valid number';
   }
 
-  if (!data.scannedAt || Number.isNaN(Date.parse(data.scannedAt))) {
+  if (!data.scannedAt || Number.isNaN(Date.parse(data.scannedAt as string))) {
     return 'scannedAt must be a valid ISO date string';
   }
 

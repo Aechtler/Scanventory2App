@@ -1,4 +1,4 @@
-import { ITEM_ID_PARAMETER } from './itemPathsShared.ts';
+import { ITEM_ID_PARAMETER } from './itemPathsShared';
 
 export function buildItemDetailPaths(): Record<string, unknown> {
   return {

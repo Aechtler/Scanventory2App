@@ -1,6 +1,6 @@
-import { buildItemCollectionPaths } from './itemPathsCollection.ts';
-import { buildItemDetailPaths } from './itemPathsDetail.ts';
-import { buildItemPriceUpdatePaths } from './itemPathsPriceUpdates.ts';
+import { buildItemCollectionPaths } from './itemPathsCollection';
+import { buildItemDetailPaths } from './itemPathsDetail';
+import { buildItemPriceUpdatePaths } from './itemPathsPriceUpdates';
 
 export function buildItemPaths(): Record<string, unknown> {
   return {

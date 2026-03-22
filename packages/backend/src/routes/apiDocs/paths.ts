@@ -1,6 +1,6 @@
-import { buildAuthPaths } from './paths/authPaths.ts';
-import { buildImagePaths } from './paths/imagePaths.ts';
-import { buildItemPaths } from './paths/itemPaths.ts';
+import { buildAuthPaths } from './paths/authPaths';
+import { buildImagePaths } from './paths/imagePaths';
+import { buildItemPaths } from './paths/itemPaths';
 
 export function buildOpenApiPaths(): Record<string, unknown> {
   return {

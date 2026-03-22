@@ -1,10 +1,10 @@
-import { buildOpenApiComponents } from './apiDocs/components.ts';
-import { OPEN_API_INFO, OPEN_API_TAGS, getDefaultServerUrl } from './apiDocs/metadata.ts';
-import { buildOpenApiPaths } from './apiDocs/paths.ts';
-import { buildSwaggerHtml } from './apiDocs/swaggerHtml.ts';
-import type { OpenApiDocument } from './apiDocs/types.ts';
+import { buildOpenApiComponents } from './apiDocs/components';
+import { OPEN_API_INFO, OPEN_API_TAGS, getDefaultServerUrl } from './apiDocs/metadata';
+import { buildOpenApiPaths } from './apiDocs/paths';
+import { buildSwaggerHtml } from './apiDocs/swaggerHtml';
+import type { OpenApiDocument } from './apiDocs/types';
 
-export type { OpenApiDocument } from './apiDocs/types.ts';
+export type { OpenApiDocument } from './apiDocs/types';
 
 export function buildOpenApiDocument(options: {
   serverUrl?: string;
