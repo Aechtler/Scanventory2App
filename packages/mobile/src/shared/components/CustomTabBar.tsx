@@ -25,6 +25,7 @@ interface TabConfig {
 const TAB_CONFIG: Record<string, TabConfig> = {
   index: { icon: (p) => <Icons.Camera {...p} />, label: 'Scan' },
   library: { icon: (p) => <Icons.BookOpen {...p} />, label: 'Bibliothek' },
+  social: { icon: (p) => <Icons.Search {...p} />, label: 'Entdecken' },
   profile: { icon: (p) => <Icons.User {...p} />, label: 'Profil' },
 };
 

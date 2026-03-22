@@ -17,7 +17,135 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  scannedItems ScannedItem[]
+  // Öffentliches Profil
+  username    String?  @unique // @handle, 3-30 Zeichen, [a-z0-9_]
+  displayName String?  // Anzeigename (frei wählbar)
+  avatarUrl   String?  // URL zum Avatar-Bild
+  bio         String?  // Kurzbeschreibung
+  isPublic    Boolean  @default(true) // Profil sichtbar für andere
+
+  // Vorbereitung für Push-Notifications (v2)
+  pushToken  String?
+  lastSeenAt DateTime?
+
+  // Relations
+  scannedItems          ScannedItem[]
+  followers             Follow[]      @relation("Following") // Wer mir folgt
+  following             Follow[]      @relation("Follower")  // Wem ich folge
+  ownedGroups           Group[]       @relation("GroupOwner")
+  groupMemberships      GroupMember[]
+  sentInvitations       GroupInvitation[] @relation("InvitedBy")
+  receivedInvitations   GroupInvitation[] @relation("InvitedUser")
+  sharedItems           SharedItem[]  @relation("SharedBy")
+  receivedSharedItems   SharedItem[]  @relation("SharedWithUser")
+  // Messaging (v2 - Tabellen existieren, werden noch nicht befüllt)
+  conversationParticipants ConversationParticipant[]
+  sentMessages          Message[]
+
+  @@index([username])
+}
+
+// Follow-System (unidirektional, wie Instagram)
+// "follower folgt following"
+model Follow {
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// Gruppen
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  avatarUrl   String?
+  inviteCode  String   @unique @default(cuid()) // 12-stelliger Code
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId     String
+  members     GroupMember[]
+  invitations GroupInvitation[]
+  sharedItems SharedItem[]  @relation("SharedWithGroup")
+
+  @@index([ownerId])
+  @@index([inviteCode])
+  @@index([name])
+}
+
+// Gruppen-Mitgliedschaft
+model GroupMember {
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      GroupRole @default(MEMBER)
+  joinedAt  DateTime  @default(now())
+
+  @@id([groupId, userId])
+  @@index([userId])
+}
+
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// Gruppen-Einladungen (per Username, nicht per Code)
+model GroupInvitation {
+  id          String           @id @default(uuid())
+  group       Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId     String
+  invitedBy   User             @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedById String
+  invitedUser User             @relation("InvitedUser", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  invitedUserId String
+  status      InvitationStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+
+  @@index([invitedUserId, status])
+  @@index([groupId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// Library Sharing — Items mit Usern oder Gruppen teilen
+model SharedItem {
+  id             String      @id @default(uuid())
+  item           ScannedItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId         String
+  sharedBy       User        @relation("SharedBy", fields: [sharedById], references: [id], onDelete: Cascade)
+  sharedById     String
+  // Entweder mit User ODER Gruppe teilen
+  sharedWithUser   User?   @relation("SharedWithUser", fields: [sharedWithUserId], references: [id], onDelete: Cascade)
+  sharedWithUserId String?
+  sharedWithGroup  Group?  @relation("SharedWithGroup", fields: [sharedWithGroupId], references: [id], onDelete: Cascade)
+  sharedWithGroupId String?
+  permission     SharePermission @default(VIEW)
+  sharedAt       DateTime    @default(now())
+
+  @@index([sharedById])
+  @@index([sharedWithUserId])
+  @@index([sharedWithGroupId])
+  @@index([itemId])
+}
+
+enum SharePermission {
+  VIEW
+  COMMENT
 }
 
 model ScannedItem {
@@ -62,9 +190,42 @@ model ScannedItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  sharedWith SharedItem[]
+
   @@index([userId])
   @@index([scannedAt])
   @@index([userId, scannedAt])
   @@index([productName])
   @@index([category])
+}
+
+// ─── Messaging (v2 — Tabellen existieren, werden noch nicht befüllt) ──────────
+
+model Conversation {
+  id           String                   @id @default(uuid())
+  createdAt    DateTime                 @default(now())
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId       String
+  content        String
+  sentAt         DateTime     @default(now())
+  readAt         DateTime?
+
+  @@index([conversationId, sentAt])
 }

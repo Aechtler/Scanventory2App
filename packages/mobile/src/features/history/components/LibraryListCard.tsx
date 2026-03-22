@@ -16,6 +16,7 @@ interface LibraryListCardProps {
   item: HistoryItem;
   index: number;
   onDelete: () => void;
+  onShare?: () => void;
 }
 
 function formatDate(isoDate: string): string {
@@ -66,7 +67,7 @@ function PriceSection({ item }: { item: HistoryItem }) {
   );
 }
 
-export function LibraryListCard({ item, index, onDelete }: LibraryListCardProps) {
+export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListCardProps) {
   const listingCount = item.priceStats?.totalListings ?? 0;
 
   return (
@@ -76,6 +77,7 @@ export function LibraryListCard({ item, index, onDelete }: LibraryListCardProps)
           className="bg-background-card rounded-2xl mb-3 overflow-hidden border border-border active:opacity-70"
           style={styles.card}
           onPress={() => router.push(`/history/${item.id}`)}
+          onLongPress={onShare}
         >
           <View className="flex-row">
             {/* Bild links */}

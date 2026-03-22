@@ -7,6 +7,12 @@ export interface User {
   email: string;
   name: string | null;
   isAdmin: boolean;
+  // Öffentliches Profil (Phase 1 — Social)
+  username?: string | null;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  isPublic?: boolean;
 }
 
 interface ApiEnvelope<T> {
@@ -20,6 +26,14 @@ interface AuthPayload {
   token: string;
 }
 
+interface ProfileFields {
+  username?: string | null;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  isPublic?: boolean;
+}
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -31,6 +45,8 @@ interface AuthState {
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   setUser: (user: User, token: string) => void;
+  /** Aktualisiert Profil-Felder im lokalen State nach einem Profil-Update */
+  setProfileFields: (fields: ProfileFields) => void;
 }
 
 const TOKEN_KEY = 'auth_token';
@@ -111,6 +127,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setUser: (user, token) => {
     set({ user, token, isAuthenticated: true });
+  },
+
+  setProfileFields: (fields) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...fields } : null,
+    }));
   },
 
   loadUser: async () => {

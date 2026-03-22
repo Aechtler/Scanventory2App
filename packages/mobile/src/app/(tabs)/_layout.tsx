@@ -31,6 +31,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="social"
+        options={{
+          title: 'Entdecken',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profil',

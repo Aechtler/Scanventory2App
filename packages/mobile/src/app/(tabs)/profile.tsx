@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Alert } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, Alert, Modal, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../features/auth/store/authStore';
@@ -10,10 +11,13 @@ import { Icons } from '../../shared/components/Icons';
 import { ThemeSelector } from '../../shared/components/ThemeSelector';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
+import { ProfileHeader, ProfileForm } from '../../features/social';
+import type { PublicProfile } from '../../features/social';
 import Constants from 'expo-constants';
 
 /**
- * Profil Tab - User-Info, Portfolio-Stats, Theme, Logout
+ * Profil Tab — User-Info, Portfolio-Stats, Theme, Logout
+ * Phase 1: + öffentliches Profil (Avatar, Bio, @handle, Follower-Stats)
  */
 export default function ProfileTab() {
   const { user, logout } = useAuthStore();
@@ -22,6 +26,20 @@ export default function ProfileTab() {
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
   const colors = useThemeColors();
   const tabBarPadding = useTabBarPadding();
+
+  const [editVisible, setEditVisible] = useState(false);
+
+  // Aktuelles Profil aus dem User-State zusammenbauen
+  const currentProfile: PublicProfile = {
+    id: user?.id ?? '',
+    username: user?.username ?? null,
+    displayName: user?.displayName ?? user?.name ?? null,
+    avatarUrl: user?.avatarUrl ?? null,
+    bio: user?.bio ?? null,
+    isPublic: user?.isPublic ?? true,
+    followerCount: 0,
+    followingCount: 0,
+  };
 
   const handleLogout = () => {
     Alert.alert('Abmelden', 'Möchtest du dich wirklich abmelden?', [
@@ -39,18 +57,39 @@ export default function ProfileTab() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 px-6 pt-8">
-        {/* User Avatar & Name */}
-        <FadeInView delay={0} className="items-center mb-8">
-          <View className="w-20 h-20 bg-primary/20 rounded-full items-center justify-center mb-4 border-2 border-primary/30">
-            <Icons.User size={36} color={colors.primary} />
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Edit-Button oben rechts */}
+        <FadeInView delay={0}>
+          <View className="flex-row justify-end mb-2">
+            <Pressable
+              onPress={() => setEditVisible(true)}
+              className="flex-row items-center gap-1.5 py-1.5 px-3 rounded-xl bg-background-card border border-border active:opacity-70"
+            >
+              <Icons.Pencil size={14} color={colors.textSecondary} />
+              <Text className="text-foreground-secondary text-sm">Bearbeiten</Text>
+            </Pressable>
           </View>
-          <Text className="text-foreground text-2xl font-bold">
-            {user?.name || 'Benutzer'}
-          </Text>
-          <Text className="text-foreground-secondary text-sm mt-1">
-            {user?.email}
-          </Text>
+        </FadeInView>
+
+        {/* Öffentliches Profil */}
+        <FadeInView delay={50}>
+          <ProfileHeader
+            profile={currentProfile}
+            onFollowersPress={() => {/* Phase 2: Follower-Liste öffnen */}}
+            onFollowingPress={() => {/* Phase 2: Following-Liste öffnen */}}
+          />
+        </FadeInView>
+
+        {/* E-Mail (privat, nur für den eigenen User sichtbar) */}
+        <FadeInView delay={80}>
+          <View className="bg-background-card rounded-2xl px-4 py-3 border border-border mb-6 flex-row items-center">
+            <Icons.Mail size={16} color={colors.textSecondary} />
+            <Text className="text-foreground-secondary text-sm ml-2">{user?.email}</Text>
+          </View>
         </FadeInView>
 
         {/* Portfolio Stats */}
@@ -93,10 +132,30 @@ export default function ProfileTab() {
         </FadeInView>
 
         {/* App Version */}
-        <View className="items-center" style={{ paddingBottom: tabBarPadding, marginTop: 'auto' }}>
+        <View className="items-center" style={{ paddingBottom: tabBarPadding + 16, marginTop: 24 }}>
           <Text className="text-foreground-secondary/50 text-xs">ScanApp v{appVersion}</Text>
         </View>
-      </View>
+      </ScrollView>
+
+      {/* Profil bearbeiten — Modal */}
+      <Modal
+        visible={editVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setEditVisible(false)}
+      >
+        <SafeAreaView className="flex-1 bg-background">
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-border">
+            <Text className="text-foreground text-lg font-semibold">Profil bearbeiten</Text>
+          </View>
+          <ProfileForm
+            currentProfile={currentProfile}
+            currentUsername={user?.username}
+            onSaved={() => setEditVisible(false)}
+            onCancel={() => setEditVisible(false)}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }

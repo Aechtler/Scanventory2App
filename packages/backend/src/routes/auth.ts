@@ -9,6 +9,7 @@ import {
   normalizeAuthCredentials,
   validatePassword,
 } from './auth/shared';
+import profileRouter from './auth/updateProfile';
 
 const router = Router();
 
@@ -130,5 +131,8 @@ router.post('/logout', (_req, res) => {
 
   res.json(response);
 });
+
+// Profil-Routen: PATCH /api/auth/profile, GET /api/auth/check-username
+router.use('/profile', profileRouter);
 
 export default router;
