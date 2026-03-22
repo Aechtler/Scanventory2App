@@ -33,10 +33,15 @@ services:
       UPLOAD_DIR: /app/uploads
     volumes:
       - uploads:/app/uploads
-      # For development: mount source code for hot reload
-      # - ./packages/backend/src:/app/src
     networks:
       - scanapp-network
+      - coolify
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.scanapp-backend.rule=Host(`os8gw44wgg888804koo08gso.72.62.49.60.sslip.io`)
+      - traefik.http.routers.scanapp-backend.entrypoints=http
+      - traefik.http.services.scanapp-backend.loadbalancer.server.port=3000
+      - traefik.docker.network=coolify
 
 volumes:
   pgdata:
@@ -48,3 +53,5 @@ networks:
   scanapp-network:
     name: scanapp-network
     driver: bridge
+  coolify:
+    external: true
