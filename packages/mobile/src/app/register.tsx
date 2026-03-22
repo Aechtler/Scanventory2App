@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Icons } from '@/shared/components/Icons';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { AuthLayout, AuthInput, AuthButton } from '@/features/auth/components';
+import { StatusBanner } from '@/shared/components/StatusBanner';
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -20,6 +21,9 @@ function translateRegisterError(message: string): string {
   }
   if (lower.includes('too many') || lower.includes('rate limit')) {
     return 'Zu viele Versuche. Bitte warte 15 Minuten und versuche es erneut.';
+  }
+  if (lower.includes('timed out')) {
+    return 'Der Server antwortet nicht. Bitte prüfe deine Verbindung oder versuche es später erneut.';
   }
   if (lower.includes('network') || lower.includes('fetch') || lower.includes('failed to fetch')) {
     return 'Keine Verbindung zum Server. Bitte überprüfe deine Internetverbindung.';
@@ -105,10 +109,11 @@ export default function RegisterScreen() {
   return (
     <AuthLayout header={header} footer={footer}>
       {errors.general && (
-        <View className="bg-red-500/15 border border-red-500/40 rounded-xl px-4 py-3 flex-row items-center gap-2">
-          <Icons.Warning size={16} color="#f87171" />
-          <Text className="text-red-400 text-sm flex-1">{errors.general}</Text>
-        </View>
+        <StatusBanner
+          variant="error"
+          title={errors.general}
+          onDismiss={() => setErrors((e) => ({ ...e, general: undefined }))}
+        />
       )}
 
       <AuthInput

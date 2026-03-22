@@ -51,6 +51,15 @@ interface AuthState {
 
 const TOKEN_KEY = 'auth_token';
 const API_URL = API_CONFIG.BASE_URL;
+const REQUEST_TIMEOUT_MS = 12000; // 12 Sekunden — danach Fehlermeldung statt endlosem Ladebalken
+
+/** Wirft nach `ms` Millisekunden einen Timeout-Fehler */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Network error: request timed out')), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
 
 function getErrorMessage(payload: unknown, fallback: string): string {
   if (!payload || typeof payload !== 'object') {
@@ -86,11 +95,14 @@ async function authenticate(
   fallbackMessage: string,
   set: (partial: Partial<AuthState>) => void
 ): Promise<void> {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const response = await withTimeout(
+    fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+    REQUEST_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     let message = fallbackMessage;
