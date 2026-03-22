@@ -2,7 +2,6 @@ import { View, Text, Image, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
-import { API_CONFIG } from '@/shared/constants';
 import type { ReceivedItem } from '../types/sharing.types';
 
 interface ReceivedItemCardProps {
@@ -19,7 +18,8 @@ function formatDate(iso: string): string {
 export function ReceivedItemCard({ item }: ReceivedItemCardProps) {
   const colors = useThemeColors();
   const senderName = item.sharedByDisplayName ?? item.sharedByUsername ?? 'Unbekannt';
-  const imageUri = `${API_CONFIG.BASE_URL}/uploads/${item.imageFilename}`;
+  // imageUrl kommt direkt vom Backend als Supabase Storage CDN URL
+  const imageUri = item.imageUrl;
 
   return (
     <Pressable

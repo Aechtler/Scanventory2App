@@ -4,6 +4,7 @@
  * Typ-Assertions bis `prisma generate` nach Migration läuft.
  */
 import { prisma } from './itemService';
+import { getImageUrl } from './imageService';
 
 export type SharePermission = 'VIEW' | 'COMMENT';
 export type ShareTargetType = 'user' | 'group';
@@ -39,6 +40,7 @@ export interface ReceivedItem {
   brand: string | null;
   condition: string;
   imageFilename: string;
+  imageUrl: string;           // Supabase Storage CDN URL
   priceStats: unknown;
   scannedAt: Date;
 }
@@ -186,6 +188,7 @@ export async function getSharedWithMe(userId: string): Promise<ReceivedItem[]> {
       brand: s.item!.brand,
       condition: s.item!.condition,
       imageFilename: s.item!.imageFilename,
+      imageUrl: getImageUrl(s.item!.imageFilename),
       priceStats: s.item!.priceStats,
       scannedAt: s.item!.scannedAt,
     }));
@@ -224,6 +227,7 @@ export async function getGroupLibrary(groupId: string, requestingUserId: string)
       brand: s.item!.brand,
       condition: s.item!.condition,
       imageFilename: s.item!.imageFilename,
+      imageUrl: getImageUrl(s.item!.imageFilename),
       priceStats: s.item!.priceStats,
       scannedAt: s.item!.scannedAt,
     }));

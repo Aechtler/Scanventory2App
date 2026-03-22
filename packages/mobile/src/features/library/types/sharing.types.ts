@@ -34,6 +34,7 @@ export interface ReceivedItem {
   brand: string | null;
   condition: string;
   imageFilename: string;
+  imageUrl: string;           // Supabase Storage CDN URL
   priceStats: unknown;
   scannedAt: string;
 }
