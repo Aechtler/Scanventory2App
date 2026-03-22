@@ -100,7 +100,7 @@ export default function LibraryTab() {
             keyExtractor={(item: LibraryRow) => item.id}
             contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 120 }}
             renderItem={renderItem}
-            estimatedItemSize={viewMode === 'grid' ? 240 : 135}
+
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             refreshControl={

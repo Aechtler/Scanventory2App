@@ -48,7 +48,7 @@ export function EditableProductCard({
         </View>
         <View className="bg-primary-500/20 px-3 py-1 rounded-lg">
           <Text className="text-primary-400 font-bold">
-            {isManual ? 'Manuelle Suche' : `${Math.round(confidence * 100)}%`}
+            {isManualSearchResult({ category }) ? 'Manuelle Suche' : `${Math.round(confidence * 100)}%`}
           </Text>
         </View>
       </View>

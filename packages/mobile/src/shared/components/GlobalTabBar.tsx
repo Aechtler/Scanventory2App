@@ -108,9 +108,6 @@ export function GlobalTabBar() {
   const firstSegment = segments[0] ?? '';
   const secondSegment = segments[1] ?? '';
 
-  // Auf Auth-Screens ausblenden
-  if (HIDDEN_SEGMENTS.includes(firstSegment)) return null;
-
   const inactiveColor = scheme === 'dark'
     ? TAB_BAR_COLORS.inactiveDark
     : TAB_BAR_COLORS.inactiveLight;
@@ -129,6 +126,9 @@ export function GlobalTabBar() {
     return false;
   };
 
+  // Hide on auth screens (use style instead of early return to keep hook count stable)
+  const isHiddenScreen = HIDDEN_SEGMENTS.includes(firstSegment);
+
   const animatedContainer = useAnimatedStyle(() => ({
     transform: [
       {
@@ -137,6 +137,8 @@ export function GlobalTabBar() {
     ],
     opacity: withTiming(tabBarHidden ? 0 : 1, { duration: tabBarHidden ? 200 : 120 }),
   }));
+
+  if (isHiddenScreen) return null;
 
   return (
     <Animated.View

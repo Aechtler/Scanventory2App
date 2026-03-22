@@ -83,7 +83,7 @@ async function validateUploadImage(imageUri: string): Promise<void> {
     throw new Error('Unsupported image URI. Expected a local file URI.');
   }
 
-  const fileInfo = await FileSystem.getInfoAsync(normalizedUri, { size: true });
+  const fileInfo = await FileSystem.getInfoAsync(normalizedUri);
   if (!fileInfo.exists) {
     throw new Error('Selected image file does not exist anymore.');
   }

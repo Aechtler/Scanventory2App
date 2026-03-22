@@ -1,7 +1,7 @@
 import '../global.css';
 
 import { View } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -19,6 +19,7 @@ export default function RootLayout() {
   const { isAuthenticated, isLoading, loadUser } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const navigationState = useRootNavigationState();
   const theme = useThemeStore((s) => s.theme);
   const resolvedScheme = useResolvedColorScheme();
   const colors = useThemeColors();
@@ -34,6 +35,8 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    // Wait until the navigator is mounted before navigating
+    if (!navigationState?.key) return;
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'register';
@@ -43,7 +46,7 @@ export default function RootLayout() {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, navigationState?.key]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

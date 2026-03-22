@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from 'react-native';
 import { MotiView } from 'moti';
-import { Icons } from '../../shared/components/Icons';
+import { Icons } from '@/shared/components/Icons';
 
 interface LibraryEmptyStateProps {
   iconColor: string;

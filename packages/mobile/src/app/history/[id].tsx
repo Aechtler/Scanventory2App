@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ScrollView, RefreshControl, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +27,21 @@ export default function HistoryDetailScreen() {
   const [platformLinks, setPlatformLinks] = useState<PlatformLink[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [priceSheetVisible, setPriceSheetVisible] = useState(false);
-  const detailState = item ? buildHistoryDetailState(item) : null;
+
+  // Memoize detailState to avoid creating a new object every render
+  const detailState = useMemo(
+    () => (item ? buildHistoryDetailState(item) : null),
+    [item?.id, item?.productName, item?.brand, item?.searchQuery, item?.marketValue, item?.ebayListings?.length],
+  );
+
+  // Stabilize callbacks to avoid recreating useMarketData options each render
+  const onEbayDataLoaded = useCallback((priceStats: any, listings: any) => {
+    if (id) updateItemPrices(id, priceStats, listings);
+  }, [id, updateItemPrices]);
+
+  const onMarketValueLoaded = useCallback((value: any) => {
+    if (id) updateMarketValue(id, value);
+  }, [id, updateMarketValue]);
 
   const {
     ebayPriceStats,
@@ -41,31 +55,29 @@ export default function HistoryDetailScreen() {
     setEbayData,
     setMarketValue,
   } = useMarketData({
-    onEbayDataLoaded: (priceStats, listings) => {
-      if (item) {
-        updateItemPrices(item.id, priceStats, listings);
-      }
-    },
-    onMarketValueLoaded: (value) => {
-      if (item) {
-        updateMarketValue(item.id, value);
-      }
-    },
+    onEbayDataLoaded,
+    onMarketValueLoaded,
   });
 
+  // Track whether initial data load has been performed for this item
+  const initialLoadDone = useRef<string | null>(null);
+
   useEffect(() => {
-    if (item && detailState) {
-      setPlatformLinks(generatePlatformLinks(detailState.platformQueries));
-      if (item.marketValue) setMarketValue(item.marketValue);
-      if (item.priceStats) setEbayData(item.priceStats, item.ebayListings);
-      if (detailState.shouldLoadMarketValue) {
-        loadMarketValue(item.productName, item.category);
-      }
-      if (detailState.shouldLoadEbayData) {
-        loadEbayData(detailState.searchQuery, item.gtin || undefined);
-      }
+    if (!item || !detailState) return;
+    // Only run initial load once per item id
+    if (initialLoadDone.current === item.id) return;
+    initialLoadDone.current = item.id;
+
+    setPlatformLinks(generatePlatformLinks(detailState.platformQueries));
+    if (item.marketValue) setMarketValue(item.marketValue);
+    if (item.priceStats) setEbayData(item.priceStats, item.ebayListings);
+    if (detailState.shouldLoadMarketValue) {
+      loadMarketValue(item.productName, item.category);
     }
-  }, [detailState, item, loadEbayData, loadMarketValue, setEbayData, setMarketValue]);
+    if (detailState.shouldLoadEbayData) {
+      loadEbayData(detailState.searchQuery, item.gtin || undefined);
+    }
+  }, [item?.id, detailState]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
