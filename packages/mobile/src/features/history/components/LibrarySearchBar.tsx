@@ -84,7 +84,7 @@ export function LibrarySearchBar({
     <View className="px-5 pt-5 pb-2">
       {/* Header mit Titel und Anzahl */}
       <View className="flex-row items-baseline mb-3.5">
-        <Text className="text-foreground text-2xl font-bold">Bibliothek</Text>
+        <Text className="text-foreground text-2xl font-bold">Verlauf</Text>
         <View className="bg-primary-500/15 ml-2.5 px-2.5 py-0.5 rounded-full">
           <Text className="text-primary-400 text-xs font-semibold">{itemCount}</Text>
         </View>

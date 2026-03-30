@@ -39,7 +39,7 @@ const TABS: TabDef[] = [
   {
     route: '/(tabs)/library',
     icon: (p) => <Icons.BookOpen {...p} />,
-    label: 'Bibliothek',
+    label: 'Verlauf',
     matchSegments: ['library', 'history'],
   },
   {
@@ -162,7 +162,13 @@ export function GlobalTabBar() {
               key={tab.route}
               tab={tab}
               isFocused={getIsActive(tab)}
-              onPress={() => router.navigate(tab.route as never)}
+              onPress={() => {
+                if (tab.route === '/(tabs)/library' && (firstSegment === 'history' || secondSegment === 'library')) {
+                  router.navigate('/(tabs)/library');
+                } else {
+                  router.navigate(tab.route as never);
+                }
+              }}
               activeColor={colors.primary}
               inactiveColor={inactiveColor}
             />

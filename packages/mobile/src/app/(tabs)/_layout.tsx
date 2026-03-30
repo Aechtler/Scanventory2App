@@ -26,7 +26,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="library"
         options={{
-          title: 'Bibliothek',
+          title: 'Verlauf',
           headerShown: false,
         }}
       />

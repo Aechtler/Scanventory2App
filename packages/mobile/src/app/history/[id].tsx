@@ -127,7 +127,7 @@ export default function HistoryDetailScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Details', headerBackTitle: 'Verlauf', headerRight: () => <HistoryDetailHeaderActions onDelete={handleDelete} /> }} />
+      <Stack.Screen options={{ title: 'Details', headerBackTitle: 'Zurück', headerRight: () => <HistoryDetailHeaderActions onDelete={handleDelete} /> }} />
       <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
         <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: tabBarPadding }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
           <HistoryDetailHeader item={item} onPriceBadgePress={() => setPriceSheetVisible(true)} />
