@@ -8,7 +8,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { HistoryState } from './types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { cacheImage, removeCachedImage, clearImageCache } from '../services/imageCacheService';
-import { syncNewItem, syncPrices, syncMarketValue, syncDeleteItem, syncItemUpdate } from '../services/syncService';
+import { syncNewItem, syncPrices, syncMarketValue, syncDeleteItem, syncItemUpdate, syncFetchHistory } from '../services/syncService';
 import { createHistoryStoreState } from './state';
 export type { HistoryItem, HistoryItemDraft, HistoryItemUpdateFields } from './types';
 export type { HistoryStoreDependencies } from './state';
@@ -22,6 +22,7 @@ const historyStoreDependencies = {
   syncMarketValue,
   syncDeleteItem,
   syncItemUpdate,
+  syncFetchHistory,
 };
 
 /**

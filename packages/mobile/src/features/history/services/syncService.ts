@@ -3,7 +3,9 @@
  * Fehler werden still gefangen, Items bleiben lokal erhalten
  */
 
-import { apiUploadItem, apiPatch, apiPut, apiDelete, UploadItemPayload } from '@/shared/services';
+import { apiGet, apiUploadItem, apiPatch, apiPut, apiDelete, UploadItemPayload } from '@/shared/services';
+import { API_CONFIG } from '@/shared/constants';
+import type { HistoryItem } from '../store/types';
 import { PriceStats, MarketListing } from '@/features/market/services/ebay';
 import { MarketValueResult } from '@/features/market/services/perplexity';
 
@@ -83,5 +85,61 @@ export async function syncDeleteItem(serverId: string): Promise<boolean> {
   } catch (error) {
     console.warn('[Sync] Delete error:', error);
     return false;
+  }
+}
+
+/** 
+ * History vom Backend laden (Ansatz: Always On)
+ * Lädt die neuesten Scans des Nutzers herunter und konvertiert sie in das HistoryItem Format
+ */
+export async function syncFetchHistory(page: number = 1, limit: number = 50): Promise<HistoryItem[] | null> {
+  try {
+    const result = await apiGet<any>(`/api/items?page=${page}&limit=${limit}`);
+    
+    if (result.success && result.data?.data) {
+      const serverItems = result.data.data;
+      
+      return serverItems.map((item: any): HistoryItem => {
+        // Parse search queries
+        let searchQueries = undefined;
+        if (item.searchQueries) {
+          searchQueries = typeof item.searchQueries === 'string' 
+            ? JSON.parse(item.searchQueries) 
+            : item.searchQueries;
+        }
+
+        // Construct remote image URI using backend endpoint
+        const remoteImageUri = `${API_CONFIG.BASE_URL}/api/images/${item.imageFilename}`;
+        
+        return {
+          id: item.id,
+          serverId: item.id,
+          imageUri: remoteImageUri,
+          productName: item.productName,
+          category: item.category,
+          brand: item.brand,
+          condition: item.condition,
+          confidence: item.confidence,
+          gtin: item.gtin,
+          searchQuery: item.searchQuery,
+          searchQueries,
+          priceStats: typeof item.priceStats === 'string' ? JSON.parse(item.priceStats) : item.priceStats,
+          ebayListings: typeof item.ebayListings === 'string' ? JSON.parse(item.ebayListings) : item.ebayListings,
+          ebayListingsFetchedAt: item.ebayListingsFetchedAt,
+          marketValue: typeof item.marketValue === 'string' ? JSON.parse(item.marketValue) : item.marketValue,
+          marketValueFetchedAt: item.marketValueFetchedAt,
+          finalPrice: item.finalPrice,
+          finalPriceNote: item.finalPriceNote,
+          scannedAt: item.scannedAt,
+          syncStatus: 'synced',
+        };
+      });
+    }
+    
+    console.warn('[Sync] Fetch History fehlgeschlagen:', result.error?.message);
+    return null;
+  } catch (error) {
+    console.warn('[Sync] Fetch History error:', error);
+    return null;
   }
 }

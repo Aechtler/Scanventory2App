@@ -10,9 +10,9 @@ import {
   updateHistoryItemFields,
   updateHistoryItemMarketValue,
   updateHistoryItemPrices,
-} from './actions.ts';
-import { getHistoryItemById } from './selectors.ts';
-import type { HistoryItemDraft, HistoryItemUpdateFields, HistoryState } from './types.ts';
+} from './actions';
+import { getHistoryItemById } from './selectors';
+import type { HistoryItem, HistoryItemDraft, HistoryItemUpdateFields, HistoryState } from './types';
 
 export interface HistoryStoreDependencies {
   cacheImage: (uri: string) => Promise<string>;
@@ -36,6 +36,7 @@ export interface HistoryStoreDependencies {
     fields: Record<string, unknown>,
   ) => Promise<boolean>;
   syncDeleteItem: (serverId: string) => Promise<boolean>;
+  syncFetchHistory?: (page?: number, limit?: number) => Promise<HistoryItem[] | null>;
   now?: () => string;
   createId?: () => string;
 }
@@ -53,6 +54,39 @@ export const createHistoryStoreState = (
 ): HistoryState => ({
   items: [],
   isOffline: false,
+  isLoading: false,
+
+  fetchHistory: async () => {
+    if (!dependencies.syncFetchHistory) return;
+    
+    set({ isLoading: true });
+    try {
+      const serverItems = await dependencies.syncFetchHistory();
+      
+      if (serverItems) {
+        set((state) => {
+          // Keep local items that are still pending or failed
+          const localDrafts = state.items.filter(
+            (item) => item.syncStatus === 'pending' || item.syncStatus === 'failed'
+          );
+          
+          // Fast id-based Map to avoid duplicates if a draft already became a serverItem but status wasn't updated
+          const serverIds = new Set(serverItems.map(i => i.serverId));
+          const draftsToKeep = localDrafts.filter(i => !i.serverId || !serverIds.has(i.serverId));
+          
+          return {
+            items: [...draftsToKeep, ...serverItems],
+            isOffline: false,
+          };
+        });
+      }
+    } catch (e) {
+      console.warn('[Store] fetchHistory failed', e);
+      set({ isOffline: true });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 
   addItem: async (item: HistoryItemDraft) => {
     const cachedImageUri = await dependencies.cacheImage(item.imageUri);

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { View, Text, Pressable, RefreshControl, ActivityIndicator, ScrollView } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore } from '../../features/history/store/historyStore';
@@ -28,6 +29,7 @@ type LibraryTab = 'mine' | 'shared';
 export default function LibraryTab() {
   const items = useHistoryStore((state) => state.items);
   const removeItem = useHistoryStore((state) => state.removeItem);
+  const fetchHistory = useHistoryStore((state) => state.fetchHistory);
   const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<LibraryTab>('mine');
@@ -51,12 +53,22 @@ export default function LibraryTab() {
   const { filters, setSearchQuery, setCategory, setSortBy, filteredItems, categories, isFiltered } =
     useLibraryFilters(items);
 
-  const onRefresh = useCallback(() => {
+  useFocusEffect(
+    useCallback(() => {
+      fetchHistory();
+    }, [fetchHistory])
+  );
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setVisibleCount(LIBRARY_PAGE_SIZE);
-    if (activeTab === 'shared') refetchReceived();
-    setTimeout(() => setRefreshing(false), 800);
-  }, [activeTab, refetchReceived]);
+    if (activeTab === 'shared') {
+      await refetchReceived();
+    } else {
+      await fetchHistory();
+    }
+    setRefreshing(false);
+  }, [activeTab, refetchReceived, fetchHistory]);
 
   const paginatedItems = useMemo(() => filteredItems.slice(0, visibleCount), [filteredItems, visibleCount]);
   const hasMore = visibleCount < filteredItems.length;

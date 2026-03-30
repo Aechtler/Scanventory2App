@@ -53,6 +53,8 @@ export type HistoryItemUpdateFields = Partial<
 export interface HistoryState {
   items: HistoryItem[];
   isOffline: boolean;
+  isLoading: boolean;
+  fetchHistory: () => Promise<void>;
   addItem: (item: HistoryItemDraft) => Promise<string>;
   removeItem: (id: string) => void;
   clearHistory: () => void;
