@@ -163,7 +163,9 @@ export function GlobalTabBar() {
               tab={tab}
               isFocused={getIsActive(tab)}
               onPress={() => {
-                if (tab.route === '/(tabs)/library' && (firstSegment === 'history' || secondSegment === 'library')) {
+                if (tab.route === '/(tabs)') {
+                  useUIStore.getState().setScanMenuVisible(true);
+                } else if (tab.route === '/(tabs)/library' && (firstSegment === 'history' || secondSegment === 'library')) {
                   router.navigate('/(tabs)/library');
                 } else {
                   router.navigate(tab.route as never);

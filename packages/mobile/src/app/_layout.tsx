@@ -11,6 +11,7 @@ import { useAuthStore } from '../features/auth/store/authStore';
 import { GlobalTabBar } from '../shared/components/GlobalTabBar';
 import { useThemeStore, useResolvedColorScheme } from '../shared/store/themeStore';
 import { useThemeColors } from '../shared/hooks/useThemeColors';
+import { ScanActionSheet } from '../shared/components/ScanActionSheet';
 
 /**
  * Root Layout - App-weite Navigation und Provider
@@ -87,6 +88,7 @@ export default function RootLayout() {
             />
           </Stack>
           <GlobalTabBar />
+          <ScanActionSheet />
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>
