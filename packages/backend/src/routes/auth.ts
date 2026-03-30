@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { registerUser, loginUser, getUserById } from '../services/authService';
+import { registerUser, loginUser, getUserById, refreshUserToken } from '../services/authService';
 import { jwtAuthMiddleware, AuthRequest } from '../middleware/jwtAuth';
 import { ApiResponse } from '../types';
 import {
@@ -98,6 +98,30 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     console.error('Login error:', error);
     res.status(500).json(buildAuthErrorResponse('INTERNAL_ERROR', 'Failed to login'));
+  }
+});
+
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      res.status(400).json(buildAuthErrorResponse('BAD_REQUEST', 'Refresh token is required'));
+      return;
+    }
+
+    const result = await refreshUserToken(refreshToken);
+    const response: ApiResponse<typeof result> = { success: true, data: result };
+
+    res.json(response);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Invalid or expired')) {
+      res.status(401).json(buildAuthErrorResponse('UNAUTHORIZED', error.message));
+      return;
+    }
+
+    console.error('Token refresh error:', error);
+    res.status(500).json(buildAuthErrorResponse('INTERNAL_ERROR', 'Failed to refresh token'));
   }
 });
 

@@ -123,3 +123,28 @@ export async function getUserById(userId: string) {
   if (!user) throw new Error('User not found');
   return user;
 }
+
+/**
+ * Erneuert eine Supabase Auth Session mittels Refresh-Token
+ */
+export async function refreshUserToken(refreshToken: string): Promise<AuthResult> {
+  const { data, error } = await supabaseAdmin.auth.refreshSession({ refresh_token: refreshToken });
+
+  if (error || !data.session || !data.user) {
+    throw new Error('Invalid or expired refresh token');
+  }
+
+  // Profil-Daten aus public.User nachladen (isAdmin, name)
+  const profile = await getUserById(data.user.id).catch(() => null);
+
+  return {
+    user: {
+      id: data.user.id,
+      email: data.user.email!,
+      name: profile?.name ?? data.user.user_metadata?.name ?? null,
+      isAdmin: profile?.isAdmin ?? false,
+    },
+    token: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+  };
+}

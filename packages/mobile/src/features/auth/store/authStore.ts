@@ -24,6 +24,7 @@ interface ApiEnvelope<T> {
 interface AuthPayload {
   user: User;
   token: string;
+  refreshToken?: string;
 }
 
 interface ProfileFields {
@@ -50,6 +51,7 @@ interface AuthState {
 }
 
 const TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'auth_refresh_token';
 const API_URL = API_CONFIG.BASE_URL;
 const REQUEST_TIMEOUT_MS = 12000; // 12 Sekunden — danach Fehlermeldung statt endlosem Ladebalken
 
@@ -123,6 +125,9 @@ async function authenticate(
   }
 
   await SecureStore.setItemAsync(TOKEN_KEY, data.token);
+  if (data.refreshToken) {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refreshToken);
+  }
 
   set({
     user: data.user,
@@ -151,7 +156,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       set({ isLoading: true });
 
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      let token = await SecureStore.getItemAsync(TOKEN_KEY);
       if (!token) {
         set({ isLoading: false });
         return;
@@ -164,9 +169,45 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       if (!response.ok) {
-        // 401 = ungültiges/abgelaufenes Token → ausloggen
+        // 401 = ungültiges/abgelaufenes Token → ausloggen oder Token refreshen
         if (response.status === 401) {
+          const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+
+          if (refreshToken) {
+            try {
+              const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken }),
+              });
+
+              if (refreshResponse.ok) {
+                const refreshedPayload = await refreshResponse.json();
+                const refreshedData = unwrapEnvelope<AuthPayload>(refreshedPayload);
+
+                if (refreshedData?.token && refreshedData?.user?.id) {
+                  // Save new tokens
+                  token = refreshedData.token;
+                  await SecureStore.setItemAsync(TOKEN_KEY, token);
+                  if (refreshedData.refreshToken) {
+                    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshedData.refreshToken);
+                  }
+
+                  set({ user: refreshedData.user, token, isAuthenticated: true, isLoading: false });
+                  return; // Escape hier, der User ist erfolgreich eingeloggt
+                }
+              }
+            } catch (err) {
+              console.warn('Token refresh network error:', err);
+              // Bei Netzwerk-Fehlern während des Refreshes lassen wir es auf false und behalten die Tokens
+              set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+              return;
+            }
+          }
+
+          // Refresh fehlgeschlagen oder nicht vorhanden
           await SecureStore.deleteItemAsync(TOKEN_KEY);
+          await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
           set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         } else {
           // Server-Fehler (5xx) → Token behalten, als nicht authentifiziert markieren
@@ -179,7 +220,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = unwrapEnvelope<User>(payload);
       set({ user, token, isAuthenticated: true, isLoading: false });
     } catch (error) {
-      // Netzwerkfehler → Token behalten, User wird zum Login weitergeleitet
+      // Netzwerkfehler → Token behalten
       console.error('Load user error:', error);
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
@@ -210,6 +251,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     try {
       await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
 
       set({
         user: null,
