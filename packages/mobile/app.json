@@ -19,6 +19,9 @@
       "infoPlist": {
         "NSCameraUsageDescription": "ScanApp benötigt Zugriff auf die Kamera um Gegenstände zu scannen.",
         "NSPhotoLibraryUsageDescription": "ScanApp benötigt Zugriff auf deine Fotos um Bilder zu analysieren."
+      },
+      "NSAppTransportSecurity": {
+        "NSAllowsArbitraryLoads": true
       }
     },
     "android": {

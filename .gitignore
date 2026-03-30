@@ -68,3 +68,6 @@ packages/*/dist/
 
 # Supabase Self-hosted Secrets
 supabase/self-hosted/.env
+
+# Claude local settings (may contain API keys)
+.claude/settings.local.json
