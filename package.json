@@ -2,32 +2,30 @@
   "name": "@scanapp/root",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
+
   "scripts": {
     "setup:workspace": "node ./scripts/setup-workspace-toolchain.mjs",
-    "dev:mobile": "npm run start --workspace=@scanapp/mobile",
-    "dev:backend": "npm run dev --workspace=@scanapp/backend",
-    "build:mobile": "npm run build:android --workspace=@scanapp/mobile",
+    "dev:mobile": "pnpm --filter @scanapp/mobile run start",
+    "dev:backend": "pnpm --filter @scanapp/backend run dev",
+    "build:mobile": "pnpm --filter @scanapp/mobile run build:android",
     "build:backend": "node ./scripts/run-workspace-build.mjs backend",
     "build:all": "node ./scripts/run-workspace-build-all.mjs",
     "lint:mobile": "node ./scripts/run-workspace-lint.mjs mobile",
     "lint:backend": "echo 'No lint configured for backend'",
-    "lint:all": "npm run lint --workspaces --if-present",
+    "lint:all": "pnpm -r run lint --if-present",
     "typecheck:mobile": "node ./scripts/run-workspace-typecheck.mjs mobile",
     "typecheck:backend": "node ./scripts/run-workspace-typecheck.mjs backend",
     "typecheck:all": "node ./scripts/run-workspace-typecheck-all.mjs",
-    "test:mobile": "npm run test --workspace=@scanapp/mobile",
+    "test:mobile": "pnpm --filter @scanapp/mobile run test",
     "test:targeted": "node --test --experimental-strip-types scripts/workspace-toolchain-health.test.ts scripts/setup-workspace-toolchain.test.ts scripts/run-workspace-lint.test.ts scripts/run-workspace-typecheck.test.ts scripts/run-workspace-typecheck-all.test.ts scripts/run-workspace-build.test.ts scripts/run-workspace-build-all.test.ts scripts/manual-regression-checklist.test.ts scripts/manual-regression-report.test.ts packages/mobile/toolchain.test.ts packages/mobile/src/features/history/utils/historyPricing.test.ts packages/mobile/src/features/history/utils/historyDetail.test.ts packages/mobile/src/features/history/store/historyStore.test.ts packages/mobile/src/features/analyze/utils/productImageLoading.test.ts packages/mobile/src/features/analyze/hooks/analysisHelpers.test.ts packages/mobile/src/features/market/services/ebay/search.test.ts packages/mobile/src/features/market/services/marketAggregator.test.ts packages/mobile/src/shared/components/Animated.test.ts packages/mobile/src/shared/components/CardSlider/cardSliderKeys.test.ts packages/mobile/src/shared/hooks/useAsync.test.ts packages/backend/dockerComposeConfig.test.ts packages/backend/prisma/schema.test.ts packages/backend/src/middleware/errorLogging.test.ts packages/backend/src/middleware/requestId.test.ts packages/backend/src/middleware/requestLogging.test.ts packages/backend/src/routes/auth.test.ts packages/backend/src/routes/docs.test.ts packages/backend/src/routes/health.test.ts packages/backend/src/routes/items/shared.test.ts packages/backend/src/services/itemPayloads.test.ts packages/backend/src/services/itemServiceFactory.test.ts",
     "validate:manual-regression": "node ./scripts/manual-regression-checklist.mjs",
     "manual-regression:report": "node ./scripts/manual-regression-report.mjs",
-    "test:all": "npm run test --workspaces --if-present",
+    "test:all": "pnpm -r run test --if-present",
     "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist",
-    "db:migrate": "npm run db:migrate --workspace=@scanapp/backend",
-    "db:push": "npm run db:push --workspace=@scanapp/backend",
-    "db:seed": "npm run db:seed --workspace=@scanapp/backend",
-    "db:studio": "npm run db:studio --workspace=@scanapp/backend",
+    "db:migrate": "pnpm --filter @scanapp/backend run db:migrate",
+    "db:push": "pnpm --filter @scanapp/backend run db:push",
+    "db:seed": "pnpm --filter @scanapp/backend run db:seed",
+    "db:studio": "pnpm --filter @scanapp/backend run db:studio",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
@@ -38,5 +36,8 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@expo/metro-runtime": "6.1.2"
   }
 }
