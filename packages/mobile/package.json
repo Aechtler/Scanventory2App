@@ -1,7 +1,7 @@
 {
   "name": "@scanapp/mobile",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -15,6 +15,7 @@
     "build:android": "eas build --platform android"
   },
   "dependencies": {
+    "@expo/metro-runtime": "^55.0.7",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@shopify/flash-list": "^2.2.0",
     "babel-preset-expo": "^54.0.10",

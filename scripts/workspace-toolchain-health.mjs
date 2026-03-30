@@ -17,10 +17,6 @@ export const TOOLCHAIN_REQUIREMENTS = [
     requiredFiles: ['package.json', 'types/index.d.ts'],
   },
   {
-    moduleDirectory: 'node_modules/@types/bcryptjs',
-    requiredFiles: ['package.json', 'index.d.ts'],
-  },
-  {
     moduleDirectory: 'node_modules/@types/cors',
     requiredFiles: ['package.json', 'index.d.ts'],
   },

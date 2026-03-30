@@ -15,7 +15,7 @@ export const createItemService = createItemServiceFactory;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const itemService = createItemServiceFactory(prisma as any, {
   toJsonOrNull,
-  isRecordNotFoundError: (error) =>
+  isRecordNotFoundError: (error: any) =>
     error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025',
 });
 
