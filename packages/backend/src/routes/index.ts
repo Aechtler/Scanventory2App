@@ -13,12 +13,13 @@ import usersRouter from './users';
 import followsRouter from './follows';
 import groupsRouter from './groups';
 import itemSharingRouter, { sharedWithMeRouter, groupLibraryRouter } from './sharing';
+import imagesRouter from './images';
 
 const router = Router();
 
 // Oeffentliche Routen (kein Auth)
 router.use('/health', healthRouter);
-// /images Route entfernt: Bilder werden direkt über Supabase Storage CDN URLs ausgeliefert
+router.use('/images', imagesRouter);
 router.use('/auth', authRouter);
 router.use('/docs', docsRouter);
 
