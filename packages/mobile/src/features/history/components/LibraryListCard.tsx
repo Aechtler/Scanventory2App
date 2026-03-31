@@ -1,16 +1,16 @@
 /**
  * LibraryListCard - Kompakte horizontale Card für die List-View
- * Bild links, Infos rechts mit Preis, Tags, Preisspanne, Datum
  */
 
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StaggeredItem } from '@/shared/components/Animated';
 import { SwipeableLibraryItem } from './SwipeableLibraryItem';
 import { HistoryItem } from '@/features/history/store/historyStore';
 import { formatPrice } from '@/features/market/services/ebay';
 import { getLibraryDisplayPrice, hasLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
+import { classifyProduct } from '@/features/history/utils/productClassification';
+import { Icons } from '@/shared/components/Icons';
 
 interface LibraryListCardProps {
   item: HistoryItem;
@@ -19,9 +19,25 @@ interface LibraryListCardProps {
   onShare?: () => void;
 }
 
-function formatDate(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+function ProductTypeBadge({ item }: { item: HistoryItem }) {
+  const type = classifyProduct(item);
+  if (type === 'fast_seller') {
+    return (
+      <View className="flex-row items-center gap-1 bg-amber-500/15 px-2 py-0.5 rounded-full">
+        <Icons.TrendingUp size={10} color="#f59e0b" />
+        <Text className="text-[10px] font-semibold text-amber-400">Schnellverkäufer</Text>
+      </View>
+    );
+  }
+  if (type === 'high_value') {
+    return (
+      <View className="flex-row items-center gap-1 bg-violet-500/15 px-2 py-0.5 rounded-full">
+        <Icons.Star size={10} color="#a78bfa" />
+        <Text className="text-[10px] font-semibold text-violet-400">High Value</Text>
+      </View>
+    );
+  }
+  return null;
 }
 
 function TagPill({ label, accent }: { label: string; accent?: boolean }) {
@@ -37,39 +53,21 @@ function TagPill({ label, accent }: { label: string; accent?: boolean }) {
 function PriceSection({ item }: { item: HistoryItem }) {
   const hasFinal = item.finalPrice != null;
   const displayPrice = getLibraryDisplayPrice(item);
-  const hasRange = item.priceStats?.minPrice > 0 && item.priceStats?.maxPrice > 0
-    && item.priceStats.minPrice !== item.priceStats.maxPrice;
 
   if (!hasLibraryDisplayPrice(item)) {
-    return (
-      <Text className="text-foreground-secondary text-xs italic">Kein Preis</Text>
-    );
+    return <Text className="text-foreground-secondary text-xs italic">Kein Preis</Text>;
   }
 
   return (
-    <View className="items-end">
-      <View className={`px-2.5 py-1 rounded-lg ${hasFinal ? 'bg-emerald-500/15' : 'bg-primary-500/10'}`}>
-        <Text className={`font-bold text-[15px] ${hasFinal ? 'text-emerald-500' : 'text-primary-400'}`}>
-          {formatPrice(displayPrice!)}
-        </Text>
-      </View>
-      {!hasFinal && hasRange && (
-        <Text className="text-foreground-secondary text-[10px] mt-1">
-          {formatPrice(item.priceStats.minPrice)}–{formatPrice(item.priceStats.maxPrice)}
-        </Text>
-      )}
-      {hasFinal && item.priceStats?.avgPrice > 0 && (
-        <Text className="text-foreground-secondary text-[10px] mt-1">
-          Ø {formatPrice(item.priceStats.avgPrice)}
-        </Text>
-      )}
+    <View className={`px-2.5 py-1 rounded-lg ${hasFinal ? 'bg-emerald-500/15' : 'bg-primary-500/10'}`}>
+      <Text className={`font-bold text-[15px] ${hasFinal ? 'text-emerald-500' : 'text-primary-400'}`}>
+        {formatPrice(displayPrice!)}
+      </Text>
     </View>
   );
 }
 
 export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListCardProps) {
-  const listingCount = item.priceStats?.totalListings ?? 0;
-
   return (
     <StaggeredItem index={index}>
       <SwipeableLibraryItem itemName={item.productName} onDelete={onDelete}>
@@ -87,47 +85,30 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
                 style={styles.image}
                 resizeMode="cover"
               />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.4)']}
-                style={styles.imageGradient}
-              />
-              {listingCount > 0 && (
-                <View className="absolute bottom-1.5 left-1.5 bg-black/50 px-1.5 py-0.5 rounded">
-                  <Text className="text-white/70 text-[9px] font-medium">
-                    {listingCount} Angebote
-                  </Text>
-                </View>
-              )}
             </View>
 
             {/* Infos rechts */}
             <View className="flex-1 py-3 pr-3.5 pl-3 justify-between">
               {/* Oberer Bereich: Name + Preis */}
-              <View>
-                <View className="flex-row justify-between items-start gap-2">
-                  <View className="flex-1 shrink">
-                    <Text className="text-foreground font-semibold text-[15px] leading-[20px]" numberOfLines={2}>
-                      {item.productName}
+              <View className="flex-row justify-between items-start gap-2">
+                <View className="flex-1 shrink">
+                  <Text className="text-foreground font-semibold text-[15px] leading-[20px]" numberOfLines={2}>
+                    {item.productName}
+                  </Text>
+                  {item.brand && (
+                    <Text className="text-foreground-secondary text-[12px] mt-0.5">
+                      {item.brand}
                     </Text>
-                    {item.brand && (
-                      <Text className="text-foreground-secondary text-[12px] mt-0.5">
-                        {item.brand}
-                      </Text>
-                    )}
-                  </View>
-                  <PriceSection item={item} />
+                  )}
                 </View>
+                <PriceSection item={item} />
               </View>
 
-              {/* Unterer Bereich: Tags + Datum */}
-              <View className="flex-row items-center justify-between mt-2.5">
-                <View className="flex-row flex-wrap gap-1.5 flex-1">
-                  {item.category ? <TagPill label={item.category} accent /> : null}
-                  {item.condition ? <TagPill label={item.condition} /> : null}
-                </View>
-                <Text className="text-foreground-secondary/60 text-[11px] ml-2">
-                  {formatDate(item.scannedAt)}
-                </Text>
+              {/* Unterer Bereich: Badges + Tags */}
+              <View className="flex-row flex-wrap gap-1.5 mt-2.5">
+                <ProductTypeBadge item={item} />
+                {item.category ? <TagPill label={item.category} accent /> : null}
+                {item.condition ? <TagPill label={item.condition} /> : null}
               </View>
             </View>
           </View>
@@ -146,19 +127,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   imageContainer: {
-    width: 120,
-    height: 120,
+    width: 110,
+    height: 110,
     overflow: 'hidden',
   },
   image: {
     width: '100%',
     height: '100%',
-  },
-  imageGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: '40%',
   },
 });

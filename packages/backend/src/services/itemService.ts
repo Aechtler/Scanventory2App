@@ -1,8 +1,7 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CreateItemBody, PaginatedResponse, PriceStats, MarketListing, MarketValueResult } from '../types';
 import { createItemService as createItemServiceFactory } from './itemServiceFactory';
-
-const prisma = new PrismaClient();
+import { prisma } from './prismaClient';
 
 function toJsonOrNull(value: unknown): Prisma.InputJsonValue | typeof Prisma.DbNull {
   if (value === undefined || value === null) return Prisma.DbNull;

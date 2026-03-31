@@ -6,6 +6,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { HistoryItem } from '../store/historyStore';
 import { getLibraryDisplayPrice } from '../utils/historyPricing';
+import { classifyProduct, type ProductType } from '../utils/productClassification';
 
 export type SortBy = 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name';
 
@@ -13,6 +14,7 @@ export interface LibraryFilters {
   searchQuery: string;
   selectedCategories: string[];
   sortBy: SortBy;
+  productType: ProductType | null;
 }
 
 export function useLibraryFilters(items: HistoryItem[]) {
@@ -20,6 +22,7 @@ export function useLibraryFilters(items: HistoryItem[]) {
     searchQuery: '',
     selectedCategories: [],
     sortBy: 'newest',
+    productType: null,
   });
 
   const setSearchQuery = useCallback((query: string) => {
@@ -34,8 +37,12 @@ export function useLibraryFilters(items: HistoryItem[]) {
     setFilters((prev) => ({ ...prev, sortBy }));
   }, []);
 
+  const setProductType = useCallback((productType: ProductType | null) => {
+    setFilters((prev) => ({ ...prev, productType }));
+  }, []);
+
   const resetFilters = useCallback(() => {
-    setFilters({ searchQuery: '', selectedCategories: [], sortBy: 'newest' });
+    setFilters({ searchQuery: '', selectedCategories: [], sortBy: 'newest', productType: null });
   }, []);
 
   const categories = useMemo(() => {
@@ -60,6 +67,11 @@ export function useLibraryFilters(items: HistoryItem[]) {
     // Kategorie (multiselect, leer = alle)
     if (filters.selectedCategories.length > 0) {
       result = result.filter((item) => filters.selectedCategories.includes(item.category));
+    }
+
+    // Produkttyp-Filter (Fast Seller / High Value)
+    if (filters.productType !== null) {
+      result = result.filter((item) => classifyProduct(item) === filters.productType);
     }
 
     // Sortierung
@@ -89,17 +101,22 @@ export function useLibraryFilters(items: HistoryItem[]) {
     return result;
   }, [items, filters]);
 
-  const isFiltered = filters.searchQuery.trim() !== '' || filters.selectedCategories.length > 0;
+  const isFiltered =
+    filters.searchQuery.trim() !== '' ||
+    filters.selectedCategories.length > 0 ||
+    filters.productType !== null;
   const activeFilterCount =
     (filters.searchQuery.trim() ? 1 : 0) +
     (filters.selectedCategories.length > 0 ? 1 : 0) +
-    (filters.sortBy !== 'newest' ? 1 : 0);
+    (filters.sortBy !== 'newest' ? 1 : 0) +
+    (filters.productType !== null ? 1 : 0);
 
   return {
     filters,
     setSearchQuery,
     setCategories,
     setSortBy,
+    setProductType,
     resetFilters,
     filteredItems,
     categories,

@@ -43,11 +43,11 @@ export default function LibraryTab() {
   const tabBarPadding = useTabBarPadding();
 
   const isEmpty = items.length === 0;
-  const { filters, setSearchQuery, setCategories, setSortBy, filteredItems, categories, isFiltered } =
+  const { filters, setSearchQuery, setCategories, setSortBy, setProductType, filteredItems, categories, isFiltered } =
     useLibraryFilters(items);
 
   // listKey zwingt FlashList zum Remount → Items animieren frisch rein
-  const listKey = `${filters.sortBy}-${filters.selectedCategories.join(',')}-${filters.searchQuery}-${viewMode}`;
+  const listKey = `${filters.sortBy}-${filters.selectedCategories.join(',')}-${filters.searchQuery}-${filters.productType}-${viewMode}`;
 
   useFocusEffect(
     useCallback(() => {
@@ -114,6 +114,8 @@ export default function LibraryTab() {
             onSelectCategories={setCategories}
             sortBy={filters.sortBy}
             onSelectSort={setSortBy}
+            productType={filters.productType}
+            onSelectProductType={setProductType}
             itemCount={items.length}
             filteredCount={filteredItems.length}
             viewMode={viewMode}
@@ -135,7 +137,7 @@ export default function LibraryTab() {
               isFiltered ? (
                 <LibraryFilteredEmptyState
                   iconColor={colors.textSecondary}
-                  onResetFilters={() => { setSearchQuery(''); setCategories([]); }}
+                  onResetFilters={() => { setSearchQuery(''); setCategories([]); setProductType(null); }}
                 />
               ) : null
             }

@@ -11,6 +11,8 @@ import {
   AnalysisImageHeader,
 } from '../features/analyze';
 import { MatchSelectionSheet } from '../features/scan/components/MatchSelectionSheet';
+import { useCategoryStore } from '../features/categories';
+import { suggestCategoryPath, resolvePathToNode } from '../features/categories/services/suggestCategory';
 
 /**
  * Analyse Screen - Bilderkennung, automatisches Speichern, Weiterleitung zur Edit-Seite
@@ -23,6 +25,7 @@ export default function AnalyzeScreen() {
     gtin?: string;
   }>();
   const addItem = useHistoryStore((state) => state.addItem);
+  const categoryTree = useCategoryStore((state) => state.tree);
   const isSaving = useRef(false);
 
   const {
@@ -53,27 +56,38 @@ export default function AnalyzeScreen() {
   useEffect(() => {
     if (selectedMatch && state === 'complete' && !isSaving.current) {
       isSaving.current = true;
-      addItem({
-        imageUri: imageUri ? decodeURIComponent(imageUri) : '',
-        productName: selectedMatch.productName,
-        category: selectedMatch.category,
-        brand: selectedMatch.brand,
-        condition: selectedMatch.condition,
-        confidence: selectedMatch.confidence,
-        searchQuery: selectedMatch.searchQuery,
-        searchQueries: selectedMatch.searchQueries,
-        gtin: selectedMatch.gtin,
-        ebayListings: [],
-        priceStats: {
-          minPrice: 0,
-          maxPrice: 0,
-          avgPrice: 0,
-          medianPrice: 0,
-          totalListings: 0,
-          soldListings: 0,
-        },
-      }).then((newId) => {
-        router.replace(`/history/edit/${newId}`);
+
+      // Kategorie-Suggestion (fire & forget, schlägt fehl wenn kein Netz/Key)
+      suggestCategoryPath(
+        { name: selectedMatch.productName, category: selectedMatch.category, brand: selectedMatch.brand },
+        categoryTree
+      ).then((pathNames) => {
+        const resolved = resolvePathToNode(categoryTree, pathNames);
+
+        addItem({
+          imageUri: imageUri ? decodeURIComponent(imageUri) : '',
+          productName: selectedMatch.productName,
+          category: selectedMatch.category,
+          categoryId: resolved?.node.id ?? null,
+          categoryPath: resolved?.pathString ?? null,
+          brand: selectedMatch.brand,
+          condition: selectedMatch.condition,
+          confidence: selectedMatch.confidence,
+          searchQuery: selectedMatch.searchQuery,
+          searchQueries: selectedMatch.searchQueries,
+          gtin: selectedMatch.gtin,
+          ebayListings: [],
+          priceStats: {
+            minPrice: 0,
+            maxPrice: 0,
+            avgPrice: 0,
+            medianPrice: 0,
+            totalListings: 0,
+            soldListings: 0,
+          },
+        }).then((newId) => {
+          router.replace(`/history/edit/${newId}`);
+        });
       });
     }
   }, [selectedMatch, state]);

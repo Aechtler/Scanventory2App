@@ -14,6 +14,7 @@ import followsRouter from './follows';
 import groupsRouter from './groups';
 import itemSharingRouter, { sharedWithMeRouter, groupLibraryRouter } from './sharing';
 import imagesRouter from './images';
+import categoriesRouter from './categories';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/health', healthRouter);
 router.use('/images', imagesRouter);
 router.use('/auth', authRouter);
 router.use('/docs', docsRouter);
+router.use('/categories', categoriesRouter);
 
 // User-Profile (optional Auth) + Follow-Routen (Auth innerhalb der Handler)
 router.use('/users', usersRouter);

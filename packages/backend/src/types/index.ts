@@ -62,6 +62,33 @@ export interface MarketValueResult {
   rawResponse: string;
 }
 
+// ─── Kategorie-Types ──────────────────────────────────────────────────────────
+
+export interface CategoryNode {
+  id: string;
+  name: string;
+  parentId: string | null;
+  iconName: string | null;
+  sortOrder: number;
+  children: CategoryNode[];
+}
+
+export interface CreateCategoryBody {
+  name: string;
+  parentId?: string | null;
+  iconName?: string | null;
+  sortOrder?: number;
+}
+
+export interface UpdateCategoryBody {
+  name?: string;
+  iconName?: string | null;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+// ─── Item-Types ───────────────────────────────────────────────────────────────
+
 /** Body beim Erstellen eines neuen Items (Multipart: JSON als `data` Feld) */
 export interface CreateItemBody {
   productName: string;

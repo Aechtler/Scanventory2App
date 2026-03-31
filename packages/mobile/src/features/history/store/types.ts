@@ -7,6 +7,8 @@ export interface HistoryItem {
   cachedImageUri?: string;
   productName: string;
   category: string;
+  categoryId?: string | null;    // FK → Category (neu)
+  categoryPath?: string | null;  // "Videospiele > Sony > PlayStation 5 > Games"
   brand: string | null;
   condition: string;
   confidence: number;
@@ -40,6 +42,8 @@ export type HistoryItemUpdateFields = Partial<
     HistoryItem,
     | 'productName'
     | 'category'
+    | 'categoryId'
+    | 'categoryPath'
     | 'brand'
     | 'condition'
     | 'gtin'

@@ -22,6 +22,8 @@ import { useHistoryStore } from '@/features/history/store/historyStore';
 import { useUIStore } from '@/shared/store/uiStore';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { useTabBarPadding } from '@/shared/hooks/useTabBarPadding';
+import { CategoryPickerField } from '@/features/categories';
+import type { CategoryNode } from '@/features/categories';
 
 const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 
@@ -47,6 +49,8 @@ export default function ProductEditScreen() {
 
   const [productName, setProductName] = useState('');
   const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [categoryPath, setCategoryPath] = useState<string | null>(null);
   const [brand, setBrand] = useState('');
   const [condition, setCondition] = useState('');
   const [gtin, setGtin] = useState('');
@@ -72,6 +76,8 @@ export default function ProductEditScreen() {
     if (item) {
       setProductName(item.productName);
       setCategory(item.category);
+      setCategoryId(item.categoryId ?? null);
+      setCategoryPath(item.categoryPath ?? null);
       setBrand(item.brand || '');
       setCondition(item.condition);
       setGtin(item.gtin || '');
@@ -86,6 +92,8 @@ export default function ProductEditScreen() {
 
     if (productName !== item.productName) changes.productName = productName;
     if (category !== item.category) changes.category = category;
+    if (categoryId !== (item.categoryId ?? null)) changes.categoryId = categoryId;
+    if (categoryPath !== (item.categoryPath ?? null)) changes.categoryPath = categoryPath;
     if (brand !== (item.brand || '')) changes.brand = brand || null;
     if (condition !== item.condition) changes.condition = condition;
     if (gtin !== (item.gtin || '')) changes.gtin = gtin || null;
@@ -213,13 +221,14 @@ export default function ProductEditScreen() {
 
             {/* Kategorie */}
             <View className="mb-5">
-              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Kategorie</Text>
-              <TextInput
-                value={category}
-                onChangeText={setCategory}
-                placeholder="Kategorie..."
-                placeholderTextColor={colors.textSecondary}
-                className="text-foreground text-base bg-background-elevated p-4 rounded-xl"
+              <CategoryPickerField
+                value={categoryPath}
+                categoryId={categoryId}
+                onSelect={(node: CategoryNode, path: string) => {
+                  setCategoryId(node.id);
+                  setCategoryPath(path);
+                  setCategory(node.name);
+                }}
               />
             </View>
 

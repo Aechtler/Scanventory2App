@@ -10,6 +10,8 @@ import { StaggeredItem } from '@/shared/components/Animated';
 import { HistoryItem } from '@/features/history/store/historyStore';
 import { formatPrice } from '@/features/market/services/ebay';
 import { getLibraryDisplayPrice, hasLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
+import { classifyProduct } from '@/features/history/utils/productClassification';
+import { Icons } from '@/shared/components/Icons';
 
 interface LibraryGridCardProps {
   item: HistoryItem;
@@ -26,6 +28,7 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
   const hasFinal = item.finalPrice != null;
   const price = getLibraryDisplayPrice(item);
   const hasPrice = hasLibraryDisplayPrice(item);
+  const productType = classifyProduct(item);
 
   return (
     <StaggeredItem index={index}>
@@ -57,6 +60,20 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
               <Text className="text-white font-bold text-xs">
                 {formatPrice(price!)}
               </Text>
+            </View>
+          )}
+
+          {/* Produkttyp-Badge unten links */}
+          {productType === 'fast_seller' && (
+            <View className="absolute bottom-2 left-2 flex-row items-center gap-1 bg-amber-500/80 px-1.5 py-0.5 rounded-md">
+              <Icons.TrendingUp size={9} color="#fff" />
+              <Text className="text-white text-[9px] font-semibold">Schnell</Text>
+            </View>
+          )}
+          {productType === 'high_value' && (
+            <View className="absolute bottom-2 left-2 flex-row items-center gap-1 bg-violet-500/80 px-1.5 py-0.5 rounded-md">
+              <Icons.Star size={9} color="#fff" />
+              <Text className="text-white text-[9px] font-semibold">High Value</Text>
             </View>
           )}
         </View>

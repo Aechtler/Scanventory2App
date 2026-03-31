@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")       // PgBouncer (für Queries, Connection Pooling)
-  directUrl = env("DIRECT_URL")         // Direkte Verbindung (für Prisma Migrationen)
+  provider = "postgresql"
+  // URL-Konfiguration liegt in prisma.config.ts (Prisma 7)
 }
 
 model User {
@@ -149,18 +148,43 @@ enum SharePermission {
   COMMENT
 }
 
+// ─── Kategorie-System ──────────────────────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  parentId  String?
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  iconName  String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scannedItems ScannedItem[]
+
+  @@index([parentId])
+  @@index([name])
+}
+
+// ─── ScannedItem ───────────────────────────────────────────────────────────────
+
 model ScannedItem {
   id     String  @id @default(uuid())
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Produktdaten (von Gemini Vision)
-  productName String
-  category    String
-  brand       String?
-  condition   String
-  confidence  Float
-  gtin        String?
+  productName  String
+  category     String   // Legacy: freier String (wird schrittweise durch categoryId ersetzt)
+  categoryId   String?  // FK → Category (neu)
+  categoryRef  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryPath String?  // Denormalisiert: "Videospiele > Sony > PlayStation 5 > Games"
+  brand        String?
+  condition    String
+  confidence   Float
+  gtin         String?
 
   // Suchkonfiguration
   searchQuery   String
@@ -198,6 +222,7 @@ model ScannedItem {
   @@index([userId, scannedAt])
   @@index([productName])
   @@index([category])
+  @@index([categoryId])
 }
 
 // ─── Messaging (v2 — Tabellen existieren, werden noch nicht befüllt) ──────────

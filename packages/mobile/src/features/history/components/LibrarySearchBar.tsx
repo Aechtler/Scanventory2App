@@ -7,6 +7,7 @@ import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { CategoryDropdown } from './CategoryDropdown';
 import type { SortBy } from '../hooks/useLibraryFilters';
+import type { ProductType } from '../utils/productClassification';
 
 export type ViewMode = 'list' | 'grid';
 
@@ -18,6 +19,8 @@ interface LibrarySearchBarProps {
   onSelectCategories: (cats: string[]) => void;
   sortBy: SortBy;
   onSelectSort: (sort: SortBy) => void;
+  productType: ProductType | null;
+  onSelectProductType: (type: ProductType | null) => void;
   itemCount: number;
   filteredCount: number;
   viewMode: ViewMode;
@@ -65,13 +68,15 @@ export function LibrarySearchBar({
   onSelectCategories,
   sortBy,
   onSelectSort,
+  productType,
+  onSelectProductType,
   itemCount,
   filteredCount,
   viewMode,
   onToggleViewMode,
 }: LibrarySearchBarProps) {
   const colors = useThemeColors();
-  const hasActiveFilters = selectedCategories.length > 0 || value.length > 0;
+  const hasActiveFilters = selectedCategories.length > 0 || value.length > 0 || productType !== null;
 
   const handleNeuesteToggle = () => {
     if (sortBy === 'newest') onSelectSort('oldest');
@@ -151,6 +156,53 @@ export function LibrarySearchBar({
           active={sortBy === 'name'}
           onPress={handleAzToggle}
         />
+      </View>
+
+      {/* Zeile 3: Produkttyp-Filter */}
+      <View className="flex-row items-center mt-1.5 gap-2">
+        <Pressable
+          onPress={() => onSelectProductType(productType === 'fast_seller' ? null : 'fast_seller')}
+          hitSlop={4}
+          className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 ${
+            productType === 'fast_seller'
+              ? 'bg-amber-500/20 border border-amber-500/50'
+              : 'bg-background-elevated/60 border border-transparent'
+          }`}
+        >
+          <Icons.TrendingUp
+            size={12}
+            color={productType === 'fast_seller' ? '#f59e0b' : colors.textSecondary}
+          />
+          <Text
+            className={`text-[13px] font-medium ${
+              productType === 'fast_seller' ? 'text-amber-400' : 'text-foreground-secondary'
+            }`}
+          >
+            Schnellverkäufer
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => onSelectProductType(productType === 'high_value' ? null : 'high_value')}
+          hitSlop={4}
+          className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 ${
+            productType === 'high_value'
+              ? 'bg-violet-500/20 border border-violet-500/50'
+              : 'bg-background-elevated/60 border border-transparent'
+          }`}
+        >
+          <Icons.Star
+            size={12}
+            color={productType === 'high_value' ? '#a78bfa' : colors.textSecondary}
+          />
+          <Text
+            className={`text-[13px] font-medium ${
+              productType === 'high_value' ? 'text-violet-400' : 'text-foreground-secondary'
+            }`}
+          >
+            High Value
+          </Text>
+        </Pressable>
       </View>
 
       {hasActiveFilters && (
