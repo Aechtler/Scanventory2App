@@ -11,14 +11,14 @@ export type SortBy = 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name';
 
 export interface LibraryFilters {
   searchQuery: string;
-  category: string | null;
+  selectedCategories: string[];
   sortBy: SortBy;
 }
 
 export function useLibraryFilters(items: HistoryItem[]) {
   const [filters, setFilters] = useState<LibraryFilters>({
     searchQuery: '',
-    category: null,
+    selectedCategories: [],
     sortBy: 'newest',
   });
 
@@ -26,8 +26,8 @@ export function useLibraryFilters(items: HistoryItem[]) {
     setFilters((prev) => ({ ...prev, searchQuery: query }));
   }, []);
 
-  const setCategory = useCallback((category: string | null) => {
-    setFilters((prev) => ({ ...prev, category }));
+  const setCategories = useCallback((selectedCategories: string[]) => {
+    setFilters((prev) => ({ ...prev, selectedCategories }));
   }, []);
 
   const setSortBy = useCallback((sortBy: SortBy) => {
@@ -35,7 +35,7 @@ export function useLibraryFilters(items: HistoryItem[]) {
   }, []);
 
   const resetFilters = useCallback(() => {
-    setFilters({ searchQuery: '', category: null, sortBy: 'newest' });
+    setFilters({ searchQuery: '', selectedCategories: [], sortBy: 'newest' });
   }, []);
 
   const categories = useMemo(() => {
@@ -57,9 +57,9 @@ export function useLibraryFilters(items: HistoryItem[]) {
       );
     }
 
-    // Kategorie
-    if (filters.category) {
-      result = result.filter((item) => item.category === filters.category);
+    // Kategorie (multiselect, leer = alle)
+    if (filters.selectedCategories.length > 0) {
+      result = result.filter((item) => filters.selectedCategories.includes(item.category));
     }
 
     // Sortierung
@@ -89,16 +89,16 @@ export function useLibraryFilters(items: HistoryItem[]) {
     return result;
   }, [items, filters]);
 
-  const isFiltered = filters.searchQuery.trim() !== '' || filters.category !== null;
+  const isFiltered = filters.searchQuery.trim() !== '' || filters.selectedCategories.length > 0;
   const activeFilterCount =
     (filters.searchQuery.trim() ? 1 : 0) +
-    (filters.category ? 1 : 0) +
+    (filters.selectedCategories.length > 0 ? 1 : 0) +
     (filters.sortBy !== 'newest' ? 1 : 0);
 
   return {
     filters,
     setSearchQuery,
-    setCategory,
+    setCategories,
     setSortBy,
     resetFilters,
     filteredItems,

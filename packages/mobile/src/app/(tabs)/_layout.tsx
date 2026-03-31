@@ -19,14 +19,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Scannen',
-          headerShown: false,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="library"
         options={{
-          title: 'Verlauf',
+          title: 'Inventar',
           headerShown: false,
         }}
       />

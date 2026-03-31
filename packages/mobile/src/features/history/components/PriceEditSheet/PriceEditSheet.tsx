@@ -25,7 +25,7 @@ export function PriceEditSheet({
 
   useEffect(() => {
     if (visible) {
-      setPriceDraft(currentPrice !== undefined ? currentPrice.toString() : '');
+      setPriceDraft(currentPrice != null ? currentPrice.toString() : '');
       setNoteDraft(currentNote || '');
       setTimeout(() => priceInputRef.current?.focus(), 300);
     }

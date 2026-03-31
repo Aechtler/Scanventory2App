@@ -9,5 +9,4 @@ export type {
 // Components
 export { EditableProductCard } from './components/EditableProductCard';
 export { FinalPriceCard } from './components/FinalPriceCard';
-export { ProductEditModal, type ProductEditData } from './components/ProductEditModal';
 

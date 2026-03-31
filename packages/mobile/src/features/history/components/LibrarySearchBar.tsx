@@ -1,12 +1,11 @@
 /**
- * Suchleiste mit Filter- und View-Toggle
+ * Suchleiste mit kompakten Filter-Toggles und View-Toggle
  */
 
-import React, { useState } from 'react';
-import { View, TextInput, Pressable, Text, ScrollView } from 'react-native';
-import { MotiView } from 'moti';
+import { View, TextInput, Pressable, Text } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
+import { CategoryDropdown } from './CategoryDropdown';
 import type { SortBy } from '../hooks/useLibraryFilters';
 
 export type ViewMode = 'list' | 'grid';
@@ -15,8 +14,8 @@ interface LibrarySearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
   categories: string[];
-  selectedCategory: string | null;
-  onSelectCategory: (category: string | null) => void;
+  selectedCategories: string[];
+  onSelectCategories: (cats: string[]) => void;
   sortBy: SortBy;
   onSelectSort: (sort: SortBy) => void;
   itemCount: number;
@@ -25,49 +24,45 @@ interface LibrarySearchBarProps {
   onToggleViewMode: () => void;
 }
 
-const SORT_OPTIONS: { value: SortBy; label: string }[] = [
-  { value: 'newest', label: 'Neueste' },
-  { value: 'price_desc', label: 'Preis ↓' },
-  { value: 'price_asc', label: 'Preis ↑' },
-  { value: 'name', label: 'A–Z' },
-];
-
-function Chip({
-  label,
-  active,
-  onPress,
-}: {
+interface SortChipProps {
   label: string;
   active: boolean;
+  direction?: 'asc' | 'desc';
   onPress: () => void;
-}) {
+}
+
+function SortChip({ label, active, direction, onPress }: SortChipProps) {
+  const colors = useThemeColors();
   return (
     <Pressable
       onPress={onPress}
       hitSlop={4}
-      className={`rounded-full mr-2 px-4 py-2 ${
+      className={`flex-row items-center gap-0.5 rounded-full px-3 py-2 mr-2 ${
         active
           ? 'bg-primary-500/25 border border-primary-500/50'
           : 'bg-background-elevated/60 border border-transparent'
       }`}
     >
-      <Text
-        className={`font-medium text-[13px] ${
-          active ? 'text-primary-400' : 'text-foreground-secondary'
-        }`}
-      >
+      <Text className={`text-[13px] font-medium ${active ? 'text-primary-400' : 'text-foreground-secondary'}`}>
         {label}
       </Text>
+      {direction === 'desc' && <Icons.ChevronDown size={12} color={active ? colors.primaryLight : colors.textSecondary} />}
+      {direction === 'asc' && <Icons.ChevronUp size={12} color={active ? colors.primaryLight : colors.textSecondary} />}
     </Pressable>
   );
+}
+
+function getSortDirection(sortBy: SortBy, type: 'date' | 'price'): 'asc' | 'desc' {
+  if (type === 'date') return sortBy === 'oldest' ? 'asc' : 'desc';
+  return sortBy === 'price_asc' ? 'asc' : 'desc';
 }
 
 export function LibrarySearchBar({
   value,
   onChangeText,
   categories,
-  selectedCategory,
-  onSelectCategory,
+  selectedCategories,
+  onSelectCategories,
   sortBy,
   onSelectSort,
   itemCount,
@@ -76,16 +71,29 @@ export function LibrarySearchBar({
   onToggleViewMode,
 }: LibrarySearchBarProps) {
   const colors = useThemeColors();
-  const [filtersExpanded, setFiltersExpanded] = useState(false);
-  const isFiltered = selectedCategory !== null || sortBy !== 'newest';
-  const hasActiveFilters = isFiltered || value.length > 0;
+  const hasActiveFilters = selectedCategories.length > 0 || value.length > 0;
+
+  const handleNeuesteToggle = () => {
+    if (sortBy === 'newest') onSelectSort('oldest');
+    else onSelectSort('newest');
+  };
+
+  const handlePreisToggle = () => {
+    if (sortBy === 'price_desc') onSelectSort('price_asc');
+    else onSelectSort('price_desc');
+  };
+
+  const handleAzToggle = () => {
+    if (sortBy === 'name') onSelectSort('newest');
+    else onSelectSort('name');
+  };
 
   return (
     <View className="px-5 pt-3 pb-2">
-      <View className="flex-row items-center gap-2.5">
-        {/* Suchfeld */}
-        <View className="flex-1 flex-row items-center bg-background-elevated/60 rounded-2xl px-4 h-12">
-          <Icons.Search size={18} color={colors.textSecondary} />
+      {/* Zeile 1: Suche + View Toggle */}
+      <View className="flex-row items-center gap-2.5 mb-2.5">
+        <View className="flex-1 flex-row items-center bg-background-elevated/60 rounded-2xl px-4 h-11">
+          <Icons.Search size={17} color={colors.textSecondary} />
           <TextInput
             className="flex-1 text-foreground text-[15px] ml-2.5"
             placeholder="Suche..."
@@ -98,93 +106,55 @@ export function LibrarySearchBar({
           />
           {value.length > 0 && (
             <Pressable onPress={() => onChangeText('')} hitSlop={12}>
-              <Icons.Close size={18} color={colors.textSecondary} />
+              <Icons.Close size={17} color={colors.textSecondary} />
             </Pressable>
           )}
         </View>
 
-        {/* View Toggle */}
         <Pressable
           onPress={onToggleViewMode}
           hitSlop={4}
-          className="h-12 w-12 rounded-2xl items-center justify-center bg-background-elevated/60"
+          className="h-11 w-11 rounded-2xl items-center justify-center bg-background-elevated/60"
         >
           {viewMode === 'list' ? (
-            <Icons.Grid size={20} color={colors.textSecondary} />
+            <Icons.Grid size={19} color={colors.textSecondary} />
           ) : (
-            <Icons.List size={20} color={colors.textSecondary} />
-          )}
-        </Pressable>
-
-        {/* Filter Toggle */}
-        <Pressable
-          onPress={() => setFiltersExpanded(!filtersExpanded)}
-          hitSlop={4}
-          className={`h-12 w-12 rounded-2xl items-center justify-center ${
-            isFiltered
-              ? 'bg-primary-500/25 border border-primary-500/50'
-              : 'bg-background-elevated/60'
-          }`}
-        >
-          <Icons.Stats size={20} color={isFiltered ? colors.primaryLight : colors.textSecondary} />
-          {isFiltered && (
-            <View className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-primary-500 rounded-full" />
+            <Icons.List size={19} color={colors.textSecondary} />
           )}
         </Pressable>
       </View>
 
-      {/* Ausklappbare Filter */}
-      {filtersExpanded && (
-        <MotiView
-          from={{ opacity: 0, translateY: -8 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 200 }}
-          className="mt-3"
-        >
-          {categories.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="mb-2"
-              contentContainerStyle={{ paddingRight: 12 }}
-            >
-              <Chip
-                label="Alle"
-                active={selectedCategory === null}
-                onPress={() => onSelectCategory(null)}
-              />
-              {categories.map((cat) => (
-                <Chip
-                  key={cat}
-                  label={cat}
-                  active={selectedCategory === cat}
-                  onPress={() =>
-                    onSelectCategory(selectedCategory === cat ? null : cat)
-                  }
-                />
-              ))}
-            </ScrollView>
-          )}
+      {/* Zeile 2: Kategorie-Dropdown + Sort-Toggles */}
+      <View className="flex-row items-center flex-wrap gap-y-1.5">
+        <View className="mr-2">
+          <CategoryDropdown
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onSelectCategories={onSelectCategories}
+          />
+        </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 12 }}
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <Chip
-                key={opt.value}
-                label={opt.label}
-                active={sortBy === opt.value}
-                onPress={() => onSelectSort(opt.value)}
-              />
-            ))}
-          </ScrollView>
-        </MotiView>
-      )}
+        <SortChip
+          label="Neueste"
+          active={sortBy === 'newest' || sortBy === 'oldest'}
+          direction={getSortDirection(sortBy, 'date')}
+          onPress={handleNeuesteToggle}
+        />
+        <SortChip
+          label="Preis"
+          active={sortBy === 'price_asc' || sortBy === 'price_desc'}
+          direction={getSortDirection(sortBy, 'price')}
+          onPress={handlePreisToggle}
+        />
+        <SortChip
+          label="A–Z"
+          active={sortBy === 'name'}
+          onPress={handleAzToggle}
+        />
+      </View>
 
       {hasActiveFilters && (
-        <Text className="text-foreground-secondary text-xs mt-2 ml-1">
+        <Text className="text-foreground-secondary text-xs mt-2 ml-0.5">
           {filteredCount} von {itemCount} Einträgen
         </Text>
       )}

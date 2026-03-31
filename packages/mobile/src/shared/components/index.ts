@@ -12,7 +12,6 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { CardSlider, PageIndicator } from './CardSlider';
 export type { CardSliderProps, PageIndicatorProps } from './CardSlider';
-export { CustomTabBar } from './CustomTabBar';
 export { GlobalTabBar } from './GlobalTabBar';
 export { Icons } from './Icons';
 export { LoadingSpinner } from './LoadingSpinner';

@@ -21,6 +21,7 @@ import { Icons } from '@/shared/components/Icons';
 import { useHistoryStore } from '@/features/history/store/historyStore';
 import { useUIStore } from '@/shared/store/uiStore';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
+import { useTabBarPadding } from '@/shared/hooks/useTabBarPadding';
 
 const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 
@@ -51,7 +52,9 @@ export default function ProductEditScreen() {
   const [gtin, setGtin] = useState('');
   const [searchQueries, setSearchQueries] = useState<SearchQueries>({});
   const [showSearchQueries, setShowSearchQueries] = useState(false);
+  const [conditionOpen, setConditionOpen] = useState(false);
   const [imageExpanded, setImageExpanded] = useState(false);
+  const tabBarPadding = useTabBarPadding();
   const setTabBarHidden = useUIStore((s) => s.setTabBarHidden);
 
   const toggleImageExpanded = (expanded: boolean) => {
@@ -139,7 +142,7 @@ export default function ProductEditScreen() {
         >
           <ScrollView
             className="flex-1"
-            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+            contentContainerStyle={{ padding: 16, flexGrow: 1, paddingBottom: tabBarPadding }}
             scrollEnabled={!imageExpanded}
           >
             {/* Bild-Preview mit Expand-Toggle */}
@@ -232,30 +235,42 @@ export default function ProductEditScreen() {
               />
             </View>
 
-            {/* Zustand mit Preset-Chips */}
+            {/* Zustand - Dropdown */}
             <View className="mb-5">
               <Text className="text-foreground-secondary text-sm mb-2 font-medium">Zustand</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {CONDITION_PRESETS.map((preset) => (
-                  <Pressable
-                    key={preset}
-                    onPress={() => setCondition(preset)}
-                    className={`px-4 py-3 rounded-xl border ${
-                      preset === condition
-                        ? 'bg-primary-500/30 border-primary-500'
-                        : 'bg-background-elevated border-border'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base ${
-                        preset === condition ? 'text-primary-400 font-semibold' : 'text-foreground'
-                      }`}
+              <Pressable
+                onPress={() => setConditionOpen(!conditionOpen)}
+                className="flex-row items-center justify-between bg-background-elevated p-4 rounded-xl"
+              >
+                <Text className="text-foreground text-base">{condition}</Text>
+                {conditionOpen
+                  ? <Icons.ChevronUp size={20} color={colors.textSecondary} />
+                  : <Icons.ChevronDown size={20} color={colors.textSecondary} />
+                }
+              </Pressable>
+              {conditionOpen && (
+                <MotiView
+                  from={{ opacity: 0, translateY: -6 }}
+                  animate={{ opacity: 1, translateY: 0 }}
+                  transition={{ type: 'timing', duration: 180 }}
+                  className="mt-1 bg-background-elevated rounded-xl overflow-hidden border border-border/50"
+                >
+                  {CONDITION_PRESETS.map((preset, i) => (
+                    <Pressable
+                      key={preset}
+                      onPress={() => { setCondition(preset); setConditionOpen(false); }}
+                      className={`flex-row items-center justify-between px-4 py-3 ${
+                        i < CONDITION_PRESETS.length - 1 ? 'border-b border-border/30' : ''
+                      } ${preset === condition ? 'bg-primary-500/15' : ''}`}
                     >
-                      {preset}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+                      <Text className={`text-base ${preset === condition ? 'text-primary-400 font-medium' : 'text-foreground'}`}>
+                        {preset}
+                      </Text>
+                      {preset === condition && <Icons.Check size={18} color={colors.primary} />}
+                    </Pressable>
+                  ))}
+                </MotiView>
+              )}
             </View>
 
             {/* GTIN */}
