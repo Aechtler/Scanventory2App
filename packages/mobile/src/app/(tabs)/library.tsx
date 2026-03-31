@@ -98,6 +98,11 @@ export default function LibraryTab() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      {/* Überschrift */}
+      <View className="px-5 pt-5 pb-1">
+        <Text className="text-foreground text-2xl font-bold">Inventar</Text>
+      </View>
+
       {/* Segmented Control */}
       <View className="flex-row mx-4 mt-3 mb-1 bg-background-elevated rounded-xl p-1">
         {(['mine', 'shared'] as LibraryTab[]).map((tab) => (

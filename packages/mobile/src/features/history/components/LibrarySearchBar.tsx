@@ -81,15 +81,7 @@ export function LibrarySearchBar({
   const hasActiveFilters = isFiltered || value.length > 0;
 
   return (
-    <View className="px-5 pt-5 pb-2">
-      {/* Header mit Titel und Anzahl */}
-      <View className="flex-row items-baseline mb-3.5">
-        <Text className="text-foreground text-2xl font-bold">Verlauf</Text>
-        <View className="bg-primary-500/15 ml-2.5 px-2.5 py-0.5 rounded-full">
-          <Text className="text-primary-400 text-xs font-semibold">{itemCount}</Text>
-        </View>
-      </View>
-
+    <View className="px-5 pt-3 pb-2">
       <View className="flex-row items-center gap-2.5">
         {/* Suchfeld */}
         <View className="flex-1 flex-row items-center bg-background-elevated/60 rounded-2xl px-4 h-12">
