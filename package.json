@@ -1,13 +1,13 @@
 {
-  "name": "@scanapp/root",
+  "name": "@scandirwas/root",
   "version": "1.0.0",
   "private": true,
 
   "scripts": {
     "setup:workspace": "node ./scripts/setup-workspace-toolchain.mjs",
-    "dev:mobile": "pnpm --filter @scanapp/mobile run start",
-    "dev:backend": "pnpm --filter @scanapp/backend run dev",
-    "build:mobile": "pnpm --filter @scanapp/mobile run build:android",
+    "dev:mobile": "pnpm --filter @scandirwas/mobile run start",
+    "dev:backend": "pnpm --filter @scandirwas/backend run dev",
+    "build:mobile": "pnpm --filter @scandirwas/mobile run build:android",
     "build:backend": "node ./scripts/run-workspace-build.mjs backend",
     "build:all": "node ./scripts/run-workspace-build-all.mjs",
     "lint:mobile": "node ./scripts/run-workspace-lint.mjs mobile",

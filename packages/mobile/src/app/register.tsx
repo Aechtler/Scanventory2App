@@ -81,16 +81,16 @@ export default function RegisterScreen() {
     <View className="mb-8">
       <Pressable
         onPress={() => router.replace('/login')}
-        className="w-10 h-10 bg-white/10 rounded-full items-center justify-center mb-6"
+        className="w-10 h-10 bg-white/5 rounded-full items-center justify-center mb-6 border border-white/10"
       >
-        <Icons.ArrowLeft size={24} color="white" />
+        <Icons.ArrowLeft size={20} color="white" />
       </Pressable>
 
-      <Text className="text-4xl font-bold text-white mb-2">
+      <Text className="text-3xl font-bold text-white mb-1">
         Account erstellen
       </Text>
-      <Text className="text-foreground-secondary text-lg">
-        Starte deine Sammlung.
+      <Text className="text-white/40 text-sm font-medium">
+        Verwalte deine Bestände.
       </Text>
     </View>
   );
@@ -117,18 +117,20 @@ export default function RegisterScreen() {
       )}
 
       <AuthInput
-        label="NAME (OPTIONAL)"
+        label="Name"
         icon="user"
-        placeholder="Dein Name"
+        placeholder="Dein Name (optional)"
         value={name}
         onChangeText={setName}
         disabled={isLoading}
+        autoFocus
+        returnKeyType="next"
       />
 
       <AuthInput
-        label="E-MAIL"
+        label="E-Mail"
         icon="mail"
-        placeholder="name@example.com"
+        placeholder="E-Mail Adresse"
         value={email}
         onChangeText={(text) => {
           setEmail(text);
@@ -138,10 +140,11 @@ export default function RegisterScreen() {
         autoCapitalize="none"
         disabled={isLoading}
         error={errors.email}
+        returnKeyType="next"
       />
 
       <AuthInput
-        label="PASSWORT"
+        label="Passwort"
         icon="lock"
         placeholder={`Mind. ${MIN_PASSWORD_LENGTH} Zeichen`}
         value={password}
@@ -152,6 +155,8 @@ export default function RegisterScreen() {
         secureTextEntry
         disabled={isLoading}
         error={errors.password}
+        returnKeyType="join"
+        onSubmitEditing={handleRegister}
       />
 
       <AuthButton

@@ -133,7 +133,7 @@ export default function ProfileTab() {
 
         {/* App Version */}
         <View className="items-center" style={{ paddingBottom: tabBarPadding + 16, marginTop: 24 }}>
-          <Text className="text-foreground-secondary/50 text-xs">ScanApp v{appVersion}</Text>
+          <Text className="text-foreground-secondary/50 text-xs">Scandirwas v{appVersion}</Text>
         </View>
       </ScrollView>
 

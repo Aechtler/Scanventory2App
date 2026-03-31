@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "ScanApp",
-    "slug": "scanapp",
+    "name": "Scandirwas",
+    "slug": "scandirwas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "scanapp",
+    "scheme": "scandirwas",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,17 +15,17 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.scanapp.app",
+      "bundleIdentifier": "com.scandirwas.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "ScanApp benötigt Zugriff auf die Kamera um Gegenstände zu scannen.",
-        "NSPhotoLibraryUsageDescription": "ScanApp benötigt Zugriff auf deine Fotos um Bilder zu analysieren.",
+        "NSCameraUsageDescription": "Scandirwas benötigt Zugriff auf die Kamera um Gegenstände zu scannen.",
+        "NSPhotoLibraryUsageDescription": "Scandirwas benötigt Zugriff auf deine Fotos um Bilder zu analysieren.",
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         }
       }
     },
     "android": {
-      "package": "com.scanapp.app",
+      "package": "com.scandirwas.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a2e"
@@ -42,13 +42,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "ScanApp benötigt Zugriff auf die Kamera um Gegenstände zu scannen."
+          "cameraPermission": "Scandirwas benötigt Zugriff auf die Kamera um Gegenstände zu scannen."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "ScanApp benötigt Zugriff auf deine Fotos um Bilder zu analysieren."
+          "photosPermission": "Scandirwas benötigt Zugriff auf deine Fotos um Bilder zu analysieren."
         }
       ]
     ],

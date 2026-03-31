@@ -76,21 +76,18 @@ export default function LoginScreen() {
   };
 
   const header = (
-    <View className="items-center mb-12">
+    <View className="items-center mb-10">
       <MotiView
-        from={{ scale: 0.8, opacity: 0 }}
+        from={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', delay: 300 }}
-        className="w-24 h-24 bg-primary-500/20 rounded-3xl items-center justify-center mb-6 border border-primary-500/30"
+        transition={{ type: 'timing', duration: 8000, loop: true, repeatReverse: true }}
+        className="mb-8"
       >
-        <Icons.Search size={48} color={colors.primaryLight} />
+        <Icons.Search size={40} color={colors.primaryLight} />
       </MotiView>
 
-      <Text className="text-5xl font-bold text-foreground mb-2 tracking-tight">
-        Scan<Text className="text-primary-400">App</Text>
-      </Text>
-      <Text className="text-foreground-secondary text-lg font-light tracking-wide">
-        DEIN WERT. DEIN WISSEN.
+      <Text className="text-4xl font-bold text-white mb-2 tracking-tight">
+        Scan<Text className="text-primary-400">dirwas</Text>
       </Text>
     </View>
   );
@@ -122,9 +119,9 @@ export default function LoginScreen() {
       )}
 
       <AuthInput
-        label="E-MAIL"
+        label="E-Mail"
         icon="mail"
-        placeholder="name@example.com"
+        placeholder="E-Mail Adresse"
         value={email}
         onChangeText={(text) => {
           setEmail(text);
@@ -134,12 +131,14 @@ export default function LoginScreen() {
         autoCapitalize="none"
         disabled={isLoading}
         error={errors.email}
+        autoFocus
+        returnKeyType="next"
       />
 
       <AuthInput
-        label="PASSWORT"
+        label="Passwort"
         icon="lock"
-        placeholder="••••••••"
+        placeholder="Passwort"
         value={password}
         onChangeText={(text) => {
           setPassword(text);
@@ -148,6 +147,8 @@ export default function LoginScreen() {
         secureTextEntry
         disabled={isLoading}
         error={errors.password}
+        returnKeyType="go"
+        onSubmitEditing={handleLogin}
       />
 
       <AuthButton
