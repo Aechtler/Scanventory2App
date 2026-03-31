@@ -1,17 +1,15 @@
 /**
- * Image Routes - Bild-Auslieferung via Supabase Storage
- * Proxied Bilder aus Supabase Storage zum Client
+ * Image Routes - Bild-Auslieferung via Redirect auf Supabase Storage
  */
 
 import { Router, Request, Response } from 'express';
 import path from 'path';
-import { supabaseAdmin } from '../services/supabaseClient';
+import { getImageUrl } from '../services/imageService';
 
 const router = Router();
-const BUCKET = 'item-images';
 
-/** GET /api/images/:filename - Bild aus Supabase Storage ausliefern */
-router.get('/:filename', async (req: Request<{ filename: string }>, res: Response) => {
+/** GET /api/images/:filename - Redirect zur Supabase Storage URL */
+router.get('/:filename', (req: Request<{ filename: string }>, res: Response) => {
   const filename = req.params.filename;
 
   // Pfad-Traversal verhindern
@@ -21,26 +19,8 @@ router.get('/:filename', async (req: Request<{ filename: string }>, res: Respons
     return;
   }
 
-  const { data, error } = await supabaseAdmin.storage.from(BUCKET).download(safeName);
-
-  if (error || !data) {
-    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Image not found' } });
-    return;
-  }
-
-  const ext = path.extname(safeName).toLowerCase();
-  const contentTypeMap: Record<string, string> = {
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.webp': 'image/webp',
-  };
-  const contentType = contentTypeMap[ext] ?? 'application/octet-stream';
-
-  const buffer = Buffer.from(await data.arrayBuffer());
-  res.setHeader('Content-Type', contentType);
-  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  res.send(buffer);
+  const url = getImageUrl(safeName);
+  res.redirect(301, url);
 });
 
 export default router;
