@@ -2,7 +2,7 @@
  * Suchleiste mit kompakten Filter-Toggles und View-Toggle
  */
 
-import { View, TextInput, Pressable, Text } from 'react-native';
+import { View, TextInput, Pressable, Text, ScrollView } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { CategoryDropdown } from './CategoryDropdown';
@@ -129,8 +129,13 @@ export function LibrarySearchBar({
         </Pressable>
       </View>
 
-      {/* Zeile 2: Kategorie-Dropdown + Sort-Toggles */}
-      <View className="flex-row items-center flex-wrap gap-y-1.5">
+      {/* Zeile 2: Filter & Sort (Scrollbar) */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ alignItems: 'center', paddingRight: 20 }}
+        className="mt-1"
+      >
         <View className="mr-2">
           <CategoryDropdown
             categories={categories}
@@ -156,14 +161,12 @@ export function LibrarySearchBar({
           active={sortBy === 'name'}
           onPress={handleAzToggle}
         />
-      </View>
 
-      {/* Zeile 3: Produkttyp-Filter */}
-      <View className="flex-row items-center mt-1.5 gap-2">
+        {/* Produkttyp-Filter (jetzt in einer Reihe) */}
         <Pressable
           onPress={() => onSelectProductType(productType === 'fast_seller' ? null : 'fast_seller')}
           hitSlop={4}
-          className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 ${
+          className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 mr-2 ${
             productType === 'fast_seller'
               ? 'bg-amber-500/20 border border-amber-500/50'
               : 'bg-background-elevated/60 border border-transparent'
@@ -185,7 +188,7 @@ export function LibrarySearchBar({
         <Pressable
           onPress={() => onSelectProductType(productType === 'high_value' ? null : 'high_value')}
           hitSlop={4}
-          className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 ${
+          className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 mr-2 ${
             productType === 'high_value'
               ? 'bg-violet-500/20 border border-violet-500/50'
               : 'bg-background-elevated/60 border border-transparent'
@@ -203,7 +206,7 @@ export function LibrarySearchBar({
             High Value
           </Text>
         </Pressable>
-      </View>
+      </ScrollView>
 
       {hasActiveFilters && (
         <Text className="text-foreground-secondary text-xs mt-2 ml-0.5">

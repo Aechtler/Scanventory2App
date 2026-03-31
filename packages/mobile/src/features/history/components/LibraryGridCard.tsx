@@ -45,6 +45,25 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
             className="w-full aspect-square"
             resizeMode="cover"
           />
+
+          {/* Custom Badges top-left */}
+          {productType === 'high_value' && (
+            <View 
+              className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-violet-600/95 border border-violet-400/40 shadow-lg"
+              style={{ shadowColor: '#a78bfa', shadowRadius: 8, shadowOpacity: 0.6 }}
+            >
+              <Icons.Star size={16} color="#fff" />
+            </View>
+          )}
+          {productType === 'fast_seller' && (
+            <View 
+              className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-amber-500 border border-amber-400/40 shadow-lg"
+              style={{ shadowColor: '#f59e0b', shadowRadius: 8, shadowOpacity: 0.6 }}
+            >
+              <Icons.TrendingUp size={16} color="#fff" />
+            </View>
+          )}
+
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.5)']}
             style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '35%' }}
@@ -60,20 +79,6 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
               <Text className="text-white font-bold text-xs">
                 {formatPrice(price!)}
               </Text>
-            </View>
-          )}
-
-          {/* Produkttyp-Badge unten links */}
-          {productType === 'fast_seller' && (
-            <View className="absolute bottom-2 left-2 flex-row items-center gap-1 bg-amber-500/80 px-1.5 py-0.5 rounded-md">
-              <Icons.TrendingUp size={9} color="#fff" />
-              <Text className="text-white text-[9px] font-semibold">Schnell</Text>
-            </View>
-          )}
-          {productType === 'high_value' && (
-            <View className="absolute bottom-2 left-2 flex-row items-center gap-1 bg-violet-500/80 px-1.5 py-0.5 rounded-md">
-              <Icons.Star size={9} color="#fff" />
-              <Text className="text-white text-[9px] font-semibold">High Value</Text>
             </View>
           )}
         </View>

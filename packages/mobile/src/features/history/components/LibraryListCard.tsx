@@ -85,6 +85,23 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
                 style={styles.image}
                 resizeMode="cover"
               />
+              
+              {classifyProduct(item) === 'high_value' && (
+                <View 
+                  className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-violet-600/90 border border-violet-400/40 shadow-sm"
+                  style={{ shadowColor: '#a78bfa', shadowRadius: 4, shadowOpacity: 0.5 }}
+                >
+                  <Icons.Star size={14} color="#fff" />
+                </View>
+              )}
+              {classifyProduct(item) === 'fast_seller' && (
+                <View 
+                  className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-amber-500/90 border border-amber-400/40 shadow-sm"
+                  style={{ shadowColor: '#f59e0b', shadowRadius: 4, shadowOpacity: 0.5 }}
+                >
+                  <Icons.TrendingUp size={14} color="#fff" />
+                </View>
+              )}
             </View>
 
             {/* Infos rechts */}
@@ -106,7 +123,6 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
 
               {/* Unterer Bereich: Badges + Tags */}
               <View className="flex-row flex-wrap gap-1.5 mt-2.5">
-                <ProductTypeBadge item={item} />
                 {item.category ? <TagPill label={item.category} accent /> : null}
                 {item.condition ? <TagPill label={item.condition} /> : null}
               </View>
