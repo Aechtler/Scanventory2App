@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '@/shared/constants';
 
 export interface User {
@@ -52,8 +52,9 @@ interface AuthState {
 
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'auth_refresh_token';
+const USER_KEY = 'auth_user';
 const API_URL = API_CONFIG.BASE_URL;
-const REQUEST_TIMEOUT_MS = 12000; // 12 Sekunden — danach Fehlermeldung statt endlosem Ladebalken
+const REQUEST_TIMEOUT_MS = 12000;
 
 /** Wirft nach `ms` Millisekunden einen Timeout-Fehler */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -91,6 +92,20 @@ function unwrapEnvelope<T>(payload: T | ApiEnvelope<T>): T {
   return payload as T;
 }
 
+async function saveAuthSession(token: string, refreshToken: string | undefined, user: User): Promise<void> {
+  await AsyncStorage.setItem(TOKEN_KEY, token);
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+  if (refreshToken) {
+    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
+}
+
+async function clearAuthSession(): Promise<void> {
+  await AsyncStorage.removeItem(TOKEN_KEY);
+  await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+  await AsyncStorage.removeItem(USER_KEY);
+}
+
 async function authenticate(
   endpoint: '/api/auth/login' | '/api/auth/register',
   body: { email: string; password: string; name?: string },
@@ -124,10 +139,7 @@ async function authenticate(
     throw new Error('Invalid server response');
   }
 
-  await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-  if (data.refreshToken) {
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refreshToken);
-  }
+  await saveAuthSession(data.token, data.refreshToken, data.user);
 
   set({
     user: data.user,
@@ -153,76 +165,82 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   loadUser: async () => {
-    try {
-      set({ isLoading: true });
+    set({ isLoading: true });
 
-      let token = await SecureStore.getItemAsync(TOKEN_KEY);
-      if (!token) {
+    // 1. Sofort aus Cache laden — kein Warten auf Netzwerk
+    const [token, userStr] = await Promise.all([
+      AsyncStorage.getItem(TOKEN_KEY),
+      AsyncStorage.getItem(USER_KEY),
+    ]);
+
+    if (!token) {
+      set({ isLoading: false });
+      return;
+    }
+
+    if (userStr) {
+      try {
+        const cachedUser: User = JSON.parse(userStr);
+        // Sofort einloggen mit gecachten Daten → kein Login-Screen beim Reload
+        set({ user: cachedUser, token, isAuthenticated: true, isLoading: false });
+      } catch {
+        // Ungültiger Cache — weiter zur Netzwerk-Validierung
+      }
+    }
+
+    // 2. Token im Hintergrund beim Backend validieren (aktualisiert User-Daten)
+    try {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const payload = await response.json();
+        const user = unwrapEnvelope<User>(payload);
+        await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+        set({ user, token, isAuthenticated: true, isLoading: false });
+        return;
+      }
+
+      if (response.status !== 401) {
+        // Server-Fehler (5xx) → gecachten State behalten, nur isLoading abschließen
         set({ isLoading: false });
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      // 401 → Token abgelaufen → Refresh versuchen
+      const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
 
-      if (!response.ok) {
-        // 401 = ungültiges/abgelaufenes Token → ausloggen oder Token refreshen
-        if (response.status === 401) {
-          const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-
-          if (refreshToken) {
-            try {
-              const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken }),
-              });
-
-              if (refreshResponse.ok) {
-                const refreshedPayload = await refreshResponse.json();
-                const refreshedData = unwrapEnvelope<AuthPayload>(refreshedPayload);
-
-                if (refreshedData?.token && refreshedData?.user?.id) {
-                  // Save new tokens
-                  token = refreshedData.token;
-                  await SecureStore.setItemAsync(TOKEN_KEY, token);
-                  if (refreshedData.refreshToken) {
-                    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshedData.refreshToken);
-                  }
-
-                  set({ user: refreshedData.user, token, isAuthenticated: true, isLoading: false });
-                  return; // Escape hier, der User ist erfolgreich eingeloggt
-                }
-              }
-            } catch (err) {
-              console.warn('Token refresh network error:', err);
-              // Bei Netzwerk-Fehlern während des Refreshes lassen wir es auf false und behalten die Tokens
-              set({ user: null, token: null, isAuthenticated: false, isLoading: false });
-              return;
-            }
-          }
-
-          // Refresh fehlgeschlagen oder nicht vorhanden
-          await SecureStore.deleteItemAsync(TOKEN_KEY);
-          await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
-        } else {
-          // Server-Fehler (5xx) → Token behalten, als nicht authentifiziert markieren
-          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
-        }
+      if (!refreshToken) {
+        await clearAuthSession();
+        set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         return;
       }
 
-      const payload = await response.json();
-      const user = unwrapEnvelope<User>(payload);
-      set({ user, token, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      // Netzwerkfehler → Token behalten
-      console.error('Load user error:', error);
+      const refreshResponse = await fetch(`${API_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (refreshResponse.ok) {
+        const refreshedPayload = await refreshResponse.json();
+        const refreshedData = unwrapEnvelope<AuthPayload>(refreshedPayload);
+
+        if (refreshedData?.token && refreshedData?.user?.id) {
+          await saveAuthSession(refreshedData.token, refreshedData.refreshToken, refreshedData.user);
+          set({ user: refreshedData.user, token: refreshedData.token, isAuthenticated: true, isLoading: false });
+          return;
+        }
+      }
+
+      // Refresh fehlgeschlagen → ausloggen
+      await clearAuthSession();
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+    } catch (error) {
+      // Netzwerkfehler → gecachten Login-State behalten
+      console.warn('[Auth] Background validation failed, keeping cached session:', error);
+      set({ isLoading: false });
     }
   },
 
@@ -250,9 +268,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-
+      await clearAuthSession();
       set({
         user: null,
         token: null,

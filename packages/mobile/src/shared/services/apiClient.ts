@@ -4,7 +4,7 @@
  */
 
 import * as FileSystem from 'expo-file-system/legacy';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PriceStats, MarketListing } from '@/features/market/services/ebay';
 import { MarketValueResult } from '@/features/market/services/perplexity';
 import { API_CONFIG, UPLOAD_CONFIG } from '@/shared/constants';
@@ -36,9 +36,6 @@ export interface UploadItemPayload {
   scannedAt: string;
 }
 
-function warnSecureStoreFailure(operation: string, error: unknown): void {
-  console.warn(`[apiClient] SecureStore ${operation} failed. Continuing without persisted auth token.`, error);
-}
 
 function getFileExtension(uri: string): string {
   const sanitizedUri = uri.split('?')[0];
@@ -103,12 +100,12 @@ async function validateUploadImage(imageUri: string): Promise<void> {
   }
 }
 
-/** Get auth token from secure storage */
+/** Get auth token from AsyncStorage (same storage as authStore) */
 async function getAuthToken(): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(TOKEN_KEY);
+    return await AsyncStorage.getItem(TOKEN_KEY);
   } catch (error) {
-    warnSecureStoreFailure('read', error);
+    console.warn('[apiClient] AsyncStorage read failed. Continuing without auth token.', error);
     return null;
   }
 }

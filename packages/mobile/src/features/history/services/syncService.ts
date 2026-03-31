@@ -96,8 +96,8 @@ export async function syncFetchHistory(page: number = 1, limit: number = 50): Pr
   try {
     const result = await apiGet<any>(`/api/items?page=${page}&limit=${limit}`);
     
-    if (result.success && result.data?.data) {
-      const serverItems = result.data.data;
+    if (result.success && result.data?.items) {
+      const serverItems = result.data.items;
       
       return serverItems.map((item: any): HistoryItem => {
         // Parse search queries
