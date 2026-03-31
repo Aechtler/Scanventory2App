@@ -1,7 +1,8 @@
 services:
   # Backend API
-  # Hinweis: PostgreSQL läuft jetzt in Supabase (self-hosted oder Cloud).
-  # Der db-Service wurde entfernt. DATABASE_URL zeigt auf Supabase.
+  # Hinweis: PostgreSQL und Auth laufen in Supabase (self-hosted, supabase/self-hosted/).
+  # Der Backend-Container muss im selben Docker-Netzwerk wie Supabase laufen,
+  # damit er 'kong' (API Gateway) und 'db' (Postgres) per Service-Name erreichen kann.
   backend:
     build:
       context: ./packages/backend
@@ -16,10 +17,14 @@ services:
       - "3000:3000"
     networks:
       - scanapp-network
-
-# uploads-Volume entfernt: Bilder liegen in Supabase Storage
+      - scanapp-supabase-network
 
 networks:
   scanapp-network:
     name: scanapp-network
     driver: bridge
+  # Externes Netzwerk — wird vom Supabase-Stack erstellt (supabase/self-hosted/)
+  # Starte zuerst: cd supabase/self-hosted && docker compose up -d
+  scanapp-supabase-network:
+    name: scanapp-supabase-network
+    external: true
