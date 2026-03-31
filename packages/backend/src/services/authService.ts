@@ -4,6 +4,7 @@
  */
 
 import { supabaseAdmin } from './supabaseClient';
+import { prisma } from './itemService';
 
 export interface TokenPayload {
   userId: string;
@@ -69,6 +70,17 @@ export async function loginUser(
   }
 
   if (!data.user || !data.session) throw new Error('Login failed: no session returned');
+
+  // User in Prisma-DB anlegen falls noch nicht vorhanden (Supabase Auth ist Source of Truth)
+  await prisma.user.upsert({
+    where: { id: data.user.id },
+    create: {
+      id: data.user.id,
+      email: data.user.email!,
+      name: data.user.user_metadata?.name ?? null,
+    },
+    update: {},
+  });
 
   // Profil-Daten aus public.User nachladen (isAdmin, name)
   const profile = await getUserById(data.user.id).catch(() => null);
