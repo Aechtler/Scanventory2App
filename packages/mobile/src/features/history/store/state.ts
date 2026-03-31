@@ -58,27 +58,53 @@ export const createHistoryStoreState = (
 
   fetchHistory: async () => {
     if (!dependencies.syncFetchHistory) return;
-    
+
     set({ isLoading: true });
     try {
       const serverItems = await dependencies.syncFetchHistory();
-      
-      if (serverItems) {
+
+      if (serverItems !== null) {
+        const serverIds = new Set(
+          serverItems.map((i) => i.serverId).filter((id): id is string => Boolean(id)),
+        );
+
+        // Zeige Server-Items + lokale Drafts die noch nicht auf dem Server sind
         set((state) => {
-          // Keep local items that are still pending or failed
           const localDrafts = state.items.filter(
-            (item) => item.syncStatus === 'pending' || item.syncStatus === 'failed'
+            (item) =>
+              (item.syncStatus === 'pending' || item.syncStatus === 'failed') &&
+              (!item.serverId || !serverIds.has(item.serverId)),
           );
-          
-          // Fast id-based Map to avoid duplicates if a draft already became a serverItem but status wasn't updated
-          const serverIds = new Set(serverItems.map(i => i.serverId));
-          const draftsToKeep = localDrafts.filter(i => !i.serverId || !serverIds.has(i.serverId));
-          
-          return {
-            items: [...draftsToKeep, ...serverItems],
-            isOffline: false,
-          };
+          return { items: [...localDrafts, ...serverItems], isOffline: false };
         });
+
+        // Failed-Items nachträglich hochladen, da der Server jetzt erreichbar ist
+        const failedItems = get().items.filter(
+          (item) =>
+            item.syncStatus === 'failed' && (!item.serverId || !serverIds.has(item.serverId)),
+        );
+
+        for (const failedItem of failedItems) {
+          const uploadUri = failedItem.cachedImageUri ?? failedItem.imageUri;
+          if (!uploadUri) continue;
+
+          // Als pending markieren während der Upload läuft
+          set((state) => ({
+            items: state.items.map((i) =>
+              i.id === failedItem.id ? { ...i, syncStatus: 'pending' as const } : i,
+            ),
+          }));
+
+          void dependencies
+            .syncNewItem(uploadUri, buildHistorySyncPayload(failedItem, failedItem.scannedAt))
+            .then((serverId) => {
+              set((state) => ({
+                items: serverId
+                  ? markHistoryItemSynced(state.items, failedItem.id, serverId)
+                  : markHistoryItemSyncFailed(state.items, failedItem.id),
+              }));
+            });
+        }
       }
     } catch (e) {
       console.warn('[Store] fetchHistory failed', e);
