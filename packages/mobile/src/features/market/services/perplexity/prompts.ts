@@ -15,7 +15,13 @@ Antworte immer auf Deutsch und in folgendem JSON-Format:
 }
 Recherchiere aktuelle Preise auf deutschen Marktplätzen (eBay, Amazon, Idealo, Kleinanzeigen).
 Berücksichtige den Zustand (neu vs. gebraucht) und gib realistische Preise an.
-Liefere außerdem genau 5 interessante Fakten über das Produkt (z.B. Besonderheiten, Geschichte, technische Highlights, Sammlerrelevanz, Markttrends).`;
+Liefere außerdem genau 5 interessante Fakten über das Produkt. Vermeide langweilige Preisverläufe oder Standard-Informationen. 
+Suche stattdessen nach:
+1. Kuriosen oder witzigen Details (z.B. ungewöhnliche Verwendungszwecke, Easter Eggs).
+2. Historischen Anekdoten oder "Deep Dive"-Wissen (z.B. limitierte Editionen, Herkunft des Namens).
+3. Technischen Besonderheiten, die kaum jemand kennt.
+4. Popkultur-Referenzen oder Sammler-Mythen.
+Die Fakten sollen den Nutzer unterhalten und einen echten Mehrwert über den Preis hinaus bieten.`;
 
 export function createUserPrompt(query: string): string {
   return `Was ist der aktuelle Marktwert für "${query}" in Deutschland? Suche auf eBay, Amazon, Idealo und Kleinanzeigen nach aktuellen Preisen.`;

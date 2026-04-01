@@ -66,6 +66,7 @@ export interface IconProps {
   size?: number;
   color?: string;
   strokeWidth?: number;
+  style?: any;
 }
 
 const defaultProps: IconProps = {
