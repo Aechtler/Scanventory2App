@@ -10,13 +10,14 @@ interface UserCardProps {
   /** Eigener User-ID — kein Follow-Button für sich selbst */
   ownUserId?: string;
   showFollowButton?: boolean;
+  onFollowToggled?: () => void;
 }
 
 /**
  * Kompakte User-Karte für Listen (Suche, Follower, Following).
  * Tippen navigiert zum öffentlichen Profil.
  */
-export function UserCard({ profile, ownUserId, showFollowButton = true }: UserCardProps) {
+export function UserCard({ profile, ownUserId, showFollowButton = true, onFollowToggled }: UserCardProps) {
   const colors = useThemeColors();
   const isOwnProfile = profile.id === ownUserId;
 
@@ -60,6 +61,7 @@ export function UserCard({ profile, ownUserId, showFollowButton = true }: UserCa
           userId={profile.id}
           isFollowing={profile.isFollowing ?? false}
           compact
+          onToggled={onFollowToggled}
         />
       )}
     </Pressable>

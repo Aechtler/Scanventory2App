@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '@/shared/constants';
 import type {
   GroupSummary,
@@ -11,7 +11,7 @@ const BASE = API_CONFIG.BASE_URL;
 const TOKEN_KEY = 'auth_token';
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  const token = await AsyncStorage.getItem(TOKEN_KEY);
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

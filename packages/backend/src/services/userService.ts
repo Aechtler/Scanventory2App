@@ -214,13 +214,16 @@ export async function searchUsers(
     _count: { followers: number; following: number };
   };
 
-  const db = prisma as unknown as {
+  const db2 = prisma as unknown as {
     user: {
       findMany: (args: unknown) => Promise<UserWithProfile[]>;
     };
+    follow: {
+      findMany: (args: unknown) => Promise<{ followingId: string }[]>;
+    };
   };
 
-  const users = await db.user.findMany({
+  const users = await db2.user.findMany({
     where: {
       isPublic: true,
       ...(requestingUserId && { id: { not: requestingUserId } }),
@@ -247,6 +250,19 @@ export async function searchUsers(
     orderBy: { username: 'asc' },
   });
 
+  // isFollowing für alle Suchergebnisse in einer Query
+  let followingSet = new Set<string>();
+  if (requestingUserId && users.length > 0) {
+    const follows = await db2.follow.findMany({
+      where: {
+        followerId: requestingUserId,
+        followingId: { in: users.map((u) => u.id) },
+      },
+      select: { followingId: true },
+    });
+    followingSet = new Set(follows.map((f) => f.followingId));
+  }
+
   return users.map((u) => ({
     id: u.id,
     username: u.username,
@@ -256,6 +272,7 @@ export async function searchUsers(
     isPublic: u.isPublic,
     followerCount: u._count.followers,
     followingCount: u._count.following,
+    ...(requestingUserId && { isFollowing: followingSet.has(u.id) }),
   }));
 }
 

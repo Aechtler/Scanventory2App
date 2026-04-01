@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, KeyboardAvoidingView,
   Platform, Pressable, ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../features/auth/store/authStore';
 import { useSearch } from '../../features/social/hooks/useSearch';
@@ -28,7 +29,11 @@ export default function SocialTab() {
 
   const [activeTab, setActiveTab] = useState<Tab>('people');
   const { query, setQuery, results: userResults, state: searchState, clear } = useSearch();
-  const { users: following, loading: followingLoading } = useFollowing(user?.id ?? '');
+  const { users: following, loading: followingLoading, refetch: refetchFollowing } = useFollowing(user?.id ?? '');
+
+  useFocusEffect(useCallback(() => {
+    refetchFollowing();
+  }, [refetchFollowing]));
   const { groups, invitations, loading: groupsLoading, refetch: refetchGroups } = useGroupList();
 
   const isSearching = query.trim().length >= 2;
@@ -87,7 +92,7 @@ export default function SocialTab() {
                 data={userResults}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                  <UserCard profile={item} ownUserId={user?.id} showFollowButton />
+                  <UserCard profile={item} ownUserId={user?.id} showFollowButton onFollowToggled={refetchFollowing} />
                 )}
                 contentContainerStyle={{ paddingBottom: tabBarPadding + 16 }}
                 keyboardShouldPersistTaps="handled"

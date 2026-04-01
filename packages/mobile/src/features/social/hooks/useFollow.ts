@@ -11,7 +11,7 @@ interface UseFollowReturn {
  * Verwaltet den Follow-State für einen einzelnen User.
  * Optimistisches Update: State wechselt sofort, Rollback bei Fehler.
  */
-export function useFollow(userId: string, initialIsFollowing: boolean): UseFollowReturn {
+export function useFollow(userId: string, initialIsFollowing: boolean, onToggled?: () => void): UseFollowReturn {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [loading, setLoading] = useState(false);
 
@@ -29,13 +29,14 @@ export function useFollow(userId: string, initialIsFollowing: boolean): UseFollo
       } else {
         await followUser(userId);
       }
+      onToggled?.();
     } catch {
       // Rollback bei Fehler
       setIsFollowing(prev);
     } finally {
       setLoading(false);
     }
-  }, [userId, isFollowing, loading]);
+  }, [userId, isFollowing, loading, onToggled]);
 
   return { isFollowing, loading, toggle };
 }
