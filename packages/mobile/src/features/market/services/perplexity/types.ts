@@ -15,6 +15,7 @@ export interface MarketValueResult {
   confidence: 'hoch' | 'mittel' | 'niedrig';
   sources: string[];
   summary: string;
+  facts?: string[];
   rawResponse: string;
 }
 
@@ -28,6 +29,6 @@ export interface PerplexityConfig {
 export const PERPLEXITY_CONFIG: PerplexityConfig = {
   apiUrl: 'https://api.perplexity.ai/chat/completions',
   model: 'sonar',
-  maxTokens: 500,
+  maxTokens: 800,
   temperature: 0.1,
 };

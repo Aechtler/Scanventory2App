@@ -102,6 +102,7 @@ export async function getMarketValue(
           confidence: mapConfidence(parsed.konfidenz),
           sources: parsed.quellen || [],
           summary: parsed.zusammenfassung || content,
+          facts: Array.isArray(parsed.fakten) ? parsed.fakten.slice(0, 5) : undefined,
           rawResponse: content,
         };
       }

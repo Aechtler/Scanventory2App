@@ -3,6 +3,7 @@ import type { MarketValueResult } from '@/features/market/services/perplexity';
 import type { PlatformLink } from '@/features/market/services/quicklinks';
 import { PlatformQuicklinks } from '@/features/market/components/PlatformQuicklinks';
 import { MarketSlider } from '@/features/market/components/MarketSlider';
+import { ProductFactsCard } from '@/features/market/components/ProductFactsCard';
 import { FadeInView } from '@/shared/components/Animated';
 
 interface HistoryDetailMarketSectionProps {
@@ -44,6 +45,9 @@ export function HistoryDetailMarketSection({
           finalPrice={finalPrice}
           onPricePress={onPricePress}
         />
+        {marketValue?.facts && marketValue.facts.length > 0 && (
+          <ProductFactsCard facts={marketValue.facts} />
+        )}
       </FadeInView>
 
       <FadeInView delay={125}>

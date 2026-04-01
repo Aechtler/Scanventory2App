@@ -55,7 +55,7 @@ export function CategoryPickerModal({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <View className="flex-1 justify-end bg-black/60">
-        <View className="bg-background-card rounded-t-3xl" style={{ maxHeight: '80%' }}>
+        <View className="flex-1 bg-background-card rounded-t-3xl" style={{ maxHeight: '80%' }}>
           {/* Header */}
           <View className="flex-row items-center px-5 pt-5 pb-2">
             <View className="w-10 h-1 bg-foreground-secondary/30 rounded-full absolute self-center top-2 left-0 right-0 mx-auto" />

@@ -37,9 +37,11 @@ export const useCategoryStore = create<CategoryState>()(
       lastSyncedAt: null,
 
       syncCategories: async () => {
-        const { lastSyncedAt } = get();
+        const { lastSyncedAt, tree } = get();
         const isStale = !lastSyncedAt || Date.now() - lastSyncedAt > CACHE_TTL_MS;
-        if (!isStale) return;
+        const isEmpty = tree.length === 0;
+
+        if (!isStale && !isEmpty) return;
 
         try {
           const tree = await categoryService.getTree();
