@@ -7,6 +7,7 @@ RUN npm install --ignore-scripts
 RUN npm install typescript --no-save
 
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 RUN npx prisma generate
 
 COPY tsconfig.json ./
