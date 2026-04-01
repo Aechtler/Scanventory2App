@@ -1,10 +1,10 @@
 import { LibraryListCard } from './LibraryListCard';
-import type { HistoryItem } from '../store/historyStore';
+import type { LibraryItem } from '../utils/libraryRows';
 
 interface LibraryListItemProps {
-  item: HistoryItem;
+  item: LibraryItem;
   index: number;
-  onDelete: (itemId: string) => void;
+  onDelete?: (itemId: string) => void;
   onShare?: (itemId: string) => void;
 }
 
@@ -13,7 +13,7 @@ export function LibraryListItem({ item, index, onDelete, onShare }: LibraryListI
     <LibraryListCard
       item={item}
       index={index}
-      onDelete={() => onDelete(item.id)}
+      onDelete={onDelete ? () => onDelete(item.id) : undefined}
       onShare={onShare ? () => onShare(item.id) : undefined}
     />
   );

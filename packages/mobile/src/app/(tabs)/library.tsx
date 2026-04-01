@@ -13,8 +13,8 @@ import {
   LibraryFilteredEmptyState,
 } from '../../features/history/components/LibraryEmptyStates';
 import { ShareSheet } from '../../features/library/components/ShareSheet';
-import { FollowingItemsSection } from '../../features/history/components/FollowingItemsSection';
 import { useFollowingItems } from '../../features/history/hooks/useFollowingItems';
+import { syncDeleteItem } from '../../features/history/services/syncService';
 import { StaggeredItem } from '../../shared/components/Animated';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
@@ -23,6 +23,7 @@ import {
   buildLibraryRows,
   LIBRARY_PAGE_SIZE,
   type LibraryRow,
+  type LibraryItem,
 } from '../../features/history/utils/libraryRows';
 
 export default function LibraryTab() {
@@ -35,7 +36,7 @@ export default function LibraryTab() {
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  const { items: followingItems, loading: followingLoading } = useFollowingItems();
+  const { items: followingItems, refetch: refetchFollowing } = useFollowingItems();
 
   const [shareItemId, setShareItemId] = useState<string | null>(null);
   const shareItemName = useMemo(
@@ -46,9 +47,28 @@ export default function LibraryTab() {
   const colors = useThemeColors();
   const tabBarPadding = useTabBarPadding();
 
-  const isEmpty = items.length === 0;
+  // Eigene Items + Items von Gefolgten zusammenführen
+  const mergedItems = useMemo<LibraryItem[]>(() => {
+    const followingAsLibrary: LibraryItem[] = followingItems.map((fi) => ({
+      id: fi.id,
+      imageUri: fi.imageUri,
+      productName: fi.productName,
+      category: fi.category,
+      brand: fi.brand,
+      condition: fi.condition,
+      confidence: 0,
+      searchQuery: '',
+      priceStats: fi.priceStats,
+      scannedAt: fi.scannedAt,
+      owner: fi.owner,
+    }));
+    return [...items, ...followingAsLibrary];
+  }, [items, followingItems]);
+
+  const isEmpty = mergedItems.length === 0;
+
   const { filters, setSearchQuery, setCategories, setSortBy, setProductType, filteredItems, categories, isFiltered } =
-    useLibraryFilters(items);
+    useLibraryFilters(mergedItems);
 
   // listKey zwingt FlashList zum Remount → Items animieren frisch rein
   const listKey = `${filters.sortBy}-${filters.selectedCategories.join(',')}-${filters.searchQuery}-${filters.productType}-${viewMode}`;
@@ -74,16 +94,26 @@ export default function LibraryTab() {
 
   const libraryRows = useMemo(() => buildLibraryRows(paginatedItems, viewMode), [paginatedItems, viewMode]);
 
+  const handleDelete = useCallback((id: string) => {
+    const isOwn = !mergedItems.find((i) => i.id === id)?.owner;
+    if (isOwn) {
+      removeItem(id);
+    } else {
+      syncDeleteItem(id).then(() => refetchFollowing());
+    }
+  }, [mergedItems, removeItem, refetchFollowing]);
+
   const renderItem = useCallback(({ item, index }: { item: LibraryRow; index: number }) => {
     const staggerIndex = Math.min(index, 12);
     if (item.type === 'list') {
+      const isOwn = !item.item.owner;
       return (
         <StaggeredItem index={staggerIndex}>
           <LibraryListItem
             item={item.item}
             index={index}
-            onDelete={removeItem}
-            onShare={(id) => setShareItemId(id)}
+            onDelete={handleDelete}
+            onShare={isOwn ? (id) => setShareItemId(id) : undefined}
           />
         </StaggeredItem>
       );
@@ -93,7 +123,7 @@ export default function LibraryTab() {
         <LibraryGridItem items={item.items} rowIndex={index} />
       </StaggeredItem>
     );
-  }, [removeItem]);
+  }, [handleDelete]);
 
   const toggleViewMode = useCallback(() => {
     setVisibleCount(LIBRARY_PAGE_SIZE);
@@ -105,8 +135,6 @@ export default function LibraryTab() {
       <View className="px-5 pt-5 pb-1">
         <Text className="text-foreground text-2xl font-bold">Inventar</Text>
       </View>
-
-      <FollowingItemsSection items={followingItems} loading={followingLoading} />
 
       {isEmpty ? (
         <LibraryEmptyState iconColor={colors.textSecondary} />

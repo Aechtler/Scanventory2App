@@ -9,8 +9,14 @@ import { AuthRequest } from '../../middleware/jwtAuth';
 import { IdParams, requireAuthenticatedUserId, validateItemId } from './shared';
 
 export async function updateItem(req: AuthRequest<IdParams>, res: Response): Promise<void> {
-  const userId = requireAuthenticatedUserId(req, res);
-  if (!userId || !validateItemId(req.params.id, res)) {
+  const requestingUserId = requireAuthenticatedUserId(req, res);
+  if (!requestingUserId || !validateItemId(req.params.id, res)) {
+    return;
+  }
+
+  const userId = await itemService.resolveAuthorizedUserId(req.params.id, requestingUserId);
+  if (!userId) {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Item not found' } });
     return;
   }
 
@@ -28,8 +34,13 @@ export async function updateItem(req: AuthRequest<IdParams>, res: Response): Pro
 }
 
 export async function updateItemPrices(req: AuthRequest<IdParams>, res: Response): Promise<void> {
-  const userId = requireAuthenticatedUserId(req, res);
-  if (!userId || !validateItemId(req.params.id, res)) {
+  const requestingUserId = requireAuthenticatedUserId(req, res);
+  if (!requestingUserId || !validateItemId(req.params.id, res)) {
+    return;
+  }
+  const userId = await itemService.resolveAuthorizedUserId(req.params.id, requestingUserId);
+  if (!userId) {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Item not found' } });
     return;
   }
 
@@ -64,8 +75,13 @@ export async function updateKleinanzeigenItemPrices(
   req: AuthRequest<IdParams>,
   res: Response
 ): Promise<void> {
-  const userId = requireAuthenticatedUserId(req, res);
-  if (!userId || !validateItemId(req.params.id, res)) {
+  const requestingUserId = requireAuthenticatedUserId(req, res);
+  if (!requestingUserId || !validateItemId(req.params.id, res)) {
+    return;
+  }
+  const userId = await itemService.resolveAuthorizedUserId(req.params.id, requestingUserId);
+  if (!userId) {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Item not found' } });
     return;
   }
 
@@ -99,8 +115,13 @@ export async function updateItemMarketValue(
   req: AuthRequest<IdParams>,
   res: Response
 ): Promise<void> {
-  const userId = requireAuthenticatedUserId(req, res);
-  if (!userId || !validateItemId(req.params.id, res)) {
+  const requestingUserId = requireAuthenticatedUserId(req, res);
+  if (!requestingUserId || !validateItemId(req.params.id, res)) {
+    return;
+  }
+  const userId = await itemService.resolveAuthorizedUserId(req.params.id, requestingUserId);
+  if (!userId) {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Item not found' } });
     return;
   }
 

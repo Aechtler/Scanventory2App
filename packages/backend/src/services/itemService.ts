@@ -66,3 +66,34 @@ export async function updateMarketValue(
 export async function deleteItem(id: string, userId: string) {
   return itemService.deleteItem(id, userId);
 }
+
+/**
+ * Gibt die userId des Item-Owners zurück, wenn der Requester der Owner
+ * oder ein Follower des Owners ist. Sonst null.
+ *
+ * Ermöglicht Followern volle Verwaltungsrechte (temporär, bis Rollenmodell kommt).
+ */
+export async function resolveAuthorizedUserId(
+  itemId: string,
+  requestingUserId: string
+): Promise<string | null> {
+  const item = await prisma.scannedItem.findUnique({
+    where: { id: itemId },
+    select: { userId: true },
+  });
+
+  if (!item) return null;
+  if (item.userId === requestingUserId) return requestingUserId;
+
+  // Prüfen ob requestingUser dem Owner folgt
+  const follow = await (prisma as any).follow.findUnique({
+    where: {
+      followerId_followingId: {
+        followerId: requestingUserId,
+        followingId: item.userId,
+      },
+    },
+  });
+
+  return follow ? item.userId : null;
+}

@@ -1,9 +1,9 @@
 import { View } from 'react-native';
 import { LibraryGridCard } from './LibraryGridCard';
-import type { HistoryItem } from '../store/historyStore';
+import type { LibraryItem } from '../utils/libraryRows';
 
 interface LibraryGridItemProps {
-  items: [HistoryItem, HistoryItem?];
+  items: [LibraryItem, LibraryItem?];
   rowIndex: number;
 }
 

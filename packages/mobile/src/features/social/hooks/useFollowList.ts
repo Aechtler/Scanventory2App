@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getFollowers, getFollowing } from '../services/followService';
 import type { PublicProfile } from '../types/profile.types';
 
@@ -46,5 +46,6 @@ function useFollowList(
     return () => { cancelled = true; };
   }, [userId, type, trigger]);
 
-  return { users, loading, error, refetch: () => setTrigger((t) => t + 1) };
+  const refetch = useCallback(() => setTrigger((t) => t + 1), []);
+  return { users, loading, error, refetch };
 }

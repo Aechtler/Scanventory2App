@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import type { HistoryItem } from '../store/historyStore';
+import type { LibraryItem } from '../utils/libraryRows';
 import { getLibraryDisplayPrice } from '../utils/historyPricing';
 import { classifyProduct, type ProductType } from '../utils/productClassification';
 
@@ -17,7 +17,7 @@ export interface LibraryFilters {
   productType: ProductType | null;
 }
 
-export function useLibraryFilters(items: HistoryItem[]) {
+export function useLibraryFilters(items: LibraryItem[]) {
   const [filters, setFilters] = useState<LibraryFilters>({
     searchQuery: '',
     selectedCategories: [],
