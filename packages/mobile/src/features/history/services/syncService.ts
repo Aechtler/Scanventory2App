@@ -88,7 +88,48 @@ export async function syncDeleteItem(serverId: string): Promise<boolean> {
   }
 }
 
-/** 
+export interface FollowingItem {
+  id: string;
+  imageUri: string;
+  productName: string;
+  category: string;
+  brand: string | null;
+  condition: string;
+  priceStats: PriceStats;
+  scannedAt: string;
+  owner: {
+    id: string;
+    displayName: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  };
+}
+
+/** Items von gefolgten Usern laden */
+export async function syncFetchFollowingItems(): Promise<FollowingItem[] | null> {
+  try {
+    const result = await apiGet<any>('/api/items/following');
+    if (result.success && Array.isArray(result.data)) {
+      return result.data.map((item: any): FollowingItem => ({
+        id: item.id,
+        imageUri: `${API_CONFIG.BASE_URL}/api/images/${item.imageFilename}`,
+        productName: item.productName,
+        category: item.category,
+        brand: item.brand ?? null,
+        condition: item.condition,
+        priceStats: typeof item.priceStats === 'string' ? JSON.parse(item.priceStats) : (item.priceStats ?? {}),
+        scannedAt: item.scannedAt,
+        owner: item.owner,
+      }));
+    }
+    return null;
+  } catch (error) {
+    console.warn('[Sync] Fetch Following Items error:', error);
+    return null;
+  }
+}
+
+/**
  * History vom Backend laden (Ansatz: Always On)
  * Lädt die neuesten Scans des Nutzers herunter und konvertiert sie in das HistoryItem Format
  */

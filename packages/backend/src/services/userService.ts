@@ -227,6 +227,7 @@ export async function searchUsers(
       OR: [
         { username: { contains: query, mode: 'insensitive' } },
         { displayName: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } },
       ],
     },
     select: {
@@ -254,5 +255,88 @@ export async function searchUsers(
     isPublic: u.isPublic,
     followerCount: u._count.followers,
     followingCount: u._count.following,
+  }));
+}
+
+export interface FollowingItemOwner {
+  id: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+}
+
+export interface FollowingItem {
+  id: string;
+  imageFilename: string;
+  productName: string;
+  category: string;
+  brand: string | null;
+  condition: string;
+  confidence: number;
+  priceStats: unknown;
+  scannedAt: Date;
+  owner: FollowingItemOwner;
+}
+
+/** Gibt Items aller Nutzer zurück, denen userId folgt */
+export async function getFollowingItems(userId: string): Promise<FollowingItem[]> {
+  type FollowRow = { followingId: string };
+  type ItemRow = {
+    id: string;
+    imageFilename: string;
+    productName: string;
+    category: string;
+    brand: string | null;
+    condition: string;
+    confidence: number;
+    priceStats: unknown;
+    scannedAt: Date;
+    user: { id: string; displayName: string | null; username: string | null; avatarUrl: string | null };
+  };
+
+  const db = prisma as unknown as {
+    follow: { findMany: (args: unknown) => Promise<FollowRow[]> };
+    scannedItem: { findMany: (args: unknown) => Promise<ItemRow[]> };
+  };
+
+  const follows = await db.follow.findMany({
+    where: { followerId: userId },
+    select: { followingId: true },
+  });
+
+  const followingIds = follows.map((f) => f.followingId);
+  if (followingIds.length === 0) return [];
+
+  const items = await db.scannedItem.findMany({
+    where: { userId: { in: followingIds } },
+    select: {
+      id: true,
+      imageFilename: true,
+      productName: true,
+      category: true,
+      brand: true,
+      condition: true,
+      confidence: true,
+      priceStats: true,
+      scannedAt: true,
+      user: {
+        select: { id: true, displayName: true, username: true, avatarUrl: true },
+      },
+    },
+    orderBy: { scannedAt: 'desc' },
+    take: 100,
+  });
+
+  return items.map((item) => ({
+    id: item.id,
+    imageFilename: item.imageFilename,
+    productName: item.productName,
+    category: item.category,
+    brand: item.brand,
+    condition: item.condition,
+    confidence: item.confidence,
+    priceStats: item.priceStats,
+    scannedAt: item.scannedAt,
+    owner: item.user,
   }));
 }

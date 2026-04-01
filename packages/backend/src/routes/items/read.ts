@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import * as itemService from '../../services/itemService';
+import { getFollowingItems } from '../../services/userService';
 import { ApiResponse } from '../../types';
 import { AuthRequest } from '../../middleware/jwtAuth';
 import { IdParams, getPaginationParams, requireAuthenticatedUserId, validateItemId } from './shared';
@@ -13,6 +14,15 @@ export async function listItems(req: AuthRequest, res: Response): Promise<void> 
   const { page, limit } = getPaginationParams(req.query);
   const result = await itemService.getItems(userId, page, limit);
   const response: ApiResponse<typeof result> = { success: true, data: result };
+  res.json(response);
+}
+
+export async function listFollowingItems(req: AuthRequest, res: Response): Promise<void> {
+  const userId = requireAuthenticatedUserId(req, res);
+  if (!userId) return;
+
+  const items = await getFollowingItems(userId);
+  const response: ApiResponse<typeof items> = { success: true, data: items };
   res.json(response);
 }
 

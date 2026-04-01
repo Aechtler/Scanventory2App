@@ -13,6 +13,8 @@ import {
   LibraryFilteredEmptyState,
 } from '../../features/history/components/LibraryEmptyStates';
 import { ShareSheet } from '../../features/library/components/ShareSheet';
+import { FollowingItemsSection } from '../../features/history/components/FollowingItemsSection';
+import { useFollowingItems } from '../../features/history/hooks/useFollowingItems';
 import { StaggeredItem } from '../../shared/components/Animated';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
@@ -32,6 +34,8 @@ export default function LibraryTab() {
   const [refreshing, setRefreshing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  const { items: followingItems, loading: followingLoading } = useFollowingItems();
 
   const [shareItemId, setShareItemId] = useState<string | null>(null);
   const shareItemName = useMemo(
@@ -101,6 +105,8 @@ export default function LibraryTab() {
       <View className="px-5 pt-5 pb-1">
         <Text className="text-foreground text-2xl font-bold">Inventar</Text>
       </View>
+
+      <FollowingItemsSection items={followingItems} loading={followingLoading} />
 
       {isEmpty ? (
         <LibraryEmptyState iconColor={colors.textSecondary} />

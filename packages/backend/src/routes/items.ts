@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import { createItem, uploadItemImage } from './items/create';
 import { deleteItemById } from './items/delete';
-import { getItem, listItems } from './items/read';
+import { getItem, listItems, listFollowingItems } from './items/read';
 import {
   updateItem,
   updateItemMarketValue,
@@ -16,6 +16,7 @@ import {
 const router = Router();
 
 router.get('/', listItems);
+router.get('/following', listFollowingItems);
 router.get('/:id', getItem);
 router.post('/', uploadItemImage.single('image'), createItem);
 router.put('/:id', updateItem);

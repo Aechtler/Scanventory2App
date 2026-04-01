@@ -62,9 +62,16 @@ export default function ProfileTab() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Edit-Button oben rechts */}
+        {/* Header-Buttons: Suche links, Bearbeiten rechts */}
         <FadeInView delay={0}>
-          <View className="flex-row justify-end mb-2">
+          <View className="flex-row justify-between items-center mb-2">
+            <Pressable
+              onPress={() => router.push('/(tabs)/social')}
+              className="p-2 rounded-xl bg-background-card border border-border active:opacity-70"
+              accessibilityLabel="Nutzer suchen"
+            >
+              <Icons.Search size={18} color={colors.textSecondary} />
+            </Pressable>
             <Pressable
               onPress={() => setEditVisible(true)}
               className="flex-row items-center gap-1.5 py-1.5 px-3 rounded-xl bg-background-card border border-border active:opacity-70"
