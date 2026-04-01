@@ -227,6 +227,7 @@ export async function searchUsers(
       OR: [
         { username: { contains: query, mode: 'insensitive' } },
         { displayName: { contains: query, mode: 'insensitive' } },
+        { name: { contains: query, mode: 'insensitive' } },
         { email: { contains: query, mode: 'insensitive' } },
       ],
     },
