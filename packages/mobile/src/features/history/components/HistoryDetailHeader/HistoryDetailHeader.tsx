@@ -1,8 +1,8 @@
 /**
  * HistoryDetailHeader Component
  *
- * Hero-Bild mit Gradient, Produktinfos unten, Preis-Badge oben rechts.
- * Tap auf Bild → Edit-Seite, Tap auf Preis-Badge → PriceEditSheet
+ * Hero-Bild mit Gradient, Produktinfos unten, Edit-Button oben rechts.
+ * Tap auf Bild → Edit-Seite.
  */
 
 import { View, Text, Image, Pressable } from 'react-native';
@@ -13,21 +13,40 @@ import { FadeInView } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
 import { HistoryItem } from '@/features/history/store/historyStore';
 import { isManualSearchResult } from '@/shared/utils/analysisSource';
+import { classifyProduct } from '@/features/history/utils/productClassification';
 
 interface HistoryDetailHeaderProps {
   item: HistoryItem;
-  onPriceBadgePress: () => void;
 }
 
-function formatPrice(price: number): string {
-  return price.toLocaleString('de-DE', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
+function ProductTypeBadge({ item }: { item: HistoryItem }) {
+  const type = classifyProduct(item);
+  if (type === 'high_value') {
+    return (
+      <View
+        className="absolute top-3 left-3 flex-row items-center gap-1.5 px-3 py-2 rounded-full bg-violet-600/90 border border-violet-400/30"
+        style={{ shadowColor: '#a78bfa', shadowRadius: 8, shadowOpacity: 0.5 }}
+      >
+        <Icons.Star size={13} color="#fff" />
+        <Text className="text-white text-xs font-semibold">High Value</Text>
+      </View>
+    );
+  }
+  if (type === 'fast_seller') {
+    return (
+      <View
+        className="absolute top-3 left-3 flex-row items-center gap-1.5 px-3 py-2 rounded-full bg-amber-500/90 border border-amber-400/30"
+        style={{ shadowColor: '#f59e0b', shadowRadius: 8, shadowOpacity: 0.5 }}
+      >
+        <Icons.TrendingUp size={13} color="#fff" />
+        <Text className="text-white text-xs font-semibold">Schnellverkäufer</Text>
+      </View>
+    );
+  }
+  return null;
 }
 
-export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHeaderProps) {
-  const hasPrice = item.finalPrice !== undefined && item.finalPrice !== null;
+export function HistoryDetailHeader({ item }: HistoryDetailHeaderProps) {
   const isManual = isManualSearchResult(item);
 
   return (
@@ -40,11 +59,11 @@ export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHe
       >
         {/* Bild — Tap öffnet Edit-Seite */}
         <Pressable onPress={() => router.push(`/history/edit/${item.id}`)}>
-          <View style={{ width: '100%', aspectRatio: 4 / 3, overflow: 'hidden' }}>
+          <View style={{ width: '100%', aspectRatio: 4 / 3, overflow: 'hidden', backgroundColor: '#0d1117' }}>
             <Image
               source={{ uri: item.cachedImageUri || item.imageUri }}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '200%' }}
-              resizeMode="cover"
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="contain"
             />
           </View>
 
@@ -85,38 +104,12 @@ export function HistoryDetailHeader({ item, onPriceBadgePress }: HistoryDetailHe
             )}
           </View>
 
-          {/* Edit-Hint oben links */}
-          <View className="absolute top-3 left-3 bg-black/40 px-3 py-2 rounded-full flex-row items-center gap-1.5">
-            <Icons.Pencil size={12} color="rgba(255,255,255,0.8)" />
-            <Text className="text-white/80 text-xs">Bearbeiten</Text>
-          </View>
-        </Pressable>
+          {/* Produkt-Typ-Badge oben links */}
+          <ProductTypeBadge item={item} />
 
-        {/* Preis-Badge oben rechts — eigener Pressable, stoppt Event-Bubbling */}
-        <Pressable
-          onPress={onPriceBadgePress}
-          className="absolute top-3 right-3"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <View
-            className={`flex-row items-center gap-1.5 px-3.5 py-2.5 rounded-2xl ${
-              hasPrice
-                ? 'bg-emerald-500/90'
-                : 'bg-black/50 border border-white/20'
-            }`}
-          >
-            {hasPrice ? (
-              <>
-                <Text className="text-white text-base font-bold">
-                  {formatPrice(item.finalPrice!)}€
-                </Text>
-              </>
-            ) : (
-              <>
-                <Icons.Coins size={14} color="rgba(255,255,255,0.7)" />
-                <Text className="text-white/70 text-xs font-medium">Preis</Text>
-              </>
-            )}
+          {/* Edit-Button oben rechts */}
+          <View className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/50 border border-white/15 items-center justify-center">
+            <Icons.Pencil size={15} color="rgba(255,255,255,0.85)" />
           </View>
         </Pressable>
       </MotiView>
