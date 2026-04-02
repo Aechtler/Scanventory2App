@@ -103,6 +103,14 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
               <Icons.TrendingUp size={14} color="#fff" />
             </View>
           )}
+          {classifyProduct(item) === 'normal' && (
+            <View
+              className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40 shadow-sm"
+              style={{ shadowColor: '#38bdf8', shadowRadius: 4, shadowOpacity: 0.4 }}
+            >
+              <Icons.Tag size={13} color="#fff" />
+            </View>
+          )}
         </View>
 
         {/* Infos rechts */}

@@ -56,11 +56,19 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
             </View>
           )}
           {productType === 'fast_seller' && (
-            <View 
+            <View
               className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-amber-500 border border-amber-400/40 shadow-lg"
               style={{ shadowColor: '#f59e0b', shadowRadius: 8, shadowOpacity: 0.6 }}
             >
               <Icons.TrendingUp size={16} color="#fff" />
+            </View>
+          )}
+          {productType === 'normal' && (
+            <View
+              className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40 shadow-lg"
+              style={{ shadowColor: '#38bdf8', shadowRadius: 8, shadowOpacity: 0.4 }}
+            >
+              <Icons.Tag size={15} color="#fff" />
             </View>
           )}
 
