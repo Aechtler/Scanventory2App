@@ -1,10 +1,11 @@
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, Pressable } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import type { PublicProfile } from '../types/profile.types';
 
 interface ProfileHeaderProps {
   profile: PublicProfile;
+  itemCount?: number;
   /** Zeigt Follower/Following-Zahlen als tippbare Elemente */
   onFollowersPress?: () => void;
   onFollowingPress?: () => void;
@@ -14,7 +15,7 @@ interface ProfileHeaderProps {
  * Zeigt Avatar, Display-Name, @username, Bio und Follower/Following-Stats.
  * Wird sowohl auf dem eigenen als auch auf fremden Profil verwendet.
  */
-export function ProfileHeader({ profile, onFollowersPress, onFollowingPress }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, itemCount, onFollowersPress, onFollowingPress }: ProfileHeaderProps) {
   const colors = useThemeColors();
 
   const displayName = profile.displayName || profile.username || 'Benutzer';
@@ -50,23 +51,24 @@ export function ProfileHeader({ profile, onFollowersPress, onFollowingPress }: P
 
       {/* Follower / Following Stats */}
       <View className="flex-row mt-5 gap-8">
-        <View
-          className="items-center active:opacity-70"
-          onStartShouldSetResponder={() => !!onFollowersPress}
-          onResponderRelease={onFollowersPress}
-        >
+        {itemCount !== undefined && (
+          <>
+            <View className="items-center">
+              <Text className="text-foreground text-xl font-bold">{itemCount}</Text>
+              <Text className="text-foreground-secondary text-xs mt-0.5">Gegenstände</Text>
+            </View>
+            <View className="w-px bg-border" />
+          </>
+        )}
+        <Pressable className="items-center active:opacity-70" onPress={onFollowersPress}>
           <Text className="text-foreground text-xl font-bold">{profile.followerCount}</Text>
           <Text className="text-foreground-secondary text-xs mt-0.5">Follower</Text>
-        </View>
+        </Pressable>
         <View className="w-px bg-border" />
-        <View
-          className="items-center active:opacity-70"
-          onStartShouldSetResponder={() => !!onFollowingPress}
-          onResponderRelease={onFollowingPress}
-        >
+        <Pressable className="items-center active:opacity-70" onPress={onFollowingPress}>
           <Text className="text-foreground text-xl font-bold">{profile.followingCount}</Text>
           <Text className="text-foreground-secondary text-xs mt-0.5">Folge ich</Text>
-        </View>
+        </Pressable>
       </View>
     </View>
   );

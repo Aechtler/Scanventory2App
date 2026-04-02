@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Alert, Modal, ScrollView } from 'react-native';
+import { View, Text, Pressable, Alert, Modal, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../features/auth/store/authStore';
@@ -12,8 +12,13 @@ import { ThemeSelector } from '../../shared/components/ThemeSelector';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
 import { ProfileHeader, ProfileForm } from '../../features/social';
+import { usePublicProfile } from '../../features/social/hooks/usePublicProfile';
+import { useFollowers, useFollowing } from '../../features/social/hooks/useFollowList';
+import { UserCard } from '../../features/social/components/UserCard';
 import type { PublicProfile } from '../../features/social';
 import Constants from 'expo-constants';
+
+type FollowSheet = 'followers' | 'following' | null;
 
 /**
  * Profil Tab — User-Info, Portfolio-Stats, Theme, Logout
@@ -28,8 +33,13 @@ export default function ProfileTab() {
   const tabBarPadding = useTabBarPadding();
 
   const [editVisible, setEditVisible] = useState(false);
+  const [followSheet, setFollowSheet] = useState<FollowSheet>(null);
 
-  // Aktuelles Profil aus dem User-State zusammenbauen
+  const { profile: fetchedProfile, refetch: refetchProfile } = usePublicProfile(user?.id ?? '');
+  const { users: followers, loading: followersLoading } = useFollowers(user?.id ?? '');
+  const { users: following, loading: followingLoading, refetch: refetchFollowing } = useFollowing(user?.id ?? '');
+
+  // Aktuelles Profil aus dem User-State zusammenbauen, Counts vom Backend
   const currentProfile: PublicProfile = {
     id: user?.id ?? '',
     username: user?.username ?? null,
@@ -37,8 +47,8 @@ export default function ProfileTab() {
     avatarUrl: user?.avatarUrl ?? null,
     bio: user?.bio ?? null,
     isPublic: user?.isPublic ?? true,
-    followerCount: 0,
-    followingCount: 0,
+    followerCount: fetchedProfile?.followerCount ?? 0,
+    followingCount: fetchedProfile?.followingCount ?? 0,
   };
 
   const handleLogout = () => {
@@ -86,8 +96,9 @@ export default function ProfileTab() {
         <FadeInView delay={50}>
           <ProfileHeader
             profile={currentProfile}
-            onFollowersPress={() => {/* Phase 2: Follower-Liste öffnen */}}
-            onFollowingPress={() => {/* Phase 2: Following-Liste öffnen */}}
+            itemCount={items.length}
+            onFollowersPress={() => setFollowSheet('followers')}
+            onFollowingPress={() => setFollowSheet('following')}
           />
         </FadeInView>
 
@@ -143,6 +154,65 @@ export default function ProfileTab() {
           <Text className="text-foreground-secondary/50 text-xs">Scandirwas v{appVersion}</Text>
         </View>
       </ScrollView>
+
+      {/* Follower / Following Sheet */}
+      <Modal
+        visible={followSheet !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setFollowSheet(null)}
+      >
+        <SafeAreaView className="flex-1 bg-background">
+          <View className="flex-row items-center justify-between px-6 py-4 border-b border-border">
+            <Text className="text-foreground text-lg font-semibold">
+              {followSheet === 'followers' ? 'Follower' : 'Folge ich'}
+            </Text>
+            <Pressable onPress={() => setFollowSheet(null)} className="p-2 active:opacity-60">
+              <Icons.Close size={20} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+          {(() => {
+            const isFollowers = followSheet === 'followers';
+            const users = isFollowers ? followers : following;
+            const loading = isFollowers ? followersLoading : followingLoading;
+
+            if (loading) {
+              return (
+                <View className="flex-1 items-center justify-center">
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              );
+            }
+
+            if (users.length === 0) {
+              return (
+                <View className="flex-1 items-center justify-center px-8">
+                  <Icons.User size={40} color={colors.textSecondary} />
+                  <Text className="text-foreground text-base font-semibold mt-3 text-center">
+                    {isFollowers ? 'Noch keine Follower' : 'Du folgst noch niemandem'}
+                  </Text>
+                </View>
+              );
+            }
+
+            return (
+              <FlatList
+                data={users}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <UserCard
+                    profile={item}
+                    ownUserId={user?.id}
+                    showFollowButton
+                    onFollowToggled={() => { refetchFollowing(); refetchProfile(); }}
+                  />
+                )}
+                showsVerticalScrollIndicator={false}
+              />
+            );
+          })()}
+        </SafeAreaView>
+      </Modal>
 
       {/* Profil bearbeiten — Modal */}
       <Modal
