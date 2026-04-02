@@ -131,6 +131,7 @@ export async function getPublicProfile(
 
   type UserWithProfile = {
     id: string;
+    name: string | null;
     username: string | null;
     displayName: string | null;
     avatarUrl: string | null;
@@ -155,6 +156,7 @@ export async function getPublicProfile(
     where,
     select: {
       id: true,
+      name: true,
       username: true,
       displayName: true,
       avatarUrl: true,
@@ -187,7 +189,7 @@ export async function getPublicProfile(
   return {
     id: user.id,
     username: user.username,
-    displayName: user.displayName,
+    displayName: user.displayName ?? user.name,
     avatarUrl: user.avatarUrl,
     bio: user.bio,
     isPublic: user.isPublic,
@@ -206,6 +208,7 @@ export async function searchUsers(
 ): Promise<PublicProfile[]> {
   type UserWithProfile = {
     id: string;
+    name: string | null;
     username: string | null;
     displayName: string | null;
     avatarUrl: string | null;
@@ -236,6 +239,7 @@ export async function searchUsers(
     },
     select: {
       id: true,
+      name: true,
       username: true,
       displayName: true,
       avatarUrl: true,
@@ -266,7 +270,7 @@ export async function searchUsers(
   return users.map((u) => ({
     id: u.id,
     username: u.username,
-    displayName: u.displayName,
+    displayName: u.displayName ?? u.name,
     avatarUrl: u.avatarUrl,
     bio: u.bio,
     isPublic: u.isPublic,
