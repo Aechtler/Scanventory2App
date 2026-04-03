@@ -36,9 +36,9 @@ export function MarketValueModal({
       <View className="flex-1 bg-background">
         {/* Modal Header */}
         <View className="flex-row items-center justify-between p-4 border-b border-border">
-          <View className="flex-row items-center gap-3">
-            <Icons.AI size={24} color={themeColors.primaryLight} />
-            <Text className="text-white font-bold text-lg">KI-Analyse Details</Text>
+          <View className="flex-row items-center gap-2">
+            <Icons.AI size={18} color={themeColors.primaryLight} />
+            <Text className="text-white font-semibold text-base">KI-Schätzung</Text>
           </View>
           <Pressable
             onPress={onClose}
@@ -49,71 +49,33 @@ export function MarketValueModal({
         </View>
 
         <ScrollView className="flex-1 p-4">
-          {/* Price Summary */}
-          <View className="bg-purple-900/30 rounded-xl p-4 mb-4 border border-purple-500/30">
-            <Text className="text-purple-300 text-sm mb-2">
-              Geschätzter Marktwert
-            </Text>
+          {/* Price + Confidence */}
+          <View className="items-center py-6 mb-4">
+            <Text className="text-foreground-secondary text-xs mb-1 uppercase tracking-wider">Von – Bis</Text>
             <Text className="text-white text-4xl font-bold text-center">
-              {result.estimatedPrice}
+              {result.priceRange || result.estimatedPrice}
             </Text>
-            {result.priceRange && (
-              <Text className="text-purple-400 text-center mt-2">
-                Spanne: {result.priceRange}
-              </Text>
-            )}
-            <View
-              className={`${colors.bg} ${colors.border} border px-3 py-2 rounded-lg mt-3 self-center`}
-            >
-              <Text className={`${colors.text} font-medium`}>
+            <View className={`${colors.bg} px-3 py-1 rounded-full mt-3`}>
+              <Text className={`${colors.text} text-xs font-semibold uppercase`}>
                 Konfidenz: {result.confidence}
               </Text>
             </View>
           </View>
 
           {/* Summary */}
-          <View className="bg-background-elevated/50 rounded-xl p-4 mb-4">
-            <View className="flex-row items-center mb-2">
-              <Icons.FileText size={18} color={themeColors.textPrimary} />
-              <Text className="text-white font-semibold ml-2">
-                Zusammenfassung
-              </Text>
-            </View>
-            <Text className="text-foreground-secondary leading-6">{result.summary}</Text>
-          </View>
+          {result.summary && (
+            <Text className="text-foreground-secondary text-sm leading-6 mb-6">{result.summary}</Text>
+          )}
 
           {/* Sources */}
           {result.sources.length > 0 && (
-            <View className="bg-background-elevated/50 rounded-xl p-4 mb-4">
-              <View className="flex-row items-center mb-2">
-                <Icons.ExternalLink size={16} color={themeColors.textPrimary} />
-                <Text className="text-white font-semibold ml-2">Quellen</Text>
-              </View>
+            <View className="mb-6">
+              <Text className="text-foreground-secondary text-xs font-medium mb-2 uppercase tracking-wider">Quellen</Text>
               {result.sources.map((source: string, i: number) => (
-                <View key={i} className="bg-background-elevated/50 px-3 py-2 rounded-lg mb-2">
-                  <Text className="text-foreground-secondary text-sm">{source}</Text>
-                </View>
+                <Text key={i} className="text-foreground-secondary text-xs py-1 border-b border-border/30">{source}</Text>
               ))}
             </View>
           )}
-
-          {/* Raw Response */}
-          <View className="bg-background-elevated/50 rounded-xl p-4 mb-4">
-            <View className="flex-row items-center mb-2">
-              <Icons.Terminal size={18} color={themeColors.textPrimary} />
-              <Text className="text-white font-semibold ml-2">
-                Komplette KI-Antwort
-              </Text>
-            </View>
-            <Text className="text-foreground-secondary text-xs mb-3">
-              Die vollständige Recherche von Perplexity AI:
-            </Text>
-            <View className="bg-background/80 rounded-lg p-3">
-              <Text className="text-foreground-secondary text-sm leading-6 font-mono">
-                {result.rawResponse}
-              </Text>
-            </View>
-          </View>
 
           {/* Refresh Button */}
           {onRefresh && (
@@ -122,13 +84,11 @@ export function MarketValueModal({
                 onRefresh();
                 onClose();
               }}
-              className="bg-purple-600 py-4 px-6 rounded-xl items-center mb-6"
+              className="bg-purple-600 py-3.5 px-6 rounded-xl items-center mb-6"
             >
-              <View className="flex-row items-center">
-                <Icons.Refresh size={18} color={themeColors.textPrimary} />
-                <Text className="text-white font-semibold ml-2">
-                  Neu recherchieren
-                </Text>
+              <View className="flex-row items-center gap-2">
+                <Icons.Refresh size={16} color={themeColors.textPrimary} />
+                <Text className="text-white font-medium">Neu recherchieren</Text>
               </View>
             </Pressable>
           )}

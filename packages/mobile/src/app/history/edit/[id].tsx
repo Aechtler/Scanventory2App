@@ -14,12 +14,12 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import { Icons } from '@/shared/components/Icons';
 import { useHistoryStore } from '@/features/history/store/historyStore';
-import { useUIStore } from '@/shared/store/uiStore';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { useTabBarPadding } from '@/shared/hooks/useTabBarPadding';
 import { CategoryPickerField } from '@/features/categories';
@@ -57,19 +57,7 @@ export default function ProductEditScreen() {
   const [searchQueries, setSearchQueries] = useState<SearchQueries>({});
   const [showSearchQueries, setShowSearchQueries] = useState(false);
   const [conditionOpen, setConditionOpen] = useState(false);
-  const [imageExpanded, setImageExpanded] = useState(false);
   const tabBarPadding = useTabBarPadding();
-  const setTabBarHidden = useUIStore((s) => s.setTabBarHidden);
-
-  const toggleImageExpanded = (expanded: boolean) => {
-    setImageExpanded(expanded);
-    setTabBarHidden(expanded);
-  };
-
-  // Tab Bar zurücksetzen beim Verlassen des Screens
-  useEffect(() => {
-    return () => setTabBarHidden(false);
-  }, []);
 
   // Init state from item
   useEffect(() => {
@@ -151,60 +139,29 @@ export default function ProductEditScreen() {
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ padding: 16, flexGrow: 1, paddingBottom: tabBarPadding }}
-            scrollEnabled={!imageExpanded}
           >
-            {/* Bild-Preview mit Expand-Toggle */}
+            {/* Bild-Preview */}
             <MotiView
               from={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'timing', duration: 300 }}
-              className="rounded-xl overflow-hidden mb-6"
-              style={imageExpanded ? { flex: 1 } : undefined}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="rounded-2xl overflow-hidden mb-6"
             >
-              <View
-                style={
-                  imageExpanded
-                    ? { flex: 1, overflow: 'hidden' }
-                    : { width: '100%', aspectRatio: 16 / 9, overflow: 'hidden' }
-                }
-              >
+              <View style={{ width: '100%', aspectRatio: 4 / 3, overflow: 'hidden', backgroundColor: '#0d1117' }}>
                 <Image
                   source={{ uri: item.cachedImageUri || item.imageUri }}
-                  style={
-                    imageExpanded
-                      ? { width: '100%', height: '100%' }
-                      : { position: 'absolute', top: 0, left: 0, right: 0, height: '200%' }
-                  }
-                  resizeMode={imageExpanded ? 'contain' : 'cover'}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="contain"
                 />
               </View>
-
-              {/* Toggle-Bar */}
-              <Pressable
-                onPress={() => toggleImageExpanded(!imageExpanded)}
-                className="flex-row items-center justify-center py-2 bg-background-elevated/90"
-                style={{ gap: 6 }}
-              >
-                {imageExpanded ? (
-                  <>
-                    <Icons.Minimize size={14} color={colors.primaryLight} />
-                    <Text className="text-primary-400 text-xs font-medium">
-                      Details einblenden
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Icons.Maximize size={14} color={colors.primaryLight} />
-                    <Text className="text-primary-400 text-xs font-medium">
-                      Bild vergrößern
-                    </Text>
-                  </>
-                )}
-              </Pressable>
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(17,24,39,0.95)', '#111827']}
+                locations={[0, 0.4, 0.75, 1]}
+                style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '70%' }}
+              />
             </MotiView>
 
-            {/* Formular - ausgeblendet im Fullscreen-Modus */}
-            {!imageExpanded && (
+            {/* Formular */}
             <>
             {/* Produktname */}
             <View className="mb-5">
@@ -347,7 +304,6 @@ export default function ProductEditScreen() {
               )}
             </View>
             </>
-            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

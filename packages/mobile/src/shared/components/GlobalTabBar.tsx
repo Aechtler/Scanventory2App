@@ -13,8 +13,10 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  withSequence,
   interpolate,
   Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import { Icons } from './Icons';
 import { useUIStore } from '../store/uiStore';
@@ -68,6 +70,8 @@ function GlobalTabItem({
   activeColor,
   inactiveColor,
   badge,
+  triggerBounce,
+  onBounceComplete,
 }: {
   tab: TabDef;
   isFocused: boolean;
@@ -75,13 +79,35 @@ function GlobalTabItem({
   activeColor: string;
   inactiveColor: string;
   badge?: number;
+  triggerBounce?: boolean;
+  onBounceComplete?: () => void;
 }) {
   const color = isFocused ? activeColor : inactiveColor;
   const pressed = useSharedValue(0);
+  const rippleScale = useSharedValue(0);
+  const rippleOpacity = useSharedValue(0);
 
-  const animatedIcon = useAnimatedStyle(() => ({
+  React.useEffect(() => {
+    if (!triggerBounce) return;
+    rippleScale.value = 0.25;
+    rippleOpacity.value = 0.75;
+    rippleScale.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.quad) });
+    rippleOpacity.value = withSequence(
+      withTiming(0.75, { duration: 80 }),
+      withTiming(0, { duration: 580 }, (finished) => {
+        if (finished && onBounceComplete) runOnJS(onBounceComplete)();
+      }),
+    );
+  }, [triggerBounce]);
+
+  const pressStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(pressed.value, [0, 1], [1, 0.80]) }],
     opacity: interpolate(pressed.value, [0, 1], [1, 0.5]),
+  }));
+
+  const rippleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: rippleScale.value }],
+    opacity: rippleOpacity.value,
   }));
 
   return (
@@ -98,13 +124,16 @@ function GlobalTabItem({
       accessibilityState={isFocused ? { selected: true } : {}}
       accessibilityLabel={tab.label}
     >
-      <Animated.View style={[animatedIcon, styles.iconWrap]}>
-        {tab.icon({ size: 28, color })}
-        {badge != null && badge > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
-          </View>
-        )}
+      <Animated.View style={pressStyle}>
+        <View style={styles.iconWrap}>
+          <Animated.View style={[styles.ripple, rippleStyle, { borderColor: activeColor }]} />
+          {tab.icon({ size: 28, color })}
+          {badge != null && badge > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
+            </View>
+          )}
+        </View>
       </Animated.View>
     </Pressable>
   );
@@ -118,6 +147,8 @@ export function GlobalTabBar() {
   const colors = useThemeColors();
   const scheme = useResolvedColorScheme();
   const campaignCount = useCampaignStore((s) => s.campaigns.length);
+  const lastCreated = useCampaignStore((s) => s.lastCreated);
+  const clearLastCreated = useCampaignStore((s) => s.clearLastCreated);
 
   const firstSegment = segments[0] ?? '';
   const secondSegment = segments[1] ?? '';
@@ -185,6 +216,8 @@ export function GlobalTabBar() {
               activeColor={colors.primary}
               inactiveColor={inactiveColor}
               badge={tab.route === '/campaigns' ? campaignCount : undefined}
+              triggerBounce={tab.route === '/campaigns' ? lastCreated !== null : undefined}
+              onBounceComplete={tab.route === '/campaigns' ? clearLastCreated : undefined}
             />
           ))}
         </View>
@@ -222,6 +255,19 @@ const styles = StyleSheet.create({
   },
   iconWrap: {
     position: 'relative',
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ripple: {
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 2,
+    top: -21,
+    left: -21,
   },
   badge: {
     position: 'absolute',

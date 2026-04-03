@@ -12,7 +12,6 @@ import { MotiView } from 'moti';
 import { FadeInView } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
 import { HistoryItem } from '@/features/history/store/historyStore';
-import { isManualSearchResult } from '@/shared/utils/analysisSource';
 import { classifyProduct } from '@/features/history/utils/productClassification';
 
 interface HistoryDetailHeaderProps {
@@ -24,22 +23,20 @@ function ProductTypeBadge({ item }: { item: HistoryItem }) {
   if (type === 'high_value') {
     return (
       <View
-        className="absolute top-3 left-3 flex-row items-center gap-1.5 px-3 py-2 rounded-full bg-violet-600/90 border border-violet-400/30"
+        className="absolute top-3 left-3 w-8 h-8 rounded-full bg-violet-600/90 border border-violet-400/30 items-center justify-center"
         style={{ shadowColor: '#a78bfa', shadowRadius: 8, shadowOpacity: 0.5 }}
       >
-        <Icons.Star size={13} color="#fff" />
-        <Text className="text-white text-xs font-semibold">High Value</Text>
+        <Icons.Star size={14} color="#fff" />
       </View>
     );
   }
   if (type === 'fast_seller') {
     return (
       <View
-        className="absolute top-3 left-3 flex-row items-center gap-1.5 px-3 py-2 rounded-full bg-amber-500/90 border border-amber-400/30"
+        className="absolute top-3 left-3 w-8 h-8 rounded-full bg-amber-500/90 border border-amber-400/30 items-center justify-center"
         style={{ shadowColor: '#f59e0b', shadowRadius: 8, shadowOpacity: 0.5 }}
       >
-        <Icons.TrendingUp size={13} color="#fff" />
-        <Text className="text-white text-xs font-semibold">Schnellverkäufer</Text>
+        <Icons.TrendingUp size={14} color="#fff" />
       </View>
     );
   }
@@ -47,7 +44,6 @@ function ProductTypeBadge({ item }: { item: HistoryItem }) {
 }
 
 export function HistoryDetailHeader({ item }: HistoryDetailHeaderProps) {
-  const isManual = isManualSearchResult(item);
 
   return (
     <FadeInView delay={0}>
@@ -82,20 +78,12 @@ export function HistoryDetailHeader({ item }: HistoryDetailHeaderProps) {
 
             <View className="flex-row flex-wrap gap-2 mb-2">
               <View className="bg-white/10 px-3 py-1.5 rounded-full">
-                <Text className="text-white/90 text-sm">{item.category}</Text>
+                <Text className="text-white/90 text-sm">
+                  {item.brand ? `${item.brand} → ${item.category}` : item.category}
+                </Text>
               </View>
-              {item.brand && (
-                <View className="bg-white/10 px-3 py-1.5 rounded-full">
-                  <Text className="text-white/90 text-sm">{item.brand}</Text>
-                </View>
-              )}
               <View className="bg-white/10 px-3 py-1.5 rounded-full">
                 <Text className="text-white/90 text-sm">{item.condition}</Text>
-              </View>
-              <View className="bg-primary-500/30 px-3 py-1.5 rounded-full">
-                <Text className="text-primary-300 text-sm font-semibold">
-                  {isManual ? 'Manuelle Suche' : `${Math.round(item.confidence * 100)}%`}
-                </Text>
               </View>
             </View>
 

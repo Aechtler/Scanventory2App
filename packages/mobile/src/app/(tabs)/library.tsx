@@ -29,7 +29,6 @@ import { Icons } from '../../shared/components/Icons';
 import { CampaignActionSheet } from '../../features/campaigns/components/CampaignActionSheet';
 import { CampaignSelectionBar } from '../../features/campaigns/components/CampaignSelectionBar';
 import { CampaignSaveDialog } from '../../features/campaigns/components/CampaignSaveDialog';
-import { CampaignSuccessOverlay } from '../../features/campaigns/components/CampaignSuccessOverlay';
 import { useCampaignStore } from '../../features/campaigns/store/campaignStore';
 
 export default function LibraryTab() {
@@ -38,8 +37,6 @@ export default function LibraryTab() {
   const fetchHistory = useHistoryStore((state) => state.fetchHistory);
   const { user } = useAuthStore();
   const createCampaign = useCampaignStore((state) => state.createCampaign);
-  const lastCreated = useCampaignStore((state) => state.lastCreated);
-  const clearLastCreated = useCampaignStore((state) => state.clearLastCreated);
 
   const [refreshing, setRefreshing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
@@ -51,7 +48,7 @@ export default function LibraryTab() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [saveDialogVisible, setSaveDialogVisible] = useState(false);
 
-  const { items: followingItems, refetch: refetchFollowing } = useFollowingItems();
+  const { items: followingItems, loading: followingLoading, refetch: refetchFollowing } = useFollowingItems();
 
   const [shareItemId, setShareItemId] = useState<string | null>(null);
   const shareItemName = useMemo(
@@ -96,9 +93,9 @@ export default function LibraryTab() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setVisibleCount(LIBRARY_PAGE_SIZE);
-    await fetchHistory();
+    await Promise.all([fetchHistory(), refetchFollowing()]);
     setRefreshing(false);
-  }, [fetchHistory]);
+  }, [fetchHistory, refetchFollowing]);
 
   const paginatedItems = useMemo(() => filteredItems.slice(0, visibleCount), [filteredItems, visibleCount]);
   const hasMore = visibleCount < filteredItems.length;
@@ -208,7 +205,11 @@ export default function LibraryTab() {
         </View>
       )}
 
-      {isEmpty ? (
+      {isEmpty && followingLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : isEmpty ? (
         <LibraryEmptyState iconColor={colors.textSecondary} />
       ) : (
         <View className="flex-1">
@@ -282,12 +283,6 @@ contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: ta
         onCancel={exitSelectionMode}
       />
 
-      <CampaignSuccessOverlay
-        visible={lastCreated !== null}
-        campaignName={lastCreated?.name ?? ''}
-        itemCount={lastCreated?.itemIds.length ?? 0}
-        onDone={clearLastCreated}
-      />
     </SafeAreaView>
   );
 }

@@ -231,26 +231,17 @@ export default function CampaignsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Header */}
-      <View className="px-5 pt-2 pb-2">
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-foreground text-2xl font-bold">Kampagnen</Text>
-            {campaigns.length > 0 && (
-              <Text className="text-foreground-secondary text-[12px] mt-0.5">
-                {campaigns.length} {campaigns.length === 1 ? 'Kampagne' : 'Kampagnen'}
-              </Text>
-            )}
-          </View>
-          <Pressable
-            onPress={() => {}}
-            hitSlop={8}
-            className="flex-row items-center gap-1.5 bg-primary-500 px-3.5 py-2 rounded-full active:opacity-75"
-            style={styles.newButton}
-          >
-            <Icons.Plus size={14} color="#fff" />
-            <Text className="text-white text-[13px] font-semibold">Neu</Text>
-          </Pressable>
-        </View>
+      <View className="px-5 pt-5 pb-1 flex-row items-center justify-between">
+        <Text className="text-foreground text-2xl font-bold">Kampagnen</Text>
+        <Pressable
+          onPress={() => {}}
+          hitSlop={8}
+          className="flex-row items-center gap-1.5 bg-primary-500 px-3.5 py-2 rounded-full active:opacity-75"
+          style={styles.newButton}
+        >
+          <Icons.Plus size={14} color="#fff" />
+          <Text className="text-white text-[13px] font-semibold">Neu</Text>
+        </Pressable>
       </View>
 
       {campaigns.length === 0 ? (

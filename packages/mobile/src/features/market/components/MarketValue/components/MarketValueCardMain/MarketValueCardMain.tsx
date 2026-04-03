@@ -32,63 +32,35 @@ export function MarketValueCardMain({
         className="bg-purple-900/20 rounded-xl p-4 mb-4 border border-purple-500/30"
       >
         {/* Header */}
-        <View className="flex-row items-center mb-3">
-          <Icons.AI size={24} color={themeColors.primaryLight} />
-          <Text className="text-white font-semibold text-lg ml-2">
-            KI-Marktwertanalyse
-          </Text>
-          <View className="ml-auto flex-row items-center gap-2">
-            <View className="flex-row items-center">
-              {result.confidence === 'hoch' ? (
-                <Icons.Check size={14} color="#4ade80" />
-              ) : result.confidence === 'niedrig' ? (
-                <Icons.Help size={14} color="#f87171" />
-              ) : null}
-              <Text className={`${colors.text} text-xs font-bold ml-1 uppercase`}>
-                {result.confidence}
-              </Text>
-            </View>
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center gap-2">
+            <Icons.AI size={16} color={themeColors.primaryLight} />
+            <Text className="text-foreground-secondary text-xs font-medium">KI-Schätzung</Text>
+          </View>
+          <View className={`px-2 py-0.5 rounded-full ${colors.bg}`}>
+            <Text className={`text-[10px] font-bold uppercase ${colors.text}`}>
+              {result.confidence}
+            </Text>
           </View>
         </View>
 
-        {/* Main Price */}
-        <View className="items-center py-3">
-          <Text className="text-purple-300 text-sm mb-1">
-            Geschätzter Marktwert
-          </Text>
-          <MotiView
-            from={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', delay: 100, damping: 20, stiffness: 300 }}
-          >
-            <Text className="text-white text-3xl font-bold">
-              {result.estimatedPrice}
-            </Text>
-          </MotiView>
-          {result.priceRange && (
-            <Text className="text-purple-400 text-sm mt-1">
-              Spanne: {result.priceRange}
-            </Text>
-          )}
-        </View>
+        {/* Price */}
+        <MotiView
+          from={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', delay: 100, damping: 20, stiffness: 300 }}
+        >
+          <Text className="text-white text-3xl font-bold">{result.estimatedPrice}</Text>
+        </MotiView>
+        {result.priceRange && (
+          <Text className="text-foreground-secondary text-xs mt-1">{result.priceRange}</Text>
+        )}
 
-        {/* Summary Preview */}
-        <View className="bg-background-elevated/50 rounded-lg p-3 mt-2">
-          <Text className="text-foreground-secondary text-sm leading-5" numberOfLines={2}>
-            {result.summary}
-          </Text>
-          <View className="flex-row items-center mt-2">
-            <Text className="text-purple-400 text-xs">Tippen für Details</Text>
-            <View className="ml-1">
-              <Icons.ChevronDown size={12} color={themeColors.primaryLight} />
-            </View>
-          </View>
+        {/* Tap hint */}
+        <View className="flex-row items-center mt-3 gap-1 opacity-50">
+          <Icons.ChevronRight size={11} color={themeColors.textSecondary} />
+          <Text className="text-foreground-secondary text-[11px]">Details</Text>
         </View>
-
-        {/* Disclaimer */}
-        <Text className="text-foreground-secondary text-xs text-center mt-2">
-          Powered by Perplexity AI • Keine Gewährleistung
-        </Text>
       </MotiView>
     </Pressable>
   );

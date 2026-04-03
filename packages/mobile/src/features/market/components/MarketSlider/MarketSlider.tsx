@@ -9,7 +9,6 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks';
 import { MarketValueModal } from '@/features/market/components/MarketValue/components/MarketValueModal';
-import { confidenceColors } from '@/features/market/components/MarketValue/utils';
 import { MarketSliderProps } from './types';
 
 export function MarketSlider({
@@ -22,7 +21,6 @@ export function MarketSlider({
   const colors = useThemeColors();
   const [showMarketValueModal, setShowMarketValueModal] = useState(false);
 
-  const isLoading = marketValueLoading;
   const hasPriceSet = finalPrice !== undefined && finalPrice !== null;
   const priceFormatted = hasPriceSet
     ? finalPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
@@ -48,6 +46,16 @@ export function MarketSlider({
                   <Text className="text-foreground-secondary text-[11px]">Ändern</Text>
                 </View>
               </>
+            ) : marketValue?.estimatedPrice ? (
+              <>
+                <Text className="text-white/30 text-3xl font-bold text-center">{marketValue.estimatedPrice}</Text>
+                <View className="flex-row items-center mt-2 gap-1">
+                  <Icons.Plus size={12} color={colors.primary} />
+                  <Text className="text-xs font-medium" style={{ color: colors.primary }}>
+                    Festlegen
+                  </Text>
+                </View>
+              </>
             ) : (
               <>
                 <Text className="text-foreground-secondary text-3xl font-light mb-1.5">—</Text>
@@ -64,37 +72,30 @@ export function MarketSlider({
           {/* Rechte Spalte: KI-Schätzung */}
           <Pressable
             onPress={() => marketValue && setShowMarketValueModal(true)}
-            className="flex-1 rounded-xl border border-purple-500/20 bg-purple-500/10 p-4 justify-center"
+            className="flex-[1] p-4 justify-center items-center"
           >
-            <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center gap-1.5">
-                <Icons.AI size={15} color={colors.primaryLight} />
-                <Text className="text-foreground-secondary text-xs font-medium">KI-Schätzung</Text>
-              </View>
-              {marketValue?.confidence && confidenceColors[marketValue.confidence as keyof typeof confidenceColors] && (
-                <View className={`px-1.5 py-0.5 rounded-full ${confidenceColors[marketValue.confidence as keyof typeof confidenceColors].bg}`}>
-                  <Text className={`text-[9px] font-bold uppercase ${confidenceColors[marketValue.confidence as keyof typeof confidenceColors].text}`}>
-                    {marketValue.confidence}
-                  </Text>
-                </View>
-              )}
+            <View className="flex-row items-center gap-1 mb-2">
+              <Icons.AI size={12} color={colors.primaryLight} />
+              <Text className="text-foreground-secondary text-xs font-medium">KI-Schätzung</Text>
             </View>
 
             {marketValueLoading ? (
-              <ActivityIndicator size="small" color={colors.primaryLight} style={{ alignSelf: 'flex-start' }} />
+              <ActivityIndicator size="small" color={colors.primaryLight} />
             ) : marketValue ? (
               <>
-                <Text className="text-white font-bold text-2xl mb-1">{marketValue.estimatedPrice}</Text>
-                {marketValue.priceRange && (
-                  <Text className="text-foreground-secondary text-xs">{marketValue.priceRange}</Text>
-                )}
+                <Text className="text-white text-2xl font-bold text-center" adjustsFontSizeToFit numberOfLines={1}>
+                  {marketValue.priceRange || marketValue.estimatedPrice}
+                </Text>
                 <View className="flex-row items-center mt-2 gap-1 opacity-60">
-                  <Icons.ChevronRight size={12} color={colors.textSecondary} />
+                  <Icons.ChevronRight size={11} color={colors.textSecondary} />
                   <Text className="text-foreground-secondary text-[11px]">Details</Text>
                 </View>
               </>
             ) : (
-              <Text className="text-foreground-secondary text-xs">Nicht verfügbar</Text>
+              <>
+                <Text className="text-foreground-secondary text-3xl font-light mb-1.5">—</Text>
+                <Text className="text-foreground-secondary text-xs opacity-60">Nicht verfügbar</Text>
+              </>
             )}
           </Pressable>
       </View>
