@@ -9,9 +9,10 @@ interface LibraryListItemProps {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
+  onItemPress?: (id: string) => void;
 }
 
-export function LibraryListItem({ item, index, onDelete, onShare, selectable, selected, onSelect }: LibraryListItemProps) {
+export function LibraryListItem({ item, index, onDelete, onShare, selectable, selected, onSelect, onItemPress }: LibraryListItemProps) {
   return (
     <LibraryListCard
       item={item}
@@ -21,6 +22,7 @@ export function LibraryListItem({ item, index, onDelete, onShare, selectable, se
       selectable={selectable}
       selected={selected}
       onSelect={onSelect}
+      onPress={onItemPress ? () => onItemPress(item.id) : undefined}
     />
   );
 }

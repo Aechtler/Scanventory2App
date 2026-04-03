@@ -8,9 +8,10 @@ interface LibraryGridItemProps {
   selectable?: boolean;
   selectedIds?: Set<string>;
   onSelect?: (id: string) => void;
+  onItemPress?: (id: string) => void;
 }
 
-export function LibraryGridItem({ items, rowIndex, selectable, selectedIds, onSelect }: LibraryGridItemProps) {
+export function LibraryGridItem({ items, rowIndex, selectable, selectedIds, onSelect, onItemPress }: LibraryGridItemProps) {
   const [leftItem, rightItem] = items;
   const leftIndex = rowIndex * 2;
 
@@ -23,6 +24,7 @@ export function LibraryGridItem({ items, rowIndex, selectable, selectedIds, onSe
           selectable={selectable}
           selected={selectedIds?.has(leftItem.id)}
           onSelect={onSelect}
+          onPress={onItemPress ? () => onItemPress(leftItem.id) : undefined}
         />
       </View>
       <View style={{ flex: 1 }}>
@@ -33,6 +35,7 @@ export function LibraryGridItem({ items, rowIndex, selectable, selectedIds, onSe
             selectable={selectable}
             selected={selectedIds?.has(rightItem.id)}
             onSelect={onSelect}
+            onPress={onItemPress ? () => onItemPress(rightItem.id) : undefined}
           />
         ) : null}
       </View>

@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { View, Text, FlatList, Pressable, Alert, Image, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, Text, FlatList, Pressable, Alert, Image, StyleSheet, Animated } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useCampaignStore } from '../../features/campaigns/store/campaignStore';
 import { useHistoryStore } from '../../features/history/store/historyStore';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
@@ -26,43 +27,32 @@ function isActive(startsAt: string | null, endsAt: string | null): boolean {
   return now >= start && now <= end;
 }
 
-/** Zeigt bis zu 4 Item-Thumbnails als Mosaic-Vorschau */
-function ItemMosaic({ items }: { items: HistoryItem[] }) {
+/** 2x2 Thumbnail-Mosaic als kompaktes quadratisches Vorschaubild */
+function ItemThumbnail({ items }: { items: HistoryItem[] }) {
   const colors = useThemeColors();
   const preview = items.slice(0, 4);
-  const rest = items.length - 4;
 
   if (preview.length === 0) {
     return (
-      <View style={styles.mosaicEmpty} className="bg-background-elevated/50 rounded-xl items-center justify-center">
-        <Icons.Package size={26} color={colors.textSecondary} />
-        <Text className="text-foreground-secondary text-[11px] mt-1.5">Keine Items</Text>
+      <View style={styles.thumbnail} className="bg-background-elevated rounded-xl items-center justify-center">
+        <Icons.Package size={22} color={colors.textSecondary} />
       </View>
     );
   }
 
   if (preview.length === 1) {
     return (
-      <View style={styles.mosaicSingle} className="rounded-xl overflow-hidden">
-        <Image
-          source={{ uri: preview[0].cachedImageUri || preview[0].imageUri }}
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-        />
+      <View style={styles.thumbnail} className="rounded-xl overflow-hidden">
+        <Image source={{ uri: preview[0].cachedImageUri || preview[0].imageUri }} style={{ flex: 1 }} resizeMode="cover" />
       </View>
     );
   }
 
   if (preview.length === 2) {
     return (
-      <View style={[styles.mosaicContainer, { gap: 2 }]} className="rounded-xl overflow-hidden flex-row">
+      <View style={[styles.thumbnail, { gap: 2, flexDirection: 'row' }]} className="rounded-xl overflow-hidden">
         {preview.map((item) => (
-          <Image
-            key={item.id}
-            source={{ uri: item.cachedImageUri || item.imageUri }}
-            style={{ flex: 1, height: '100%' }}
-            resizeMode="cover"
-          />
+          <Image key={item.id} source={{ uri: item.cachedImageUri || item.imageUri }} style={{ flex: 1, height: '100%' }} resizeMode="cover" />
         ))}
       </View>
     );
@@ -70,58 +60,30 @@ function ItemMosaic({ items }: { items: HistoryItem[] }) {
 
   if (preview.length === 3) {
     return (
-      <View style={styles.mosaicContainer} className="rounded-xl overflow-hidden flex-row">
-        <Image
-          source={{ uri: preview[0].cachedImageUri || preview[0].imageUri }}
-          style={{ flex: 1, height: '100%', marginRight: 2 }}
-          resizeMode="cover"
-        />
+      <View style={[styles.thumbnail, { flexDirection: 'row', gap: 2 }]} className="rounded-xl overflow-hidden">
+        <Image source={{ uri: preview[0].cachedImageUri || preview[0].imageUri }} style={{ flex: 1, height: '100%' }} resizeMode="cover" />
         <View style={{ flex: 1, gap: 2 }}>
-          <Image
-            source={{ uri: preview[1].cachedImageUri || preview[1].imageUri }}
-            style={{ flex: 1 }}
-            resizeMode="cover"
-          />
-          <Image
-            source={{ uri: preview[2].cachedImageUri || preview[2].imageUri }}
-            style={{ flex: 1 }}
-            resizeMode="cover"
-          />
+          <Image source={{ uri: preview[1].cachedImageUri || preview[1].imageUri }} style={{ flex: 1 }} resizeMode="cover" />
+          <Image source={{ uri: preview[2].cachedImageUri || preview[2].imageUri }} style={{ flex: 1 }} resizeMode="cover" />
         </View>
       </View>
     );
   }
 
-  // 4 items (2x2)
+  const rest = items.length - 4;
   return (
-    <View style={styles.mosaicContainer} className="rounded-xl overflow-hidden">
-      <View style={{ flex: 1, gap: 2, marginRight: 2 }}>
-        <Image
-          source={{ uri: preview[0].cachedImageUri || preview[0].imageUri }}
-          style={{ flex: 1 }}
-          resizeMode="cover"
-        />
-        <Image
-          source={{ uri: preview[2].cachedImageUri || preview[2].imageUri }}
-          style={{ flex: 1 }}
-          resizeMode="cover"
-        />
+    <View style={[styles.thumbnail, { gap: 2 }]} className="rounded-xl overflow-hidden">
+      <View style={{ flex: 1, flexDirection: 'row', gap: 2 }}>
+        <Image source={{ uri: preview[0].cachedImageUri || preview[0].imageUri }} style={{ flex: 1 }} resizeMode="cover" />
+        <Image source={{ uri: preview[1].cachedImageUri || preview[1].imageUri }} style={{ flex: 1 }} resizeMode="cover" />
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Image
-          source={{ uri: preview[1].cachedImageUri || preview[1].imageUri }}
-          style={{ flex: 1 }}
-          resizeMode="cover"
-        />
+      <View style={{ flex: 1, flexDirection: 'row', gap: 2 }}>
+        <Image source={{ uri: preview[2].cachedImageUri || preview[2].imageUri }} style={{ flex: 1 }} resizeMode="cover" />
         <View style={{ flex: 1, position: 'relative' }}>
-          <Image
-            source={{ uri: preview[3].cachedImageUri || preview[3].imageUri }}
-            style={{ flex: 1 }}
-            resizeMode="cover"
-          />
+          <Image source={{ uri: preview[3].cachedImageUri || preview[3].imageUri }} style={{ flex: 1 }} resizeMode="cover" />
           {rest > 0 && (
-            <View style={StyleSheet.absoluteFill} className="bg-black/60 items-center justify-center">
-              <Text className="text-white font-bold text-[15px]">+{rest}</Text>
+            <View style={StyleSheet.absoluteFill} className="bg-black/55 items-center justify-center">
+              <Text className="text-white font-bold text-[12px]">+{rest}</Text>
             </View>
           )}
         </View>
@@ -133,81 +95,105 @@ function ItemMosaic({ items }: { items: HistoryItem[] }) {
 function CampaignCard({
   campaign,
   items,
+}: {
+  campaign: Campaign;
+  items: HistoryItem[];
+}) {
+  const colors = useThemeColors();
+  const active = isActive(campaign.startsAt, campaign.endsAt);
+
+  return (
+    <Pressable
+      onPress={() => router.push(`/campaigns/${campaign.id}`)}
+      className="bg-background-card rounded-2xl mb-3 border border-border active:opacity-80"
+      style={styles.card}
+    >
+      <View className="flex-row items-center p-3 gap-3">
+        {/* Thumbnail */}
+        <ItemThumbnail items={items} />
+
+        {/* Info */}
+        <View className="flex-1 gap-1">
+          <View className="flex-row items-center gap-2">
+            <Text className="text-foreground font-semibold text-[15px] flex-1" numberOfLines={1}>
+              {campaign.name}
+            </Text>
+            {active && (
+              <View className="flex-row items-center gap-1 bg-emerald-500/15 px-2 py-0.5 rounded-full">
+                <View className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <Text className="text-emerald-500 text-[11px] font-semibold">Aktiv</Text>
+              </View>
+            )}
+          </View>
+
+          <View className="flex-row items-center gap-1">
+            <Icons.History size={11} color={colors.textSecondary} />
+            <Text className="text-foreground-secondary text-[12px]" numberOfLines={1}>
+              {formatDateRange(campaign.startsAt, campaign.endsAt)}
+            </Text>
+          </View>
+
+          <View className="flex-row items-center gap-1 mt-0.5">
+            <Icons.Package size={11} color={colors.primary} />
+            <Text className="text-primary-400 text-[12px] font-medium">
+              {campaign.itemIds.length} {campaign.itemIds.length === 1 ? 'Item' : 'Items'}
+            </Text>
+          </View>
+        </View>
+
+        <Icons.ChevronRight size={16} color={colors.textSecondary} />
+      </View>
+    </Pressable>
+  );
+}
+
+function renderRightActions(
+  _progress: Animated.AnimatedInterpolation<number>,
+  dragX: Animated.AnimatedInterpolation<number>,
+) {
+  const scale = dragX.interpolate({ inputRange: [-100, 0], outputRange: [1, 0.5], extrapolate: 'clamp' });
+  const opacity = dragX.interpolate({ inputRange: [-80, 0], outputRange: [1, 0], extrapolate: 'clamp' });
+  return (
+    <View style={styles.swipeAction}>
+      <Animated.View style={[styles.swipeDeleteButton, { transform: [{ scale }], opacity }]}>
+        <Icons.Close size={26} color="#ef4444" />
+      </Animated.View>
+    </View>
+  );
+}
+
+function SwipeableCampaignCard({
+  campaign,
+  items,
   onDelete,
 }: {
   campaign: Campaign;
   items: HistoryItem[];
   onDelete: (id: string) => void;
 }) {
-  const colors = useThemeColors();
-  const active = isActive(campaign.startsAt, campaign.endsAt);
+  const swipeableRef = useRef<Swipeable>(null);
 
-  const handleDelete = () => {
+  const handleSwipeOpen = () => {
     Alert.alert(
       'Kampagne löschen',
       `"${campaign.name}" wirklich löschen?`,
       [
-        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Abbrechen', style: 'cancel', onPress: () => swipeableRef.current?.close() },
         { text: 'Löschen', style: 'destructive', onPress: () => onDelete(campaign.id) },
-      ]
+      ],
     );
   };
 
   return (
-    <Pressable
-      className="bg-background-card rounded-2xl mb-4 overflow-hidden border border-border active:opacity-80"
-      style={styles.card}
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      onSwipeableOpen={handleSwipeOpen}
+      overshootRight={false}
+      rightThreshold={70}
     >
-      {/* Mosaic-Vorschau oben */}
-      <View className="relative">
-        <ItemMosaic items={items} />
-        {/* Aktiv-Badge */}
-        {active && (
-          <View className="absolute top-2.5 left-2.5 flex-row items-center gap-1 bg-emerald-500/90 px-2.5 py-1 rounded-full">
-            <View className="w-1.5 h-1.5 rounded-full bg-white" />
-            <Text className="text-white text-[11px] font-semibold">Aktiv</Text>
-          </View>
-        )}
-        {/* Löschen-Button */}
-        <Pressable
-          onPress={handleDelete}
-          hitSlop={8}
-          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/40 items-center justify-center active:opacity-60"
-        >
-          <Icons.Close size={14} color="#fff" />
-        </Pressable>
-        {/* Gradient overlay unten */}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.25)']}
-          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 40 }}
-        />
-      </View>
-
-      {/* Info-Bereich */}
-      <View className="px-4 pt-3 pb-4">
-        <Text className="text-foreground font-bold text-[16px] leading-snug" numberOfLines={2}>
-          {campaign.name}
-        </Text>
-
-        <View className="flex-row items-center gap-2 mt-2.5">
-          {/* Datum */}
-          <View className="flex-row items-center gap-1 flex-1">
-            <Icons.History size={12} color={colors.textSecondary} />
-            <Text className="text-foreground-secondary text-[12px]" numberOfLines={1}>
-              {formatDateRange(campaign.startsAt, campaign.endsAt)}
-            </Text>
-          </View>
-
-          {/* Item-Count */}
-          <View className="flex-row items-center gap-1 bg-primary-500/10 px-2.5 py-1 rounded-full">
-            <Icons.Package size={11} color={colors.primary} />
-            <Text className="text-primary-400 text-[12px] font-semibold">
-              {campaign.itemIds.length} {campaign.itemIds.length === 1 ? 'Item' : 'Items'}
-            </Text>
-          </View>
-        </View>
-      </View>
-    </Pressable>
+      <CampaignCard campaign={campaign} items={items} />
+    </Swipeable>
   );
 }
 
@@ -274,7 +260,7 @@ export default function CampaignsScreen() {
             paddingBottom: tabBarPadding,
           }}
           renderItem={({ item }) => (
-            <CampaignCard
+            <SwipeableCampaignCard
               campaign={item}
               items={getItemsForCampaign(item)}
               onDelete={deleteCampaign}
@@ -286,25 +272,17 @@ export default function CampaignsScreen() {
   );
 }
 
-const MOSAIC_HEIGHT = 200;
-
 const styles = StyleSheet.create({
   card: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  mosaicContainer: {
-    height: MOSAIC_HEIGHT,
-    flexDirection: 'row',
-  },
-  mosaicSingle: {
-    height: MOSAIC_HEIGHT,
-  },
-  mosaicEmpty: {
-    height: MOSAIC_HEIGHT,
+  thumbnail: {
+    width: 72,
+    height: 72,
   },
   newButton: {
     shadowColor: '#007AFF',
@@ -325,5 +303,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 5,
+  },
+  swipeAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+    width: 88,
+    marginBottom: 16,
+  },
+  swipeDeleteButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
   },
 });

@@ -12,6 +12,7 @@ import { GlobalTabBar } from '../shared/components/GlobalTabBar';
 import { useThemeStore, useResolvedColorScheme } from '../shared/store/themeStore';
 import { useThemeColors } from '../shared/hooks/useThemeColors';
 import { ScanActionSheet } from '../shared/components/ScanActionSheet';
+import { CampaignActionSheet } from '../features/campaigns/components/CampaignActionSheet';
 
 /**
  * Root Layout - App-weite Navigation und Provider
@@ -90,6 +91,7 @@ export default function RootLayout() {
           </Stack>
           <GlobalTabBar />
           <ScanActionSheet />
+          <CampaignActionSheet />
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>

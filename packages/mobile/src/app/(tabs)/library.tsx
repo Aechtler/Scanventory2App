@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, RefreshControl, ActivityIndicator, Pressable } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -26,10 +26,10 @@ import {
   type LibraryItem,
 } from '../../features/history/utils/libraryRows';
 import { Icons } from '../../shared/components/Icons';
-import { CampaignActionSheet } from '../../features/campaigns/components/CampaignActionSheet';
 import { CampaignSelectionBar } from '../../features/campaigns/components/CampaignSelectionBar';
 import { CampaignSaveDialog } from '../../features/campaigns/components/CampaignSaveDialog';
 import { useCampaignStore } from '../../features/campaigns/store/campaignStore';
+import { useUIStore } from '../../shared/store/uiStore';
 
 export default function LibraryTab() {
   const items = useHistoryStore((state) => state.items);
@@ -42,8 +42,12 @@ export default function LibraryTab() {
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
+  const setCampaignSheetVisible = useUIStore((s) => s.setCampaignSheetVisible);
+  const campaignSelectionRequested = useUIStore((s) => s.campaignSelectionRequested);
+  const setCampaignSelectionRequested = useUIStore((s) => s.setCampaignSelectionRequested);
+  const setItemNavigationIds = useUIStore((s) => s.setItemNavigationIds);
+
   // Campaign state
-  const [campaignSheetVisible, setCampaignSheetVisible] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [saveDialogVisible, setSaveDialogVisible] = useState(false);
@@ -55,6 +59,13 @@ export default function LibraryTab() {
     () => items.find((i) => i.id === shareItemId)?.productName ?? '',
     [items, shareItemId]
   );
+
+  useEffect(() => {
+    if (campaignSelectionRequested) {
+      setSelectionMode(true);
+      setCampaignSelectionRequested(false);
+    }
+  }, [campaignSelectionRequested]);
 
   const colors = useThemeColors();
   const tabBarPadding = useTabBarPadding();
@@ -162,6 +173,7 @@ export default function LibraryTab() {
             selectable={selectionMode}
             selected={selectedIds.has(item.item.id)}
             onSelect={toggleSelection}
+            onItemPress={!selectionMode ? handleItemPress : undefined}
           />
         </StaggeredItem>
       );
@@ -174,10 +186,16 @@ export default function LibraryTab() {
           selectable={selectionMode}
           selectedIds={selectedIds}
           onSelect={toggleSelection}
+          onItemPress={!selectionMode ? handleItemPress : undefined}
         />
       </StaggeredItem>
     );
-  }, [handleDelete, selectionMode, selectedIds, toggleSelection]);
+  }, [handleDelete, handleItemPress, selectionMode, selectedIds, toggleSelection]);
+
+  const handleItemPress = useCallback((id: string) => {
+    setItemNavigationIds(filteredItems.map((i) => i.id));
+    router.push(`/history/${id}`);
+  }, [filteredItems, setItemNavigationIds]);
 
   const toggleViewMode = useCallback(() => {
     setVisibleCount(LIBRARY_PAGE_SIZE);
@@ -197,6 +215,7 @@ export default function LibraryTab() {
           <Text className="text-foreground text-2xl font-bold">Inventar</Text>
           <Pressable
             onPress={() => setCampaignSheetVisible(true)}
+
             hitSlop={8}
             className="w-9 h-9 rounded-xl bg-background-elevated/60 items-center justify-center active:opacity-60"
           >
@@ -268,14 +287,7 @@ contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: ta
         onShared={() => setShareItemId(null)}
       />
 
-      <CampaignActionSheet
-        visible={campaignSheetVisible}
-        onClose={() => setCampaignSheetVisible(false)}
-        onCreateNew={() => setSelectionMode(true)}
-        onViewAll={() => router.push('/campaigns')}
-      />
-
-      <CampaignSaveDialog
+<CampaignSaveDialog
         visible={saveDialogVisible}
         selectedCount={selectedIds.size}
         onSave={handleSaveCampaign}

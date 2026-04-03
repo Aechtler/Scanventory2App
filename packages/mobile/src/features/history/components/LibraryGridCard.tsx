@@ -20,6 +20,7 @@ interface LibraryGridCardProps {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
+  onPress?: () => void;
 }
 
 function formatDate(isoDate: string): string {
@@ -27,7 +28,7 @@ function formatDate(isoDate: string): string {
   return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
 }
 
-export const LibraryGridCard = memo(function LibraryGridCard({ item, index, selectable, selected, onSelect }: LibraryGridCardProps) {
+export const LibraryGridCard = memo(function LibraryGridCard({ item, index, selectable, selected, onSelect, onPress }: LibraryGridCardProps) {
   const isLeft = index % 2 === 0;
   const hasFinal = item.finalPrice != null;
   const price = getLibraryDisplayPrice(item);
@@ -36,7 +37,7 @@ export const LibraryGridCard = memo(function LibraryGridCard({ item, index, sele
 
   const handlePress = selectable
     ? () => onSelect?.(item.id)
-    : () => router.push(`/history/${item.id}`);
+    : () => onPress ? onPress() : router.push(`/history/${item.id}`);
 
   return (
     <StaggeredItem index={index}>

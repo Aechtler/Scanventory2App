@@ -21,6 +21,7 @@ interface LibraryListCardProps {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
+  onPress?: () => void;
 }
 
 function TagPill({ label, accent }: { label: string; accent?: boolean }) {
@@ -70,7 +71,7 @@ function TypeBadge({ type }: { type: ProductType }) {
 }
 
 export const LibraryListCard = memo(function LibraryListCard({
-  item, index, onDelete, onShare, selectable, selected, onSelect,
+  item, index, onDelete, onShare, selectable, selected, onSelect, onPress,
 }: LibraryListCardProps) {
   const productType = classifyProduct(item);
   const ownerName = item.owner
@@ -79,7 +80,7 @@ export const LibraryListCard = memo(function LibraryListCard({
 
   const handlePress = selectable
     ? () => onSelect?.(item.id)
-    : () => router.push(`/history/${item.id}`);
+    : () => onPress ? onPress() : router.push(`/history/${item.id}`);
 
   const card = (
     <Pressable
