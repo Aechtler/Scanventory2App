@@ -6,7 +6,7 @@ export type { FollowingItem };
 
 export function useFollowingItems() {
   const [items, setItems] = useState<FollowingItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const activeRef = useRef(true);
 
   const fetch = useCallback(async () => {

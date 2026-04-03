@@ -224,7 +224,7 @@ export default function LibraryTab() {
         </View>
       )}
 
-      {isEmpty && followingLoading ? (
+      {followingLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
