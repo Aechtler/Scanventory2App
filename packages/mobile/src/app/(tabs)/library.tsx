@@ -29,6 +29,7 @@ import { Icons } from '../../shared/components/Icons';
 import { CampaignActionSheet } from '../../features/campaigns/components/CampaignActionSheet';
 import { CampaignSelectionBar } from '../../features/campaigns/components/CampaignSelectionBar';
 import { CampaignSaveDialog } from '../../features/campaigns/components/CampaignSaveDialog';
+import { CampaignSuccessOverlay } from '../../features/campaigns/components/CampaignSuccessOverlay';
 import { useCampaignStore } from '../../features/campaigns/store/campaignStore';
 
 export default function LibraryTab() {
@@ -37,6 +38,8 @@ export default function LibraryTab() {
   const fetchHistory = useHistoryStore((state) => state.fetchHistory);
   const { user } = useAuthStore();
   const createCampaign = useCampaignStore((state) => state.createCampaign);
+  const lastCreated = useCampaignStore((state) => state.lastCreated);
+  const clearLastCreated = useCampaignStore((state) => state.clearLastCreated);
 
   const [refreshing, setRefreshing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
@@ -277,6 +280,13 @@ export default function LibraryTab() {
         onSave={handleSaveCampaign}
         onSelectMore={() => setSaveDialogVisible(false)}
         onCancel={exitSelectionMode}
+      />
+
+      <CampaignSuccessOverlay
+        visible={lastCreated !== null}
+        campaignName={lastCreated?.name ?? ''}
+        itemCount={lastCreated?.itemIds.length ?? 0}
+        onDone={clearLastCreated}
       />
     </SafeAreaView>
   );

@@ -9,6 +9,8 @@ const createCampaignId = () => `campaign-${Date.now()}-${Math.random().toString(
 interface CampaignState {
   campaigns: Campaign[];
   isSyncing: boolean;
+  lastCreated: Campaign | null;
+  clearLastCreated: () => void;
   createCampaign: (draft: CampaignDraft) => Promise<void>;
   deleteCampaign: (id: string) => Promise<void>;
   fetchCampaigns: () => Promise<void>;
@@ -20,6 +22,9 @@ export const useCampaignStore = create<CampaignState>()(
     (set, get) => ({
       campaigns: [],
       isSyncing: false,
+      lastCreated: null,
+
+      clearLastCreated: () => set({ lastCreated: null }),
 
       createCampaign: async (draft) => {
         // Optimistisch lokal anlegen
@@ -32,17 +37,17 @@ export const useCampaignStore = create<CampaignState>()(
           endsAt: draft.endsAt,
           createdAt: new Date().toISOString(),
         };
-        set((state) => ({ campaigns: [optimistic, ...state.campaigns] }));
+        set((state) => ({ campaigns: [optimistic, ...state.campaigns], lastCreated: optimistic }));
 
         // Im Backend speichern
         try {
           const res = await campaignService.create(draft);
           if (res.success && res.data) {
-            // Lokale ID durch Server-ID ersetzen
             set((state) => ({
               campaigns: state.campaigns.map((c) =>
                 c.id === localId ? { ...res.data! } : c
               ),
+              lastCreated: res.data,
             }));
           }
         } catch {

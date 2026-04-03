@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useSegments } from 'expo-router';
@@ -21,12 +21,14 @@ import { useUIStore } from '../store/uiStore';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { useResolvedColorScheme } from '../store/themeStore';
 import { TAB_BAR_COLORS } from '../constants';
+import { useCampaignStore } from '../../features/campaigns/store/campaignStore';
 
 interface TabDef {
   route: string;
   icon: (props: { size: number; color: string }) => React.ReactNode;
   label: string;
   matchSegments: string[];
+  badge?: () => number;
 }
 
 const TABS: TabDef[] = [
@@ -41,6 +43,12 @@ const TABS: TabDef[] = [
     icon: (p) => <Icons.BookOpen {...p} />,
     label: 'Verlauf',
     matchSegments: ['library', 'history'],
+  },
+  {
+    route: '/campaigns',
+    icon: (p) => <Icons.Flag {...p} />,
+    label: 'Kampagnen',
+    matchSegments: ['campaigns'],
   },
   {
     route: '/(tabs)/profile',
@@ -59,20 +67,20 @@ function GlobalTabItem({
   onPress,
   activeColor,
   inactiveColor,
+  badge,
 }: {
   tab: TabDef;
   isFocused: boolean;
   onPress: () => void;
   activeColor: string;
   inactiveColor: string;
+  badge?: number;
 }) {
   const color = isFocused ? activeColor : inactiveColor;
   const pressed = useSharedValue(0);
 
   const animatedIcon = useAnimatedStyle(() => ({
-    transform: [
-      { scale: interpolate(pressed.value, [0, 1], [1, 0.80]) },
-    ],
+    transform: [{ scale: interpolate(pressed.value, [0, 1], [1, 0.80]) }],
     opacity: interpolate(pressed.value, [0, 1], [1, 0.5]),
   }));
 
@@ -90,8 +98,13 @@ function GlobalTabItem({
       accessibilityState={isFocused ? { selected: true } : {}}
       accessibilityLabel={tab.label}
     >
-      <Animated.View style={animatedIcon}>
+      <Animated.View style={[animatedIcon, styles.iconWrap]}>
         {tab.icon({ size: 28, color })}
+        {badge != null && badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
+          </View>
+        )}
       </Animated.View>
     </Pressable>
   );
@@ -104,6 +117,7 @@ export function GlobalTabBar() {
   const tabBarHidden = useUIStore((s) => s.tabBarHidden);
   const colors = useThemeColors();
   const scheme = useResolvedColorScheme();
+  const campaignCount = useCampaignStore((s) => s.campaigns.length);
 
   const firstSegment = segments[0] ?? '';
   const secondSegment = segments[1] ?? '';
@@ -113,12 +127,9 @@ export function GlobalTabBar() {
     : TAB_BAR_COLORS.inactiveLight;
 
   const getIsActive = (tab: TabDef): boolean => {
-    if (firstSegment === 'history' && tab.matchSegments.includes('history')) {
-      return true;
-    }
-    if (firstSegment === 'analyze' && tab.matchSegments.includes('(tabs)')) {
-      return true;
-    }
+    if (firstSegment === 'history' && tab.matchSegments.includes('history')) return true;
+    if (firstSegment === 'campaigns' && tab.matchSegments.includes('campaigns')) return true;
+    if (firstSegment === 'analyze' && tab.matchSegments.includes('(tabs)')) return true;
     if (firstSegment === '(tabs)') {
       if (!secondSegment && tab.matchSegments.includes('(tabs)')) return true;
       return tab.matchSegments.includes(secondSegment);
@@ -173,6 +184,7 @@ export function GlobalTabBar() {
               }}
               activeColor={colors.primary}
               inactiveColor={inactiveColor}
+              badge={tab.route === '/campaigns' ? campaignCount : undefined}
             />
           ))}
         </View>
@@ -207,5 +219,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,
+  },
+  iconWrap: {
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 12,
   },
 });
