@@ -72,6 +72,7 @@ export default function RootLayout() {
                 presentation: 'modal',
               }}
             />
+            <Stack.Screen name="campaigns" options={{ headerShown: false }} />
             <Stack.Screen
               name="history/[id]"
               options={{

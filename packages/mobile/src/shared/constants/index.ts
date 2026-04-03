@@ -99,9 +99,9 @@ export const ANIMATION_PRESETS = {
     duration: 150,
   },
   staggeredItem: {
-    translateX: -10,
-    duration: 300,
-    delayStep: 30,
+    translateX: -8,
+    duration: 220,
+    delayStep: 15,
   },
   pulse: {
     scale: 1.02,

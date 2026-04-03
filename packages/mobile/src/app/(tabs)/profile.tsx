@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, Pressable, Alert, Modal, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +27,7 @@ type FollowSheet = 'followers' | 'following' | null;
 export default function ProfileTab() {
   const { user, logout } = useAuthStore();
   const items = useHistoryStore((state) => state.items);
-  const totalValue = calculateTotalValue(items);
+  const totalValue = useMemo(() => calculateTotalValue(items), [items]);
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
   const colors = useThemeColors();
   const tabBarPadding = useTabBarPadding();

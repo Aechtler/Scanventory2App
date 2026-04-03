@@ -2,13 +2,14 @@
  * LibraryListCard - Kompakte horizontale Card für die List-View
  */
 
+import { memo } from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { StaggeredItem } from '@/shared/components/Animated';
 import { SwipeableLibraryItem } from './SwipeableLibraryItem';
 import { formatPrice } from '@/features/market/services/ebay';
 import { getLibraryDisplayPrice, hasLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
-import { classifyProduct } from '@/features/history/utils/productClassification';
+import { classifyProduct, type ProductType } from '@/features/history/utils/productClassification';
 import { Icons } from '@/shared/components/Icons';
 import type { LibraryItem } from '@/features/history/utils/libraryRows';
 
@@ -20,27 +21,6 @@ interface LibraryListCardProps {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
-}
-
-function ProductTypeBadge({ item }: { item: LibraryItem }) {
-  const type = classifyProduct(item);
-  if (type === 'fast_seller') {
-    return (
-      <View className="flex-row items-center gap-1 bg-amber-500/15 px-2 py-0.5 rounded-full">
-        <Icons.TrendingUp size={10} color="#f59e0b" />
-        <Text className="text-[10px] font-semibold text-amber-400">Schnellverkäufer</Text>
-      </View>
-    );
-  }
-  if (type === 'high_value') {
-    return (
-      <View className="flex-row items-center gap-1 bg-violet-500/15 px-2 py-0.5 rounded-full">
-        <Icons.Star size={10} color="#a78bfa" />
-        <Text className="text-[10px] font-semibold text-violet-400">High Value</Text>
-      </View>
-    );
-  }
-  return null;
 }
 
 function TagPill({ label, accent }: { label: string; accent?: boolean }) {
@@ -55,24 +35,46 @@ function TagPill({ label, accent }: { label: string; accent?: boolean }) {
 
 function PriceSection({ item }: { item: LibraryItem }) {
   const hasFinal = item.finalPrice != null;
-  const displayPrice = getLibraryDisplayPrice(item);
-
   if (!hasLibraryDisplayPrice(item)) {
     return <Text className="text-foreground-secondary text-xs italic">Kein Preis</Text>;
   }
-
   return (
     <View className={`px-2.5 py-1 rounded-lg ${hasFinal ? 'bg-emerald-500/15' : 'bg-primary-500/10'}`}>
       <Text className={`font-bold text-[15px] ${hasFinal ? 'text-emerald-500' : 'text-primary-400'}`}>
-        {formatPrice(displayPrice!)}
+        {formatPrice(getLibraryDisplayPrice(item)!)}
       </Text>
     </View>
   );
 }
 
-export function LibraryListCard({ item, index, onDelete, onShare, selectable, selected, onSelect }: LibraryListCardProps) {
+function TypeBadge({ type }: { type: ProductType }) {
+  if (type === 'high_value') {
+    return (
+      <View className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-violet-600/90 border border-violet-400/40" style={badgeStyles.highValue}>
+        <Icons.Star size={14} color="#fff" />
+      </View>
+    );
+  }
+  if (type === 'fast_seller') {
+    return (
+      <View className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-amber-500/90 border border-amber-400/40" style={badgeStyles.fastSeller}>
+        <Icons.TrendingUp size={14} color="#fff" />
+      </View>
+    );
+  }
+  return (
+    <View className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40" style={badgeStyles.normal}>
+      <Icons.Tag size={13} color="#fff" />
+    </View>
+  );
+}
+
+export const LibraryListCard = memo(function LibraryListCard({
+  item, index, onDelete, onShare, selectable, selected, onSelect,
+}: LibraryListCardProps) {
+  const productType = classifyProduct(item);
   const ownerName = item.owner
-    ? (item.owner.displayName || item.owner.username ? `@${item.owner.username ?? item.owner.displayName}` : null)
+    ? (item.owner.username ? `@${item.owner.username}` : item.owner.displayName ?? null)
     : null;
 
   const handlePress = selectable
@@ -89,68 +91,40 @@ export function LibraryListCard({ item, index, onDelete, onShare, selectable, se
       onLongPress={selectable ? undefined : onShare}
     >
       <View className="flex-row">
-        {/* Bild links */}
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: item.cachedImageUri || item.imageUri }}
             style={styles.image}
             resizeMode="cover"
           />
-          {selectable && (
+          {selectable ? (
             <View className="absolute bottom-2 right-2">
               {selected ? (
-                <View className="w-6 h-6 rounded-full bg-primary-500 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
+                <View className="w-6 h-6 rounded-full bg-primary-500 items-center justify-center" style={badgeStyles.checkSelected}>
                   <Icons.Check size={14} color="#fff" strokeWidth={3} />
                 </View>
               ) : (
-                <View className="w-6 h-6 rounded-full bg-white/90 border-2 border-white/60 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3 }} />
+                <View className="w-6 h-6 rounded-full bg-white/90 border-2 border-white/60" style={badgeStyles.checkUnselected} />
               )}
             </View>
-          )}
-          {!selectable && classifyProduct(item) === 'high_value' && (
-            <View
-              className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-violet-600/90 border border-violet-400/40 shadow-sm"
-              style={{ shadowColor: '#a78bfa', shadowRadius: 4, shadowOpacity: 0.5 }}
-            >
-              <Icons.Star size={14} color="#fff" />
-            </View>
-          )}
-          {!selectable && classifyProduct(item) === 'fast_seller' && (
-            <View
-              className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-amber-500/90 border border-amber-400/40 shadow-sm"
-              style={{ shadowColor: '#f59e0b', shadowRadius: 4, shadowOpacity: 0.5 }}
-            >
-              <Icons.TrendingUp size={14} color="#fff" />
-            </View>
-          )}
-          {!selectable && classifyProduct(item) === 'normal' && (
-            <View
-              className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40 shadow-sm"
-              style={{ shadowColor: '#38bdf8', shadowRadius: 4, shadowOpacity: 0.4 }}
-            >
-              <Icons.Tag size={13} color="#fff" />
-            </View>
+          ) : (
+            <TypeBadge type={productType} />
           )}
         </View>
 
-        {/* Infos rechts */}
         <View className="flex-1 py-3 pr-3.5 pl-3 justify-between">
-          {/* Oberer Bereich: Name + Preis */}
           <View className="flex-row justify-between items-start gap-2">
             <View className="flex-1 shrink">
               <Text className="text-foreground font-semibold text-[15px] leading-[20px]" numberOfLines={2}>
                 {item.productName}
               </Text>
               {item.brand && (
-                <Text className="text-foreground-secondary text-[12px] mt-0.5">
-                  {item.brand}
-                </Text>
+                <Text className="text-foreground-secondary text-[12px] mt-0.5">{item.brand}</Text>
               )}
             </View>
             <PriceSection item={item} />
           </View>
 
-          {/* Unterer Bereich: Badges + Tags */}
           <View className="flex-row flex-wrap gap-1.5 mt-2.5">
             {item.category ? <TagPill label={item.category} accent /> : null}
             {item.condition ? <TagPill label={item.condition} /> : null}
@@ -175,7 +149,15 @@ export function LibraryListCard({ item, index, onDelete, onShare, selectable, se
       ) : card}
     </StaggeredItem>
   );
-}
+});
+
+const badgeStyles = StyleSheet.create({
+  highValue:    { shadowColor: '#a78bfa', shadowRadius: 4, shadowOpacity: 0.5 },
+  fastSeller:   { shadowColor: '#f59e0b', shadowRadius: 4, shadowOpacity: 0.5 },
+  normal:       { shadowColor: '#38bdf8', shadowRadius: 4, shadowOpacity: 0.4 },
+  checkSelected:   { shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 },
+  checkUnselected: { shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3 },
+});
 
 const styles = StyleSheet.create({
   card: {

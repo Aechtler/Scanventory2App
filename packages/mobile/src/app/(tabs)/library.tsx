@@ -234,7 +234,7 @@ export default function LibraryTab() {
             key={listKey}
             data={libraryRows}
             keyExtractor={(item: LibraryRow) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: tabBarPadding }}
+contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: tabBarPadding }}
             renderItem={renderItem}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}

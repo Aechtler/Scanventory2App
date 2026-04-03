@@ -3,7 +3,7 @@
  * Suche, Kategorie-Filter und Sortierung
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { LibraryItem } from '../utils/libraryRows';
 import { getLibraryDisplayPrice } from '../utils/historyPricing';
 import { classifyProduct, type ProductType } from '../utils/productClassification';
@@ -24,6 +24,13 @@ export function useLibraryFilters(items: LibraryItem[]) {
     sortBy: 'newest',
     productType: null,
   });
+
+  // Suche debounced: Filter erst 200ms nach letzter Eingabe anwenden
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(filters.searchQuery), 200);
+    return () => clearTimeout(t);
+  }, [filters.searchQuery]);
 
   const setSearchQuery = useCallback((query: string) => {
     setFilters((prev) => ({ ...prev, searchQuery: query }));
@@ -50,56 +57,47 @@ export function useLibraryFilters(items: LibraryItem[]) {
     return Array.from(cats).sort();
   }, [items]);
 
-  const filteredItems = useMemo(() => {
-    let result = items;
+  // Datums-Timestamps einmal parsen, nicht bei jedem Sort-Vergleich
+  const itemsWithTime = useMemo(
+    () => items.map((item) => ({ item, t: new Date(item.scannedAt).getTime() })),
+    [items]
+  );
 
-    // Textsuche
-    if (filters.searchQuery.trim()) {
-      const q = filters.searchQuery.toLowerCase();
+  const filteredItems = useMemo(() => {
+    let result = itemsWithTime;
+
+    if (debouncedQuery.trim()) {
+      const q = debouncedQuery.toLowerCase();
       result = result.filter(
-        (item) =>
+        ({ item }) =>
           item.productName.toLowerCase().includes(q) ||
           item.category.toLowerCase().includes(q) ||
           (item.brand && item.brand.toLowerCase().includes(q))
       );
     }
 
-    // Kategorie (multiselect, leer = alle)
     if (filters.selectedCategories.length > 0) {
-      result = result.filter((item) => filters.selectedCategories.includes(item.category));
+      result = result.filter(({ item }) => filters.selectedCategories.includes(item.category));
     }
 
-    // Produkttyp-Filter (Fast Seller / High Value)
     if (filters.productType !== null) {
-      result = result.filter((item) => classifyProduct(item) === filters.productType);
+      const type = filters.productType;
+      result = result.filter(({ item }) => classifyProduct(item) === type);
     }
 
-    // Sortierung
-    result = [...result].sort((a, b) => {
+    const sorted = [...result].sort((a, b) => {
       switch (filters.sortBy) {
-        case 'newest':
-          return new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime();
-        case 'oldest':
-          return new Date(a.scannedAt).getTime() - new Date(b.scannedAt).getTime();
-        case 'price_asc': {
-          const priceA = getLibraryDisplayPrice(a) ?? 0;
-          const priceB = getLibraryDisplayPrice(b) ?? 0;
-          return priceA - priceB;
-        }
-        case 'price_desc': {
-          const priceA = getLibraryDisplayPrice(a) ?? 0;
-          const priceB = getLibraryDisplayPrice(b) ?? 0;
-          return priceB - priceA;
-        }
-        case 'name':
-          return a.productName.localeCompare(b.productName, 'de');
-        default:
-          return 0;
+        case 'newest':  return b.t - a.t;
+        case 'oldest':  return a.t - b.t;
+        case 'price_asc':  return (getLibraryDisplayPrice(a.item) ?? 0) - (getLibraryDisplayPrice(b.item) ?? 0);
+        case 'price_desc': return (getLibraryDisplayPrice(b.item) ?? 0) - (getLibraryDisplayPrice(a.item) ?? 0);
+        case 'name': return a.item.productName.localeCompare(b.item.productName, 'de');
+        default: return 0;
       }
     });
 
-    return result;
-  }, [items, filters]);
+    return sorted.map(({ item }) => item);
+  }, [itemsWithTime, debouncedQuery, filters.selectedCategories, filters.sortBy, filters.productType]);
 
   const isFiltered =
     filters.searchQuery.trim() !== '' ||

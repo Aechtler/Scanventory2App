@@ -3,7 +3,8 @@
  * Bild mit Floating-Price-Badge, Produktname, Kategorie-Pill
  */
 
-import { View, Text, Image, Pressable } from 'react-native';
+import { memo } from 'react';
+import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StaggeredItem } from '@/shared/components/Animated';
@@ -26,7 +27,7 @@ function formatDate(isoDate: string): string {
   return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
 }
 
-export function LibraryGridCard({ item, index, selectable, selected, onSelect }: LibraryGridCardProps) {
+export const LibraryGridCard = memo(function LibraryGridCard({ item, index, selectable, selected, onSelect }: LibraryGridCardProps) {
   const isLeft = index % 2 === 0;
   const hasFinal = item.finalPrice != null;
   const price = getLibraryDisplayPrice(item);
@@ -57,37 +58,28 @@ export function LibraryGridCard({ item, index, selectable, selected, onSelect }:
           {selectable && (
             <View className="absolute bottom-2 right-2">
               {selected ? (
-                <View className="w-7 h-7 rounded-full bg-primary-500 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
+                <View className="w-7 h-7 rounded-full bg-primary-500 items-center justify-center" style={gridBadgeStyles.checkSelected}>
                   <Icons.Check size={16} color="#fff" strokeWidth={3} />
                 </View>
               ) : (
-                <View className="w-7 h-7 rounded-full bg-white/90 border-2 border-white/60 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3 }} />
+                <View className="w-7 h-7 rounded-full bg-white/90 border-2 border-white/60" style={gridBadgeStyles.checkUnselected} />
               )}
             </View>
           )}
 
           {/* Custom Badges top-left */}
           {!selectable && productType === 'high_value' && (
-            <View 
-              className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-violet-600/95 border border-violet-400/40 shadow-lg"
-              style={{ shadowColor: '#a78bfa', shadowRadius: 8, shadowOpacity: 0.6 }}
-            >
+            <View className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-violet-600/95 border border-violet-400/40" style={gridBadgeStyles.highValue}>
               <Icons.Star size={16} color="#fff" />
             </View>
           )}
           {!selectable && productType === 'fast_seller' && (
-            <View
-              className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-amber-500 border border-amber-400/40 shadow-lg"
-              style={{ shadowColor: '#f59e0b', shadowRadius: 8, shadowOpacity: 0.6 }}
-            >
+            <View className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-amber-500 border border-amber-400/40" style={gridBadgeStyles.fastSeller}>
               <Icons.TrendingUp size={16} color="#fff" />
             </View>
           )}
           {!selectable && productType === 'normal' && (
-            <View
-              className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40 shadow-lg"
-              style={{ shadowColor: '#38bdf8', shadowRadius: 8, shadowOpacity: 0.4 }}
-            >
+            <View className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40" style={gridBadgeStyles.normal}>
               <Icons.Tag size={15} color="#fff" />
             </View>
           )}
@@ -131,4 +123,12 @@ export function LibraryGridCard({ item, index, selectable, selected, onSelect }:
       </Pressable>
     </StaggeredItem>
   );
-}
+});
+
+const gridBadgeStyles = StyleSheet.create({
+  highValue:       { shadowColor: '#a78bfa', shadowRadius: 8, shadowOpacity: 0.6 },
+  fastSeller:      { shadowColor: '#f59e0b', shadowRadius: 8, shadowOpacity: 0.6 },
+  normal:          { shadowColor: '#38bdf8', shadowRadius: 8, shadowOpacity: 0.4 },
+  checkSelected:   { shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 },
+  checkUnselected: { shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3 },
+});
