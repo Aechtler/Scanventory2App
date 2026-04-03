@@ -38,6 +38,7 @@ model User {
   receivedInvitations   GroupInvitation[] @relation("InvitedUser")
   sharedItems           SharedItem[]  @relation("SharedBy")
   receivedSharedItems   SharedItem[]  @relation("SharedWithUser")
+  campaigns             Campaign[]
   // Messaging (v2 - Tabellen existieren, werden noch nicht befüllt)
   conversationParticipants ConversationParticipant[]
   sentMessages          Message[]
@@ -215,7 +216,8 @@ model ScannedItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sharedWith SharedItem[]
+  sharedWith     SharedItem[]
+  campaignItems  CampaignItem[]
 
   @@index([userId])
   @@index([scannedAt])
@@ -223,6 +225,34 @@ model ScannedItem {
   @@index([productName])
   @@index([category])
   @@index([categoryId])
+}
+
+// ─── Kampagnen ─────────────────────────────────────────────────────────────────
+
+model Campaign {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     CampaignItem[]
+
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+model CampaignItem {
+  campaign   Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId String
+  item       ScannedItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId     String
+
+  @@id([campaignId, itemId])
+  @@index([itemId])
 }
 
 // ─── Messaging (v2 — Tabellen existieren, werden noch nicht befüllt) ──────────

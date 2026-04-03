@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, RefreshControl, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { View, Text, RefreshControl, ActivityIndicator, Pressable } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore } from '../../features/history/store/historyStore';
@@ -25,16 +25,28 @@ import {
   type LibraryRow,
   type LibraryItem,
 } from '../../features/history/utils/libraryRows';
+import { Icons } from '../../shared/components/Icons';
+import { CampaignActionSheet } from '../../features/campaigns/components/CampaignActionSheet';
+import { CampaignSelectionBar } from '../../features/campaigns/components/CampaignSelectionBar';
+import { CampaignSaveDialog } from '../../features/campaigns/components/CampaignSaveDialog';
+import { useCampaignStore } from '../../features/campaigns/store/campaignStore';
 
 export default function LibraryTab() {
   const items = useHistoryStore((state) => state.items);
   const removeItem = useHistoryStore((state) => state.removeItem);
   const fetchHistory = useHistoryStore((state) => state.fetchHistory);
   const { user } = useAuthStore();
+  const createCampaign = useCampaignStore((state) => state.createCampaign);
 
   const [refreshing, setRefreshing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(LIBRARY_PAGE_SIZE);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  // Campaign state
+  const [campaignSheetVisible, setCampaignSheetVisible] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [saveDialogVisible, setSaveDialogVisible] = useState(false);
 
   const { items: followingItems, refetch: refetchFollowing } = useFollowingItems();
 
@@ -70,8 +82,7 @@ export default function LibraryTab() {
   const { filters, setSearchQuery, setCategories, setSortBy, setProductType, filteredItems, categories, isFiltered } =
     useLibraryFilters(mergedItems);
 
-  // listKey zwingt FlashList zum Remount → Items animieren frisch rein
-  const listKey = `${filters.sortBy}-${filters.selectedCategories.join(',')}-${filters.searchQuery}-${filters.productType}-${viewMode}`;
+  const listKey = `${filters.sortBy}-${filters.selectedCategories.join(',')}-${filters.searchQuery}-${filters.productType}-${viewMode}-${selectionMode}`;
 
   useFocusEffect(
     useCallback(() => {
@@ -103,6 +114,40 @@ export default function LibraryTab() {
     }
   }, [mergedItems, removeItem, refetchFollowing]);
 
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const allFilteredSelected = filteredItems.length > 0 && filteredItems.every((i) => selectedIds.has(i.id));
+
+  const handleSelectAll = useCallback(() => {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map((i) => i.id)));
+    }
+  }, [allFilteredSelected, filteredItems]);
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    setSaveDialogVisible(false);
+  }, [setSaveDialogVisible]);
+
+  const handleSaveCampaign = useCallback(
+    (name: string, startsAt: string | null, endsAt: string | null) => {
+      createCampaign({ name, itemIds: Array.from(selectedIds), startsAt, endsAt });
+      setSaveDialogVisible(false);
+      exitSelectionMode();
+    },
+    [selectedIds, createCampaign, exitSelectionMode]
+  );
+
   const renderItem = useCallback(({ item, index }: { item: LibraryRow; index: number }) => {
     const staggerIndex = Math.min(index, 12);
     if (item.type === 'list') {
@@ -112,18 +157,27 @@ export default function LibraryTab() {
           <LibraryListItem
             item={item.item}
             index={index}
-            onDelete={handleDelete}
-            onShare={isOwn ? (id) => setShareItemId(id) : undefined}
+            onDelete={!selectionMode && isOwn ? handleDelete : undefined}
+            onShare={!selectionMode && isOwn ? (id) => setShareItemId(id) : undefined}
+            selectable={selectionMode}
+            selected={selectedIds.has(item.item.id)}
+            onSelect={toggleSelection}
           />
         </StaggeredItem>
       );
     }
     return (
       <StaggeredItem index={staggerIndex}>
-        <LibraryGridItem items={item.items} rowIndex={index} />
+        <LibraryGridItem
+          items={item.items}
+          rowIndex={index}
+          selectable={selectionMode}
+          selectedIds={selectedIds}
+          onSelect={toggleSelection}
+        />
       </StaggeredItem>
     );
-  }, [handleDelete]);
+  }, [handleDelete, selectionMode, selectedIds, toggleSelection]);
 
   const toggleViewMode = useCallback(() => {
     setVisibleCount(LIBRARY_PAGE_SIZE);
@@ -132,9 +186,24 @@ export default function LibraryTab() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <View className="px-5 pt-5 pb-1">
-        <Text className="text-foreground text-2xl font-bold">Inventar</Text>
-      </View>
+      {selectionMode ? (
+        <CampaignSelectionBar
+          selectedCount={selectedIds.size}
+          onCancel={exitSelectionMode}
+          onSave={() => setSaveDialogVisible(true)}
+        />
+      ) : (
+        <View className="px-5 pt-5 pb-1 flex-row items-center justify-between">
+          <Text className="text-foreground text-2xl font-bold">Inventar</Text>
+          <Pressable
+            onPress={() => setCampaignSheetVisible(true)}
+            hitSlop={8}
+            className="w-9 h-9 rounded-xl bg-background-elevated/60 items-center justify-center active:opacity-60"
+          >
+            <Icons.Flag size={18} color={colors.textSecondary} />
+          </Pressable>
+        </View>
+      )}
 
       {isEmpty ? (
         <LibraryEmptyState iconColor={colors.textSecondary} />
@@ -154,6 +223,9 @@ export default function LibraryTab() {
             filteredCount={filteredItems.length}
             viewMode={viewMode}
             onToggleViewMode={toggleViewMode}
+            selectionMode={selectionMode}
+            allSelected={allFilteredSelected}
+            onSelectAll={handleSelectAll}
           />
           <FlashList
             key={listKey}
@@ -163,7 +235,11 @@ export default function LibraryTab() {
             renderItem={renderItem}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+            refreshControl={
+              !selectionMode ? (
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+              ) : undefined
+            }
             ListFooterComponent={
               hasMore ? <View className="items-center py-6"><ActivityIndicator size="small" color={colors.primary} /></View> : null
             }
@@ -186,6 +262,21 @@ export default function LibraryTab() {
         ownUserId={user?.id ?? ''}
         onClose={() => setShareItemId(null)}
         onShared={() => setShareItemId(null)}
+      />
+
+      <CampaignActionSheet
+        visible={campaignSheetVisible}
+        onClose={() => setCampaignSheetVisible(false)}
+        onCreateNew={() => setSelectionMode(true)}
+        onViewAll={() => router.push('/campaigns')}
+      />
+
+      <CampaignSaveDialog
+        visible={saveDialogVisible}
+        selectedCount={selectedIds.size}
+        onSave={handleSaveCampaign}
+        onSelectMore={() => setSaveDialogVisible(false)}
+        onCancel={exitSelectionMode}
       />
     </SafeAreaView>
   );

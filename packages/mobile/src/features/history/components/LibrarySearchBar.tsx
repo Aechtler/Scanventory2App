@@ -25,6 +25,10 @@ interface LibrarySearchBarProps {
   filteredCount: number;
   viewMode: ViewMode;
   onToggleViewMode: () => void;
+  // Selektionsmodus
+  selectionMode?: boolean;
+  allSelected?: boolean;
+  onSelectAll?: () => void;
 }
 
 interface SortChipProps {
@@ -74,6 +78,9 @@ export function LibrarySearchBar({
   filteredCount,
   viewMode,
   onToggleViewMode,
+  selectionMode,
+  allSelected,
+  onSelectAll,
 }: LibrarySearchBarProps) {
   const colors = useThemeColors();
   const hasActiveFilters = selectedCategories.length > 0 || value.length > 0 || productType !== null;
@@ -136,6 +143,18 @@ export function LibrarySearchBar({
         contentContainerStyle={{ alignItems: 'center', paddingRight: 20 }}
         className="mt-1"
       >
+        {selectionMode && (
+          <Pressable onPress={onSelectAll} hitSlop={8} className="mr-3 active:opacity-60">
+            {allSelected ? (
+              <View className="w-6 h-6 rounded-full bg-primary-500 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
+                <Icons.Check size={14} color="#fff" strokeWidth={3} />
+              </View>
+            ) : (
+              <View className="w-6 h-6 rounded-full bg-white/90 border-2 border-white/60" style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3 }} />
+            )}
+          </Pressable>
+        )}
+
         <View className="mr-2">
           <CategoryDropdown
             categories={categories}

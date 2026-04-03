@@ -17,6 +17,9 @@ interface LibraryListCardProps {
   index: number;
   onDelete?: () => void;
   onShare?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
 function ProductTypeBadge({ item }: { item: LibraryItem }) {
@@ -67,17 +70,23 @@ function PriceSection({ item }: { item: LibraryItem }) {
   );
 }
 
-export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListCardProps) {
+export function LibraryListCard({ item, index, onDelete, onShare, selectable, selected, onSelect }: LibraryListCardProps) {
   const ownerName = item.owner
     ? (item.owner.displayName || item.owner.username ? `@${item.owner.username ?? item.owner.displayName}` : null)
     : null;
 
+  const handlePress = selectable
+    ? () => onSelect?.(item.id)
+    : () => router.push(`/history/${item.id}`);
+
   const card = (
     <Pressable
-      className="bg-background-card rounded-2xl mb-3 overflow-hidden border border-border active:opacity-70"
-      style={styles.card}
-      onPress={() => router.push(`/history/${item.id}`)}
-      onLongPress={onShare}
+      className={`bg-background-card rounded-2xl mb-3 overflow-hidden border active:opacity-70 ${
+        selected ? 'border-primary-500' : 'border-border'
+      }`}
+      style={[styles.card, selected && styles.selectedCard]}
+      onPress={handlePress}
+      onLongPress={selectable ? undefined : onShare}
     >
       <View className="flex-row">
         {/* Bild links */}
@@ -87,7 +96,18 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
             style={styles.image}
             resizeMode="cover"
           />
-          {classifyProduct(item) === 'high_value' && (
+          {selectable && (
+            <View className="absolute bottom-2 right-2">
+              {selected ? (
+                <View className="w-6 h-6 rounded-full bg-primary-500 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
+                  <Icons.Check size={14} color="#fff" strokeWidth={3} />
+                </View>
+              ) : (
+                <View className="w-6 h-6 rounded-full bg-white/90 border-2 border-white/60 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3 }} />
+              )}
+            </View>
+          )}
+          {!selectable && classifyProduct(item) === 'high_value' && (
             <View
               className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-violet-600/90 border border-violet-400/40 shadow-sm"
               style={{ shadowColor: '#a78bfa', shadowRadius: 4, shadowOpacity: 0.5 }}
@@ -95,7 +115,7 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
               <Icons.Star size={14} color="#fff" />
             </View>
           )}
-          {classifyProduct(item) === 'fast_seller' && (
+          {!selectable && classifyProduct(item) === 'fast_seller' && (
             <View
               className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-amber-500/90 border border-amber-400/40 shadow-sm"
               style={{ shadowColor: '#f59e0b', shadowRadius: 4, shadowOpacity: 0.5 }}
@@ -103,7 +123,7 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
               <Icons.TrendingUp size={14} color="#fff" />
             </View>
           )}
-          {classifyProduct(item) === 'normal' && (
+          {!selectable && classifyProduct(item) === 'normal' && (
             <View
               className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40 shadow-sm"
               style={{ shadowColor: '#38bdf8', shadowRadius: 4, shadowOpacity: 0.4 }}
@@ -148,7 +168,7 @@ export function LibraryListCard({ item, index, onDelete, onShare }: LibraryListC
 
   return (
     <StaggeredItem index={index}>
-      {onDelete ? (
+      {!selectable && onDelete ? (
         <SwipeableLibraryItem itemName={item.productName} onDelete={onDelete}>
           {card}
         </SwipeableLibraryItem>
@@ -164,6 +184,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+  },
+  selectedCard: {
+    shadowColor: '#6366f1',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
   },
   imageContainer: {
     width: 110,

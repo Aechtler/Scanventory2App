@@ -15,6 +15,7 @@ import groupsRouter from './groups';
 import itemSharingRouter, { sharedWithMeRouter, groupLibraryRouter } from './sharing';
 import imagesRouter from './images';
 import categoriesRouter from './categories';
+import campaignsRouter from './campaigns';
 
 const router = Router();
 
@@ -40,5 +41,8 @@ router.use('/shared', sharedWithMeRouter);
 router.use('/items', jwtAuthMiddleware, itemsRouter);
 // Item-Sharing (Auth innerhalb der Handler)
 router.use('/items', itemSharingRouter);
+
+// Kampagnen
+router.use('/campaigns', campaignsRouter);
 
 export default router;

@@ -16,6 +16,9 @@ import { Icons } from '@/shared/components/Icons';
 interface LibraryGridCardProps {
   item: HistoryItem;
   index: number;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
 function formatDate(isoDate: string): string {
@@ -23,20 +26,24 @@ function formatDate(isoDate: string): string {
   return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
 }
 
-export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
+export function LibraryGridCard({ item, index, selectable, selected, onSelect }: LibraryGridCardProps) {
   const isLeft = index % 2 === 0;
   const hasFinal = item.finalPrice != null;
   const price = getLibraryDisplayPrice(item);
   const hasPrice = hasLibraryDisplayPrice(item);
   const productType = classifyProduct(item);
 
+  const handlePress = selectable
+    ? () => onSelect?.(item.id)
+    : () => router.push(`/history/${item.id}`);
+
   return (
     <StaggeredItem index={index}>
       <Pressable
-        className={`flex-1 bg-background-card rounded-2xl mb-3.5 overflow-hidden border border-border active:opacity-70 ${
+        className={`flex-1 bg-background-card rounded-2xl mb-3.5 overflow-hidden border active:opacity-70 ${
           isLeft ? 'mr-1.5' : 'ml-1.5'
-        }`}
-        onPress={() => router.push(`/history/${item.id}`)}
+        } ${selected ? 'border-primary-500' : 'border-border'}`}
+        onPress={handlePress}
       >
         {/* Bild mit Gradient und Price-Badge */}
         <View className="relative">
@@ -46,8 +53,21 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
             resizeMode="cover"
           />
 
+          {/* Selektions-Badge */}
+          {selectable && (
+            <View className="absolute bottom-2 right-2">
+              {selected ? (
+                <View className="w-7 h-7 rounded-full bg-primary-500 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 4 }}>
+                  <Icons.Check size={16} color="#fff" strokeWidth={3} />
+                </View>
+              ) : (
+                <View className="w-7 h-7 rounded-full bg-white/90 border-2 border-white/60 items-center justify-center" style={{ shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3 }} />
+              )}
+            </View>
+          )}
+
           {/* Custom Badges top-left */}
-          {productType === 'high_value' && (
+          {!selectable && productType === 'high_value' && (
             <View 
               className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-violet-600/95 border border-violet-400/40 shadow-lg"
               style={{ shadowColor: '#a78bfa', shadowRadius: 8, shadowOpacity: 0.6 }}
@@ -55,7 +75,7 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
               <Icons.Star size={16} color="#fff" />
             </View>
           )}
-          {productType === 'fast_seller' && (
+          {!selectable && productType === 'fast_seller' && (
             <View
               className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-amber-500 border border-amber-400/40 shadow-lg"
               style={{ shadowColor: '#f59e0b', shadowRadius: 8, shadowOpacity: 0.6 }}
@@ -63,7 +83,7 @@ export function LibraryGridCard({ item, index }: LibraryGridCardProps) {
               <Icons.TrendingUp size={16} color="#fff" />
             </View>
           )}
-          {productType === 'normal' && (
+          {!selectable && productType === 'normal' && (
             <View
               className="absolute top-2 left-2 w-8 h-8 rounded-full items-center justify-center bg-sky-500/80 border border-sky-400/40 shadow-lg"
               style={{ shadowColor: '#38bdf8', shadowRadius: 8, shadowOpacity: 0.4 }}
