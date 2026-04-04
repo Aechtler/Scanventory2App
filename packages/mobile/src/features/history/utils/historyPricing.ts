@@ -1,6 +1,8 @@
-import type { HistoryItem } from '../store/historyStore';
-
-type PricedHistoryItem = Pick<HistoryItem, 'finalPrice' | 'priceStats' | 'marketValue'>;
+type PricedHistoryItem = {
+  finalPrice?: number | null;
+  priceStats?: { avgPrice?: number } | null;
+  marketValue?: { estimatedPrice?: string } | null;
+};
 
 /** Parst "15 €", "56,81 €", "~20 €" etc. zu einer Zahl */
 function parseEstimatedPrice(str: string): number | undefined {

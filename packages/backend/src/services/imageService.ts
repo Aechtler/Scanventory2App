@@ -77,3 +77,38 @@ export async function deleteImage(filename: string): Promise<void> {
     throw new Error(`Supabase Storage Löschen fehlgeschlagen: ${error.message}`);
   }
 }
+
+/**
+ * Lädt ein Avatar-Bild hoch (Prefix: avatars/) und gibt die öffentliche CDN-URL zurück.
+ */
+export async function saveAvatar(file: Express.Multer.File): Promise<string> {
+  const ext = getSafeExtension(file.mimetype, file.originalname);
+  const filename = `avatars/${uuidv4()}${ext}`;
+
+  const { error } = await supabaseAdmin.storage
+    .from(BUCKET)
+    .upload(filename, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false,
+    });
+
+  if (error) {
+    throw new Error(`Avatar Upload fehlgeschlagen: ${error.message}`);
+  }
+
+  return getImageUrl(filename);
+}
+
+/**
+ * Extrahiert den Storage-Pfad (z.B. "avatars/uuid.jpg") aus einer öffentlichen Supabase-URL.
+ * Gibt null zurück wenn es keine verwaltete Storage-URL ist.
+ */
+export function extractStorageFilename(publicUrl: string): string | null {
+  try {
+    const url = new URL(publicUrl);
+    const match = url.pathname.match(/\/item-images\/(.+)/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}

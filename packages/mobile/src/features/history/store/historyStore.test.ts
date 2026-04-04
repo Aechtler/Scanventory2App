@@ -30,10 +30,10 @@ test('createHistoryItem builds a pending history item and sync payload excludes 
     searchQuery: 'nintendo switch',
     searchQueries: { ebay: 'nintendo switch console' },
     gtin: '0045496596782',
-    priceStats: { minPrice: 100, maxPrice: 150, avgPrice: 125, medianPrice: 127 },
+    priceStats: { minPrice: 100, maxPrice: 150, avgPrice: 125, medianPrice: 127, totalListings: 10, soldListings: 4 },
     ebayListings: [],
     ebayListingsFetchedAt: '2026-03-18T12:00:00.000Z',
-    marketValue: { summary: 'Stable resale demand' },
+    marketValue: { estimatedPrice: '125 €', priceRange: '100–150 €', confidence: 'mittel' as const, sources: [], summary: 'Stable resale demand', rawResponse: '' },
     marketValueFetchedAt: '2026-03-18T12:05:00.000Z',
   };
 
@@ -60,10 +60,10 @@ test('createHistoryItem builds a pending history item and sync payload excludes 
     gtin: '0045496596782',
     searchQuery: 'nintendo switch',
     searchQueries: { ebay: 'nintendo switch console' },
-    priceStats: { minPrice: 100, maxPrice: 150, avgPrice: 125, medianPrice: 127 },
+    priceStats: { minPrice: 100, maxPrice: 150, avgPrice: 125, medianPrice: 127, totalListings: 10, soldListings: 4 },
     ebayListings: [],
     ebayListingsFetchedAt: '2026-03-18T12:00:00.000Z',
-    marketValue: { summary: 'Stable resale demand' },
+    marketValue: { estimatedPrice: '125 €', priceRange: '100–150 €', confidence: 'mittel' as const, sources: [], summary: 'Stable resale demand', rawResponse: '' },
     marketValueFetchedAt: '2026-03-18T12:05:00.000Z',
     scannedAt: '2026-03-19T10:00:00.000Z',
   });
@@ -80,7 +80,7 @@ test('updateHistoryItemPrices updates the matching item and selectors find it by
       condition: 'Used',
       confidence: 0.5,
       searchQuery: 'keep',
-      priceStats: { minPrice: 1, maxPrice: 2, avgPrice: 1.5, medianPrice: 1.5 },
+      priceStats: { minPrice: 1, maxPrice: 2, avgPrice: 1.5, medianPrice: 1.5, totalListings: 0, soldListings: 0 },
       scannedAt: '2026-03-19T09:00:00.000Z',
       syncStatus: 'pending' as const,
     },
@@ -93,7 +93,7 @@ test('updateHistoryItemPrices updates the matching item and selectors find it by
       condition: 'New',
       confidence: 0.9,
       searchQuery: 'target',
-      priceStats: { minPrice: 10, maxPrice: 20, avgPrice: 15, medianPrice: 15 },
+      priceStats: { minPrice: 10, maxPrice: 20, avgPrice: 15, medianPrice: 15, totalListings: 0, soldListings: 0 },
       scannedAt: '2026-03-19T09:05:00.000Z',
       syncStatus: 'synced' as const,
       serverId: 'server-1',
@@ -103,7 +103,7 @@ test('updateHistoryItemPrices updates the matching item and selectors find it by
   const updatedItems = updateHistoryItemPrices(
     items,
     'target',
-    { minPrice: 11, maxPrice: 19, avgPrice: 15, medianPrice: 15 },
+    { minPrice: 11, maxPrice: 19, avgPrice: 15, medianPrice: 15, totalListings: 0, soldListings: 0 },
     [{ id: 'listing-1', title: 'Listing', price: 15, currency: 'EUR', condition: 'Used', imageUrl: '', itemUrl: '', sold: false, selected: true }],
     '2026-03-19T10:30:00.000Z',
   );
@@ -198,7 +198,7 @@ test('createHistoryStoreState uses injected cache and sync dependencies', async 
     condition: 'Used',
     confidence: 0.7,
     searchQuery: 'injected item',
-    priceStats: { minPrice: 50, maxPrice: 70, avgPrice: 60, medianPrice: 60 },
+    priceStats: { minPrice: 50, maxPrice: 70, avgPrice: 60, medianPrice: 60, totalListings: 0, soldListings: 0 },
   });
 
   assert.equal(itemId, 'scan-di-test');
@@ -208,10 +208,10 @@ test('createHistoryStoreState uses injected cache and sync dependencies', async 
 
   currentState.updateItemPrices(
     itemId,
-    { minPrice: 55, maxPrice: 75, avgPrice: 65, medianPrice: 65 },
+    { minPrice: 55, maxPrice: 75, avgPrice: 65, medianPrice: 65, totalListings: 0, soldListings: 0 },
     [],
   );
-  currentState.updateMarketValue(itemId, { summary: 'Growing demand' });
+  currentState.updateMarketValue(itemId, { estimatedPrice: '65 €', priceRange: '55–75 €', confidence: 'mittel', sources: [], summary: 'Growing demand', rawResponse: '' });
   currentState.updateItem(itemId, { productName: 'Injected Item Updated' });
   currentState.removeItem(itemId);
   currentState.clearHistory();

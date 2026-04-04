@@ -11,6 +11,7 @@
  * />
  */
 
+import type { ReactElement } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
 import { BounceInView } from '@/shared/components/Animated';
@@ -75,7 +76,7 @@ const VARIANT_STYLES: Record<StatusBannerVariant, VariantStyle> = {
   },
 };
 
-const VARIANT_ICONS: Record<StatusBannerVariant, (color: string) => JSX.Element> = {
+const VARIANT_ICONS: Record<StatusBannerVariant, (color: string) => ReactElement> = {
   warning: (color) => <Icons.Warning size={18} color={color} />,
   error:   (color) => <Icons.Warning size={18} color={color} />,
   info:    (color) => <Icons.Info    size={18} color={color} />,

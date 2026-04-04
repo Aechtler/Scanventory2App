@@ -13,6 +13,7 @@ import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { useProfile } from '../hooks/useProfile';
 import { AvatarPicker } from './AvatarPicker';
 import { UsernameInput } from './UsernameInput';
+import { uploadAvatar, deleteAvatar } from '../services/profileService';
 import type { PublicProfile } from '../types/profile.types';
 
 interface ProfileFormProps {
@@ -22,10 +23,11 @@ interface ProfileFormProps {
   onCancel: () => void;
 }
 
-/**
- * Formular zum Bearbeiten des eigenen Profils.
- * Avatar, Username, Display-Name, Bio, Sichtbarkeit.
- */
+type AvatarState =
+  | { type: 'unchanged' }
+  | { type: 'new'; localUri: string }
+  | { type: 'removed' };
+
 export function ProfileForm({
   currentProfile,
   currentUsername,
@@ -39,25 +41,60 @@ export function ProfileForm({
   const [displayName, setDisplayName] = useState(currentProfile.displayName ?? '');
   const [bio, setBio] = useState(currentProfile.bio ?? '');
   const [isPublic, setIsPublic] = useState(currentProfile.isPublic);
-  const [avatarUri, setAvatarUri] = useState<string | null>(currentProfile.avatarUrl ?? null);
+  const [avatarState, setAvatarState] = useState<AvatarState>({ type: 'unchanged' });
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  /** Vorschau-URI: neue lokale Datei, kein Bild bei Entfernung, sonst Server-URL */
+  function getDisplayUri(): string | null {
+    if (avatarState.type === 'new') return avatarState.localUri;
+    if (avatarState.type === 'removed') return null;
+    return currentProfile.avatarUrl ?? null;
+  }
+
+  function handleAvatarChanged(localUri: string | null) {
+    if (localUri === null) {
+      setAvatarState({ type: 'removed' });
+    } else {
+      setAvatarState({ type: 'new', localUri });
+    }
+  }
 
   async function handleSave() {
     clearError();
+    setAvatarUploading(false);
     try {
+      // 1. Avatar-Änderung verarbeiten
+      if (avatarState.type === 'new') {
+        setAvatarUploading(true);
+        await uploadAvatar(avatarState.localUri);
+        setAvatarUploading(false);
+      } else if (avatarState.type === 'removed') {
+        await deleteAvatar();
+      }
+
+      // 2. Restliche Profil-Felder speichern
       const saved = await update({
         username: username || undefined,
         displayName: displayName.trim() || undefined,
         bio: bio.trim() || undefined,
         isPublic,
-        // avatarUrl wird separat über einen Upload-Endpoint gesetzt (Phase 1b)
-        // Für jetzt: lokaler URI wird als Platzhalter gespeichert
-        ...(avatarUri !== currentProfile.avatarUrl && { avatarUrl: avatarUri ?? undefined }),
       });
-      onSaved(saved);
-    } catch {
-      // Fehler wird über error State angezeigt
+
+      // avatarUrl aus gespeichertem Profil übernehmen oder bei Entfernung auf null setzen
+      const finalProfile: PublicProfile = {
+        ...saved,
+        avatarUrl: avatarState.type === 'removed' ? null : saved.avatarUrl,
+      };
+      onSaved(finalProfile);
+    } catch (err) {
+      setAvatarUploading(false);
+      if (err instanceof Error) {
+        Alert.alert('Fehler', err.message);
+      }
     }
   }
+
+  const isBusy = updating || avatarUploading;
 
   return (
     <ScrollView
@@ -68,8 +105,9 @@ export function ProfileForm({
       {/* Avatar */}
       <View className="items-center mb-8">
         <AvatarPicker
-          currentAvatarUrl={avatarUri}
-          onUploaded={setAvatarUri}
+          currentAvatarUrl={getDisplayUri()}
+          onChanged={handleAvatarChanged}
+          loading={avatarUploading}
           size={96}
         />
         <Text className="text-foreground-secondary text-xs mt-2">Tippe um Foto zu ändern</Text>
@@ -140,10 +178,10 @@ export function ProfileForm({
       {/* Buttons */}
       <Pressable
         onPress={handleSave}
-        disabled={updating}
+        disabled={isBusy}
         className="bg-primary rounded-xl py-4 items-center mb-3 active:opacity-80"
       >
-        {updating ? (
+        {isBusy ? (
           <ActivityIndicator color="#fff" />
         ) : (
           <Text className="text-white font-semibold text-base">Speichern</Text>
@@ -152,7 +190,7 @@ export function ProfileForm({
 
       <Pressable
         onPress={onCancel}
-        disabled={updating}
+        disabled={isBusy}
         className="rounded-xl py-4 items-center active:opacity-70"
       >
         <Text className="text-foreground-secondary font-medium">Abbrechen</Text>

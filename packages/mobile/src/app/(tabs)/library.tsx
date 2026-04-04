@@ -159,6 +159,11 @@ export default function LibraryTab() {
     [selectedIds, createCampaign, exitSelectionMode]
   );
 
+  const handleItemPress = useCallback((id: string) => {
+    setItemNavigationIds(filteredItems.map((i) => i.id));
+    router.push(`/history/${id}`);
+  }, [filteredItems, setItemNavigationIds]);
+
   const renderItem = useCallback(({ item, index }: { item: LibraryRow; index: number }) => {
     const staggerIndex = Math.min(index, 12);
     if (item.type === 'list') {
@@ -191,11 +196,6 @@ export default function LibraryTab() {
       </StaggeredItem>
     );
   }, [handleDelete, handleItemPress, selectionMode, selectedIds, toggleSelection]);
-
-  const handleItemPress = useCallback((id: string) => {
-    setItemNavigationIds(filteredItems.map((i) => i.id));
-    router.push(`/history/${id}`);
-  }, [filteredItems, setItemNavigationIds]);
 
   const toggleViewMode = useCallback(() => {
     setVisibleCount(LIBRARY_PAGE_SIZE);

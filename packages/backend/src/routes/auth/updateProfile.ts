@@ -1,9 +1,25 @@
 import { Router } from 'express';
+import multer from 'multer';
 import rateLimit from 'express-rate-limit';
 import { jwtAuthMiddleware, AuthRequest } from '../../middleware/jwtAuth';
 import { updateUserProfile, isUsernameTaken, validateUsername } from '../../services/userService';
+import { saveAvatar, deleteImage, extractStorageFilename } from '../../services/imageService';
+import { prisma } from '../../services/prismaClient';
 import { ApiResponse } from '../../types';
 import { buildAuthErrorResponse } from './shared';
+
+const uploadAvatarImage = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    if (!allowed.has(file.mimetype)) {
+      cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'avatar'));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 const router = Router();
 
@@ -78,6 +94,84 @@ router.patch('/', jwtAuthMiddleware, profileUpdateLimiter, async (req: AuthReque
     }
     console.error('Profile update error:', error);
     res.status(500).json(buildAuthErrorResponse('INTERNAL_ERROR', 'Failed to update profile'));
+  }
+});
+
+/** POST /api/auth/profile/avatar — Avatar hochladen (ersetzt altes Bild) */
+router.post('/avatar', jwtAuthMiddleware, uploadAvatarImage.single('avatar'), async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      res.status(401).json(buildAuthErrorResponse('UNAUTHORIZED', 'Not authenticated'));
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json(buildAuthErrorResponse('BAD_REQUEST', 'Avatar image is required'));
+      return;
+    }
+
+    const db = prisma as unknown as {
+      user: { findUnique: (args: unknown) => Promise<{ avatarUrl: string | null } | null> };
+    };
+    const currentUser = await db.user.findUnique({
+      where: { id: req.user.userId },
+      select: { avatarUrl: true },
+    });
+
+    // Altes Avatar aus Storage löschen
+    if (currentUser?.avatarUrl) {
+      const oldFilename = extractStorageFilename(currentUser.avatarUrl);
+      if (oldFilename?.startsWith('avatars/')) {
+        await deleteImage(oldFilename).catch(() => {});
+      }
+    }
+
+    const newAvatarUrl = await saveAvatar(req.file);
+    const profile = await updateUserProfile(req.user.userId, { avatarUrl: newAvatarUrl });
+
+    const response: ApiResponse<typeof profile> = { success: true, data: profile };
+    res.json(response);
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json(buildAuthErrorResponse('INTERNAL_ERROR', 'Failed to upload avatar'));
+  }
+});
+
+/** DELETE /api/auth/profile/avatar — Avatar entfernen */
+router.delete('/avatar', jwtAuthMiddleware, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      res.status(401).json(buildAuthErrorResponse('UNAUTHORIZED', 'Not authenticated'));
+      return;
+    }
+
+    const db = prisma as unknown as {
+      user: {
+        findUnique: (args: unknown) => Promise<{ avatarUrl: string | null } | null>;
+        update: (args: unknown) => Promise<unknown>;
+      };
+    };
+    const currentUser = await db.user.findUnique({
+      where: { id: req.user.userId },
+      select: { avatarUrl: true },
+    });
+
+    if (currentUser?.avatarUrl) {
+      const filename = extractStorageFilename(currentUser.avatarUrl);
+      if (filename?.startsWith('avatars/')) {
+        await deleteImage(filename).catch(() => {});
+      }
+    }
+
+    await db.user.update({
+      where: { id: req.user.userId },
+      data: { avatarUrl: null },
+    });
+
+    const response: ApiResponse<{ avatarUrl: null }> = { success: true, data: { avatarUrl: null } };
+    res.json(response);
+  } catch (error) {
+    console.error('Avatar delete error:', error);
+    res.status(500).json(buildAuthErrorResponse('INTERNAL_ERROR', 'Failed to delete avatar'));
   }
 });
 

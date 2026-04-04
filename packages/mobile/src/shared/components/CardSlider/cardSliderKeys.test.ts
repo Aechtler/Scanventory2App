@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import type { ReactNode } from 'react';
 import { getCardSliderItemKey } from './cardSliderKeys.ts';
 
 test('getCardSliderItemKey prefers an existing child key over index-based fallbacks', () => {
-  const keyedChild = { key: '.$listing-42' };
+  const keyedChild = { key: '.$listing-42' } as unknown as ReactNode;
 
   assert.equal(getCardSliderItemKey(keyedChild), '.$listing-42');
 });

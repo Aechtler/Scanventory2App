@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '@/shared/constants';
+import { apiUploadAvatar, apiDelete } from '@/shared/services/apiClient';
 import type {
   PublicProfile,
   ProfileUpdatePayload,
@@ -84,4 +85,27 @@ export async function searchUsers(query: string): Promise<PublicProfile[]> {
     throw new Error(json.error?.message ?? 'Suche fehlgeschlagen');
   }
   return json.data as PublicProfile[];
+}
+
+/**
+ * Avatar hochladen — gibt die neue CDN-URL zurück
+ * POST /api/auth/profile/avatar
+ */
+export async function uploadAvatar(localUri: string): Promise<string> {
+  const result = await apiUploadAvatar(localUri);
+  if (!result.success || !result.data) {
+    throw new Error(result.error?.message ?? 'Avatar konnte nicht hochgeladen werden');
+  }
+  return result.data.avatarUrl;
+}
+
+/**
+ * Avatar entfernen
+ * DELETE /api/auth/profile/avatar
+ */
+export async function deleteAvatar(): Promise<void> {
+  const result = await apiDelete<{ avatarUrl: null }>('/api/auth/profile/avatar');
+  if (!result.success) {
+    throw new Error(result.error?.message ?? 'Avatar konnte nicht entfernt werden');
+  }
 }

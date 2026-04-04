@@ -1,22 +1,19 @@
-import { useState } from 'react';
 import { View, Pressable, Image, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 
 interface AvatarPickerProps {
+  /** Anzeigebild — kann lokale URI oder Server-URL sein */
   currentAvatarUrl?: string | null;
-  onUploaded: (uri: string) => void;
+  /** Aufgerufen wenn ein neues Bild gewählt wurde (lokale URI) oder Avatar entfernt wird (null) */
+  onChanged: (localUri: string | null) => void;
+  loading?: boolean;
   size?: number;
 }
 
-/**
- * Avatar-Picker — öffnet Kamera oder Galerie und gibt den lokalen URI zurück.
- * Der Upload zum Server erfolgt beim Speichern des Profil-Formulars.
- */
-export function AvatarPicker({ currentAvatarUrl, onUploaded, size = 80 }: AvatarPickerProps) {
+export function AvatarPicker({ currentAvatarUrl, onChanged, loading = false, size = 80 }: AvatarPickerProps) {
   const colors = useThemeColors();
-  const [loading, setLoading] = useState(false);
 
   async function pickImage(source: 'camera' | 'gallery') {
     const permResult =
@@ -32,39 +29,43 @@ export function AvatarPicker({ currentAvatarUrl, onUploaded, size = 80 }: Avatar
       return;
     }
 
-    setLoading(true);
-    try {
-      const result =
-        source === 'camera'
-          ? await ImagePicker.launchCameraAsync({
-              mediaTypes: ['images'],
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            })
-          : await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ['images'],
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            });
+    const result =
+      source === 'camera'
+        ? await ImagePicker.launchCameraAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          });
 
-      if (!result.canceled && result.assets[0]) {
-        onUploaded(result.assets[0].uri);
-      }
-    } catch {
-      Alert.alert('Fehler', 'Bild konnte nicht geladen werden.');
-    } finally {
-      setLoading(false);
+    if (!result.canceled && result.assets[0]) {
+      onChanged(result.assets[0].uri);
     }
   }
 
   function handlePress() {
-    Alert.alert('Avatar ändern', 'Wähle eine Quelle', [
+    const options: Parameters<typeof Alert.alert>[2] = [
       { text: 'Kamera', onPress: () => pickImage('camera') },
       { text: 'Galerie', onPress: () => pickImage('gallery') },
-      { text: 'Abbrechen', style: 'cancel' },
-    ]);
+    ];
+
+    if (currentAvatarUrl) {
+      options.push({
+        text: 'Bild entfernen',
+        style: 'destructive',
+        onPress: () => onChanged(null),
+      });
+    }
+
+    options.push({ text: 'Abbrechen', style: 'cancel' });
+
+    Alert.alert('Profilbild ändern', 'Wähle eine Option', options);
   }
 
   return (
@@ -85,7 +86,6 @@ export function AvatarPicker({ currentAvatarUrl, onUploaded, size = 80 }: Avatar
           <Icons.User size={size * 0.45} color={colors.primary} />
         )}
       </View>
-      {/* Kamera-Icon Overlay */}
       <View
         className="absolute bottom-0 right-0 bg-primary rounded-full items-center justify-center"
         style={{ width: size * 0.32, height: size * 0.32 }}

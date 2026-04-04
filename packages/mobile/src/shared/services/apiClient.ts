@@ -205,6 +205,37 @@ export async function apiDelete<T>(path: string): Promise<ApiResponse<T>> {
 }
 
 /**
+ * Avatar Upload — lädt ein Bild als neues Profilbild hoch
+ */
+export async function apiUploadAvatar(imageUri: string): Promise<ApiResponse<{ avatarUrl: string }>> {
+  await validateUploadImage(imageUri);
+
+  const token = await getAuthToken();
+  const mimeType = inferMimeTypeFromUri(imageUri) || 'image/jpeg';
+
+  const uploadResult = await FileSystem.uploadAsync(
+    `${API_CONFIG.BASE_URL}/api/auth/profile/avatar`,
+    imageUri,
+    {
+      httpMethod: 'POST',
+      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+      fieldName: 'avatar',
+      mimeType,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
+
+  try {
+    return JSON.parse(uploadResult.body);
+  } catch {
+    return {
+      success: false,
+      error: { code: 'PARSE_ERROR', message: 'Failed to parse avatar upload response' },
+    };
+  }
+}
+
+/**
  * Multipart Upload - Bild + JSON-Daten
  * Nutzt expo-file-system fuer nativen Upload
  */
