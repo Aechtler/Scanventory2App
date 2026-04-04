@@ -1,22 +1,17 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable, Alert, Modal, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../features/auth/store/authStore';
 import { useHistoryStore } from '../../features/history/store/historyStore';
-import { formatPrice } from '../../features/market/services/ebay';
-import { calculateTotalValue } from '../../features/history/services/exportService';
 import { FadeInView } from '../../shared/components/Animated';
 import { Icons } from '../../shared/components/Icons';
-import { ThemeSelector } from '../../shared/components/ThemeSelector';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
-import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
 import { ProfileHeader, ProfileForm } from '../../features/social';
 import { usePublicProfile } from '../../features/social/hooks/usePublicProfile';
 import { useFollowers, useFollowing } from '../../features/social/hooks/useFollowList';
 import { UserCard } from '../../features/social/components/UserCard';
 import type { PublicProfile } from '../../features/social';
-import Constants from 'expo-constants';
 
 type FollowSheet = 'followers' | 'following' | null;
 
@@ -27,11 +22,7 @@ type FollowSheet = 'followers' | 'following' | null;
 export default function ProfileTab() {
   const { user, logout } = useAuthStore();
   const items = useHistoryStore((state) => state.items);
-  const totalValue = useMemo(() => calculateTotalValue(items), [items]);
-  const appVersion = Constants.expoConfig?.version ?? '1.0.0';
   const colors = useThemeColors();
-  const tabBarPadding = useTabBarPadding();
-
   const [editVisible, setEditVisible] = useState(false);
   const [followSheet, setFollowSheet] = useState<FollowSheet>(null);
 
@@ -110,34 +101,6 @@ export default function ProfileTab() {
           </View>
         </FadeInView>
 
-        {/* Portfolio Stats */}
-        <FadeInView delay={100}>
-          <View className="bg-background-card rounded-2xl p-5 border border-border mb-6">
-            <Text className="text-foreground-secondary text-sm mb-4">Dein Portfolio</Text>
-            <View className="flex-row">
-              <View className="flex-1 items-center">
-                <Text className="text-foreground text-2xl font-bold">{items.length}</Text>
-                <Text className="text-foreground-secondary text-xs mt-1">Gegenstände</Text>
-              </View>
-              <View className="w-px bg-border" />
-              <View className="flex-1 items-center">
-                <Text className="text-primary text-2xl font-bold">
-                  {formatPrice(totalValue)}
-                </Text>
-                <Text className="text-foreground-secondary text-xs mt-1">Gesamtwert</Text>
-              </View>
-            </View>
-          </View>
-        </FadeInView>
-
-        {/* Theme Selector */}
-        <FadeInView delay={150}>
-          <View className="bg-background-card rounded-2xl p-5 border border-border mb-6">
-            <Text className="text-foreground-secondary text-sm mb-3">Erscheinungsbild</Text>
-            <ThemeSelector />
-          </View>
-        </FadeInView>
-
         {/* Logout */}
         <FadeInView delay={200}>
           <Pressable
@@ -149,10 +112,6 @@ export default function ProfileTab() {
           </Pressable>
         </FadeInView>
 
-        {/* App Version */}
-        <View className="items-center" style={{ paddingBottom: tabBarPadding + 16, marginTop: 24 }}>
-          <Text className="text-foreground-secondary/50 text-xs">Scandirwas v{appVersion}</Text>
-        </View>
       </ScrollView>
 
       {/* Follower / Following Sheet */}

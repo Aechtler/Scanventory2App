@@ -7,6 +7,9 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance } from 'react-native';
 
+// Sofort beim Modulimport setzen — verhindert Flash beim Start/Reload
+Appearance.setColorScheme('dark');
+
 type ThemeMode = 'light' | 'dark' | 'system';
 
 interface ThemeState {
