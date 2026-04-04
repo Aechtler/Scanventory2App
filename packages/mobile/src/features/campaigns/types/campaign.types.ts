@@ -5,6 +5,7 @@ export interface Campaign {
   startsAt: string | null; // ISO date string
   endsAt: string | null;   // ISO date string
   createdAt: string;
+  syncStatus?: 'synced' | 'pending';
 }
 
 export interface CampaignDraft {

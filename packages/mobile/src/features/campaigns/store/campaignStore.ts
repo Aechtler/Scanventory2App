@@ -36,6 +36,7 @@ export const useCampaignStore = create<CampaignState>()(
           startsAt: draft.startsAt,
           endsAt: draft.endsAt,
           createdAt: new Date().toISOString(),
+          syncStatus: 'pending',
         };
         set((state) => ({ campaigns: [optimistic, ...state.campaigns], lastCreated: optimistic }));
 
@@ -45,13 +46,13 @@ export const useCampaignStore = create<CampaignState>()(
           if (res.success && res.data) {
             set((state) => ({
               campaigns: state.campaigns.map((c) =>
-                c.id === localId ? { ...res.data! } : c
+                c.id === localId ? { ...res.data!, syncStatus: 'synced' as const } : c
               ),
-              lastCreated: res.data,
+              lastCreated: { ...res.data!, syncStatus: 'synced' as const },
             }));
           }
         } catch {
-          // Offline — bleibt lokal, kein Retry nötig für v1
+          // Offline — bleibt pending, wird bei fetchCampaigns nachsynchronisiert
         }
       },
 
@@ -68,7 +69,31 @@ export const useCampaignStore = create<CampaignState>()(
         try {
           const res = await campaignService.fetchAll();
           if (res.success && res.data) {
-            set({ campaigns: res.data });
+            const serverData = res.data.map((c) => ({ ...c, syncStatus: 'synced' as const }));
+            const serverIds = new Set(serverData.map((c) => c.id));
+
+            // Lokale pending-Kampagnen behalten, die noch nicht im Backend sind
+            const pending = get().campaigns.filter(
+              (c) => c.syncStatus === 'pending' && !serverIds.has(c.id),
+            );
+
+            set({ campaigns: [...serverData, ...pending] });
+
+            // Pending-Kampagnen nachsynchronisieren (fire-and-forget)
+            for (const p of pending) {
+              campaignService
+                .create({ name: p.name, itemIds: p.itemIds, startsAt: p.startsAt, endsAt: p.endsAt })
+                .then((createRes) => {
+                  if (createRes.success && createRes.data) {
+                    set((state) => ({
+                      campaigns: state.campaigns.map((c) =>
+                        c.id === p.id ? { ...createRes.data!, syncStatus: 'synced' as const } : c,
+                      ),
+                    }));
+                  }
+                })
+                .catch(() => {});
+            }
           }
         } catch {
           // Offline — lokaler Cache bleibt
