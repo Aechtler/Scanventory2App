@@ -13,8 +13,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
@@ -27,19 +28,6 @@ import type { CategoryNode } from '@/features/categories';
 
 const CONDITION_PRESETS = ['Neu', 'Wie neu', 'Gut', 'Akzeptabel', 'Defekt'];
 
-const PLATFORM_CONFIG = [
-  { key: 'generic' as const, label: 'Generisch', icon: 'Search' as const },
-  { key: 'ebay' as const, label: 'eBay', icon: 'Globe' as const },
-  { key: 'amazon' as const, label: 'Amazon', icon: 'Package' as const },
-  { key: 'idealo' as const, label: 'Idealo', icon: 'Tag' as const },
-];
-
-type SearchQueries = {
-  ebay?: string;
-  amazon?: string;
-  idealo?: string;
-  generic?: string;
-};
 
 export default function ProductEditScreen() {
   const colors = useThemeColors();
@@ -53,11 +41,43 @@ export default function ProductEditScreen() {
   const [categoryPath, setCategoryPath] = useState<string | null>(null);
   const [brand, setBrand] = useState('');
   const [condition, setCondition] = useState('');
+  const [conditionNote, setConditionNote] = useState('');
   const [gtin, setGtin] = useState('');
-  const [searchQueries, setSearchQueries] = useState<SearchQueries>({});
-  const [showSearchQueries, setShowSearchQueries] = useState(false);
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [conditionOpen, setConditionOpen] = useState(false);
   const tabBarPadding = useTabBarPadding();
+
+  async function pickImage(source: 'camera' | 'gallery') {
+    const permResult =
+      source === 'camera'
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permResult.granted) {
+      Alert.alert(
+        'Berechtigung benötigt',
+        `Bitte erlaube den Zugriff auf ${source === 'camera' ? 'die Kamera' : 'deine Fotos'}.`
+      );
+      return;
+    }
+
+    const result =
+      source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
+
+    if (!result.canceled && result.assets[0]) {
+      setLocalImageUri(result.assets[0].uri);
+    }
+  }
+
+  function handleImagePress() {
+    Alert.alert('Bild ändern', 'Wähle eine Option', [
+      { text: 'Kamera', onPress: () => pickImage('camera') },
+      { text: 'Galerie', onPress: () => pickImage('gallery') },
+      { text: 'Abbrechen', style: 'cancel' },
+    ]);
+  }
 
   // Init state from item
   useEffect(() => {
@@ -68,8 +88,8 @@ export default function ProductEditScreen() {
       setCategoryPath(item.categoryPath ?? null);
       setBrand(item.brand || '');
       setCondition(item.condition);
+      setConditionNote(item.conditionNote || '');
       setGtin(item.gtin || '');
-      setSearchQueries(item.searchQueries || {});
     }
   }, [item?.id]);
 
@@ -84,14 +104,13 @@ export default function ProductEditScreen() {
     if (categoryPath !== (item.categoryPath ?? null)) changes.categoryPath = categoryPath;
     if (brand !== (item.brand || '')) changes.brand = brand || null;
     if (condition !== item.condition) changes.condition = condition;
+    if (conditionNote !== (item.conditionNote || '')) changes.conditionNote = conditionNote || null;
     if (gtin !== (item.gtin || '')) changes.gtin = gtin || null;
 
-    const queriesChanged = Object.keys(searchQueries).some(
-      (key) =>
-        searchQueries[key as keyof SearchQueries] !==
-        item.searchQueries?.[key as keyof SearchQueries]
-    );
-    if (queriesChanged) changes.searchQueries = searchQueries;
+    if (localImageUri) {
+      changes.imageUri = localImageUri;
+      changes.cachedImageUri = localImageUri;
+    }
 
     if (Object.keys(changes).length > 0) {
       updateItem(id, changes);
@@ -110,10 +129,6 @@ export default function ProductEditScreen() {
       </>
     );
   }
-
-  const updateSearchQuery = (key: string, value: string) => {
-    setSearchQueries((prev) => ({ ...prev, [key]: value }));
-  };
 
   return (
     <>
@@ -147,18 +162,21 @@ export default function ProductEditScreen() {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="rounded-2xl overflow-hidden mb-6"
             >
-              <View style={{ width: '100%', aspectRatio: 4 / 3, overflow: 'hidden', backgroundColor: '#0d1117' }}>
-                <Image
-                  source={{ uri: item.cachedImageUri || item.imageUri }}
-                  style={{ width: '100%', height: '100%' }}
-                  resizeMode="contain"
-                />
-              </View>
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(17,24,39,0.95)', '#111827']}
-                locations={[0, 0.4, 0.75, 1]}
-                style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '70%' }}
-              />
+              <Pressable onPress={handleImagePress}>
+                <View style={{ width: '100%', aspectRatio: 4 / 3, overflow: 'hidden', backgroundColor: '#0d1117' }}>
+                  <Image
+                    source={{ uri: localImageUri || item.cachedImageUri || item.imageUri }}
+                    style={{ width: '100%', height: '100%' }}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View
+                  className="absolute bottom-3 right-3 bg-black/60 rounded-full items-center justify-center"
+                  style={{ width: 36, height: 36 }}
+                >
+                  <Icons.Camera size={18} color="#fff" />
+                </View>
+              </Pressable>
             </MotiView>
 
             {/* Formular */}
@@ -239,6 +257,21 @@ export default function ProductEditScreen() {
               )}
             </View>
 
+            {/* Zustandsbeschreibung */}
+            <View className="mb-5">
+              <Text className="text-foreground-secondary text-sm mb-2 font-medium">Zustandsbeschreibung</Text>
+              <TextInput
+                value={conditionNote}
+                onChangeText={setConditionNote}
+                placeholder="z. B. hat Kratzer, Teile fehlen..."
+                placeholderTextColor={colors.textSecondary}
+                className="text-foreground text-base bg-background-elevated p-4 rounded-xl"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
             {/* GTIN */}
             <View className="mb-5">
               <Text className="text-foreground-secondary text-sm mb-2 font-medium">
@@ -254,56 +287,7 @@ export default function ProductEditScreen() {
               />
             </View>
 
-            {/* Suchbegriffe - Aufklappbar */}
-            <View className="mb-5">
-              <Pressable
-                onPress={() => setShowSearchQueries(!showSearchQueries)}
-                className="flex-row items-center justify-between p-4 bg-background-elevated rounded-xl"
-              >
-                <View className="flex-row items-center gap-3">
-                  <Icons.Search size={20} color={colors.textSecondary} />
-                  <Text className="text-foreground text-base font-medium">
-                    Suchbegriffe anpassen
-                  </Text>
-                </View>
-                {showSearchQueries ? (
-                  <Icons.ChevronUp size={20} color={colors.textSecondary} />
-                ) : (
-                  <Icons.ChevronDown size={20} color={colors.textSecondary} />
-                )}
-              </Pressable>
-
-              {showSearchQueries && (
-                <MotiView
-                  from={{ opacity: 0, translateY: -10 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{ type: 'timing', duration: 200 }}
-                  className="mt-3 gap-3"
-                >
-                  {PLATFORM_CONFIG.map(({ key, label, icon }) => {
-                    const IconComponent = Icons[icon];
-                    return (
-                      <View key={key} className="flex-row items-center gap-3">
-                        <View className="w-10 h-10 bg-background-elevated rounded-lg items-center justify-center">
-                          {IconComponent && <IconComponent size={18} color={colors.textSecondary} />}
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-foreground-secondary text-xs mb-1">{label}</Text>
-                          <TextInput
-                            value={searchQueries[key] || ''}
-                            onChangeText={(val) => updateSearchQuery(key, val)}
-                            placeholder={`${label}-Suchbegriff...`}
-                            placeholderTextColor={colors.textSecondary}
-                            className="text-foreground text-sm bg-background-elevated p-3 rounded-lg"
-                          />
-                        </View>
-                      </View>
-                    );
-                  })}
-                </MotiView>
-              )}
-            </View>
-            </>
+</>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

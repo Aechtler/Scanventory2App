@@ -11,6 +11,7 @@ export interface HistoryItem {
   categoryPath?: string | null;  // "Videospiele > Sony > PlayStation 5 > Games"
   brand: string | null;
   condition: string;
+  conditionNote?: string | null;
   confidence: number;
   searchQuery: string;
   searchQueries?: {
@@ -46,11 +47,14 @@ export type HistoryItemUpdateFields = Partial<
     | 'categoryPath'
     | 'brand'
     | 'condition'
+    | 'conditionNote'
     | 'gtin'
     | 'searchQuery'
     | 'searchQueries'
     | 'finalPrice'
     | 'finalPriceNote'
+    | 'imageUri'
+    | 'cachedImageUri'
   >
 >;
 

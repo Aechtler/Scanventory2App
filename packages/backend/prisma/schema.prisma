@@ -182,9 +182,10 @@ model ScannedItem {
   categoryId   String?  // FK → Category (neu)
   categoryRef  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   categoryPath String?  // Denormalisiert: "Videospiele > Sony > PlayStation 5 > Games"
-  brand        String?
-  condition    String
-  confidence   Float
+  brand          String?
+  condition      String
+  conditionNote  String?
+  confidence     Float
   gtin         String?
 
   // Suchkonfiguration
