@@ -86,7 +86,7 @@ export function PriceEstimateModal({
           </View>
 
           {/* Listings by Marketplace */}
-          {Object.entries(groupedListings).map(([marketplace, mpListings]) => {
+          {(Object.entries(groupedListings) as [string, MarketListing[]][]).map(([marketplace, mpListings]) => {
             const selectedInMp = mpListings.filter((l) => l.selected).length;
             const allSelected = mpListings.every((l) => l.selected);
 

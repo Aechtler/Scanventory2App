@@ -150,8 +150,9 @@ export function GlobalTabBar() {
   const lastCreated = useCampaignStore((s) => s.lastCreated);
   const clearLastCreated = useCampaignStore((s) => s.clearLastCreated);
 
-  const firstSegment = segments[0] ?? '';
-  const secondSegment = segments[1] ?? '';
+  const segs = segments as string[];
+  const firstSegment = segs[0] ?? '';
+  const secondSegment = segs[1] ?? '';
 
   const inactiveColor = scheme === 'dark'
     ? TAB_BAR_COLORS.inactiveDark

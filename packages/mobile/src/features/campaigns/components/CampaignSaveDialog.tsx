@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  type ViewStyle,
 } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
@@ -252,7 +253,13 @@ export function CampaignSaveDialog({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<{
+  wrapper: ViewStyle;
+  backdrop: ViewStyle;
+  sheet: ViewStyle;
+  toggleRow: ViewStyle;
+  switch: ViewStyle;
+}>({
   wrapper: {
     flex: 1,
     justifyContent: 'flex-end',
