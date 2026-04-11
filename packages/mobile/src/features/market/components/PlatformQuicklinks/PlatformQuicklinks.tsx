@@ -1,6 +1,6 @@
 /**
  * Platform Quicklinks Component
- * Buttons zum Öffnen der Marktplatz-Suchergebnisse
+ * Buttons zum Öffnen der Marktplatz-Suchergebnisse und Erstellen von Inseraten
  */
 
 import React, { useState } from 'react';
@@ -10,25 +10,36 @@ import { PlatformLink, openPlatformLink } from '@/features/market/services/quick
 import { AnimatedButton } from '@/shared/components/Animated';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks';
+import { CreateListingSheet } from '@/features/listings/components/CreateListingSheet/CreateListingSheet';
+import type { ListingPlatform } from '@/features/listings/types/listing.types';
+import type { HistoryItem } from '@/features/history/store/types';
 
 interface PlatformQuicklinksProps {
   links: PlatformLink[];
+  item?: HistoryItem;
 }
 
 type ActiveTab = 'compare' | 'sell';
 
-const SELL_PLATFORMS = [
+const SELL_PLATFORMS: { id: ListingPlatform; name: string; icon: string; color: string }[] = [
   { id: 'amazon', name: 'Amazon', icon: 'ShoppingCart', color: '#FF9900' },
   { id: 'ebay', name: 'eBay', icon: 'Tag', color: '#E53238' },
   { id: 'kleinanzeigen', name: 'Kleinanzeigen', icon: 'MessageCircle', color: '#BBDE14' },
-] as const;
+];
 
 /**
  * Grid von Plattform-Buttons mit Tab-Navigation
  */
-export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
+export function PlatformQuicklinks({ links, item }: PlatformQuicklinksProps) {
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<ActiveTab>('compare');
+  const [selectedPlatform, setSelectedPlatform] = useState<ListingPlatform>('ebay');
+  const [listingSheetVisible, setListingSheetVisible] = useState(false);
+
+  function handleSellPress(platform: ListingPlatform) {
+    setSelectedPlatform(platform);
+    setListingSheetVisible(true);
+  }
 
   return (
     <View className="gap-3">
@@ -94,7 +105,7 @@ export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
           {SELL_PLATFORMS.map((platform) => (
             <View key={platform.id} className="flex-1 min-w-[45%]">
               <AnimatedButton
-                onPress={() => {}}
+                onPress={() => handleSellPress(platform.id)}
                 className="rounded-xl p-4 border border-border"
                 style={{ backgroundColor: platform.color + '20' }}
               >
@@ -112,7 +123,7 @@ export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
             </View>
           ))}
 
-          {/* Plus Button für Shop-Verwaltung */}
+          {/* Plus Button — Platzhalter für künftige Shops */}
           <View className="flex-1 min-w-[45%]">
             <AnimatedButton
               onPress={() => {}}
@@ -124,6 +135,16 @@ export function PlatformQuicklinks({ links }: PlatformQuicklinksProps) {
             </AnimatedButton>
           </View>
         </View>
+      )}
+
+      {/* CreateListingSheet */}
+      {item && (
+        <CreateListingSheet
+          visible={listingSheetVisible}
+          onClose={() => setListingSheetVisible(false)}
+          item={item}
+          initialPlatform={selectedPlatform}
+        />
       )}
     </View>
   );

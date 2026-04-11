@@ -16,6 +16,9 @@ import itemSharingRouter, { sharedWithMeRouter, groupLibraryRouter } from './sha
 import imagesRouter from './images';
 import categoriesRouter from './categories';
 import campaignsRouter from './campaigns';
+import listingsRouter from './listings';
+import ebayRouter from './ebay';
+import aiRouter from './ai';
 
 const router = Router();
 
@@ -44,5 +47,14 @@ router.use('/items', itemSharingRouter);
 
 // Kampagnen
 router.use('/campaigns', campaignsRouter);
+
+// Listings (Verkaufsinserate)
+router.use('/listings', listingsRouter);
+
+// eBay Sell API
+router.use('/ebay', ebayRouter);
+
+// KI-Empfehlungen
+router.use('/ai', aiRouter);
 
 export default router;

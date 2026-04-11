@@ -39,6 +39,8 @@ model User {
   sharedItems           SharedItem[]  @relation("SharedBy")
   receivedSharedItems   SharedItem[]  @relation("SharedWithUser")
   campaigns             Campaign[]
+  listings              Listing[]
+  ebayConnection        EbayConnection?
   // Messaging (v2 - Tabellen existieren, werden noch nicht befüllt)
   conversationParticipants ConversationParticipant[]
   sentMessages          Message[]
@@ -219,6 +221,7 @@ model ScannedItem {
 
   sharedWith     SharedItem[]
   campaignItems  CampaignItem[]
+  listings       Listing[]
 
   @@index([userId])
   @@index([scannedAt])
@@ -254,6 +257,56 @@ model CampaignItem {
 
   @@id([campaignId, itemId])
   @@index([itemId])
+}
+
+// ─── eBay OAuth Connection (pro User) ─────────────────────────────────────────
+
+model EbayConnection {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime
+  ebayUserId   String?
+  connectedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ─── Listings (Verkaufsinserate) ───────────────────────────────────────────────
+
+model Listing {
+  id     String      @id @default(uuid())
+  userId String
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId String
+  item   ScannedItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  platform    String // 'ebay' | 'kleinanzeigen' | 'amazon'
+  listingType String // 'auction' | 'fixed_price' | 'negotiable'
+  startingPrice Float?
+  fixedPrice    Float?
+
+  status    String    // 'draft' | 'active' | 'sold' | 'cancelled'
+  soldPrice Float?
+  soldAt    DateTime?
+
+  externalUrl String? // vom Nutzer optional eingetragene URL des Inserats
+  externalId  String? // Plattform-spezifische Listing-ID (z.B. eBay Item ID)
+
+  // Post-Sale: Bestelldaten (nach Verkauf befüllt via eBay Order API)
+  ebayOrderId   String?
+  buyerInfo     Json?   // { name, address: { line1, city, zip, country } }
+  paymentStatus String? // 'paid' | 'pending' | 'failed'
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([itemId])
+  @@index([userId, status])
 }
 
 // ─── Messaging (v2 — Tabellen existieren, werden noch nicht befüllt) ──────────

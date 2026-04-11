@@ -127,6 +127,7 @@ function DetailPage({ itemId, isActive, pageWidth, onDeleteRequest }: DetailPage
         <HistoryDetailHeader item={item} />
         <HistoryDetailMarketSection
           links={platformLinks}
+          item={item}
           marketValue={marketValue}
           marketValueLoading={marketValueLoading}
           onRefreshMarketValue={() => loadMarketValue(item.productName, item.category, true)}

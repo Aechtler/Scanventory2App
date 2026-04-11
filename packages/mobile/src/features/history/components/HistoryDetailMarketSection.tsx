@@ -5,9 +5,11 @@ import { PlatformQuicklinks } from '@/features/market/components/PlatformQuickli
 import { MarketSlider } from '@/features/market/components/MarketSlider';
 import { ProductFactsCard } from '@/features/market/components/ProductFactsCard';
 import { FadeInView } from '@/shared/components/Animated';
+import type { HistoryItem } from '@/features/history/store/types';
 
 interface HistoryDetailMarketSectionProps {
   links: PlatformLink[];
+  item?: HistoryItem;
   marketValue: MarketValueResult | null;
   marketValueLoading: boolean;
   onRefreshMarketValue: () => void;
@@ -21,6 +23,7 @@ interface HistoryDetailMarketSectionProps {
 
 export function HistoryDetailMarketSection({
   links,
+  item,
   marketValue,
   marketValueLoading,
   onRefreshMarketValue,
@@ -51,7 +54,7 @@ export function HistoryDetailMarketSection({
       </FadeInView>
 
       <FadeInView delay={125}>
-        <PlatformQuicklinks links={links} />
+        <PlatformQuicklinks links={links} item={item} />
       </FadeInView>
     </>
   );

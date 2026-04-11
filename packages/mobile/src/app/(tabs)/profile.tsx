@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, Alert, Modal, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../features/auth/store/authStore';
 import { useHistoryStore } from '../../features/history/store/historyStore';
+import { useListingStore } from '../../features/listings/store/listingStore';
+import { useEbayConnectionStore } from '../../features/listings/store/ebayConnectionStore';
 import { FadeInView } from '../../shared/components/Animated';
 import { Icons } from '../../shared/components/Icons';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
@@ -22,7 +24,16 @@ type FollowSheet = 'followers' | 'following' | null;
 export default function ProfileTab() {
   const { user, logout } = useAuthStore();
   const items = useHistoryStore((state) => state.items);
+  const activeListingsCount = useListingStore((s) =>
+    s.listings.filter((l) => l.status === 'active').length
+  );
+  const { connected: ebayConnected, connect: connectEbay, disconnect: disconnectEbay, check: checkEbay } =
+    useEbayConnectionStore();
   const colors = useThemeColors();
+
+  useEffect(() => {
+    checkEbay();
+  }, []);
   const [editVisible, setEditVisible] = useState(false);
   const [followSheet, setFollowSheet] = useState<FollowSheet>(null);
 
@@ -91,6 +102,48 @@ export default function ProfileTab() {
             onFollowersPress={() => setFollowSheet('followers')}
             onFollowingPress={() => setFollowSheet('following')}
           />
+        </FadeInView>
+
+        {/* Meine Verkäufe */}
+        <FadeInView delay={75}>
+          <Pressable
+            onPress={() => router.push('/listings')}
+            className="bg-background-card rounded-2xl px-4 py-3.5 border border-border mb-3 flex-row items-center justify-between active:opacity-70"
+          >
+            <View className="flex-row items-center gap-3">
+              <Icons.Tag size={18} color={colors.primary} />
+              <Text className="text-foreground font-medium">Meine Verkäufe</Text>
+              {activeListingsCount > 0 && (
+                <View className="bg-primary/20 px-2 py-0.5 rounded-full" style={{ backgroundColor: colors.primary + '30' }}>
+                  <Text className="text-xs font-semibold" style={{ color: colors.primary }}>
+                    {activeListingsCount} aktiv
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Icons.ChevronRight size={16} color={colors.textSecondary} />
+          </Pressable>
+        </FadeInView>
+
+        {/* eBay-Verbindung */}
+        <FadeInView delay={90}>
+          <Pressable
+            onPress={ebayConnected ? disconnectEbay : connectEbay}
+            className="bg-background-card rounded-2xl px-4 py-3.5 border border-border mb-3 flex-row items-center justify-between active:opacity-70"
+          >
+            <View className="flex-row items-center gap-3">
+              <Icons.Tag size={18} color={ebayConnected ? '#22c55e' : colors.textSecondary} />
+              <Text className="text-foreground font-medium">
+                {ebayConnected ? 'eBay verbunden' : 'eBay verbinden'}
+              </Text>
+              {ebayConnected && (
+                <View className="bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                  <Text className="text-emerald-400 text-xs font-semibold">Aktiv</Text>
+                </View>
+              )}
+            </View>
+            <Icons.ChevronRight size={16} color={colors.textSecondary} />
+          </Pressable>
         </FadeInView>
 
         {/* E-Mail (privat, nur für den eigenen User sichtbar) */}

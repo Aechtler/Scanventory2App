@@ -20,6 +20,22 @@ export const config = {
   supabaseServiceRoleKey: requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
 
   // uploadDir wird nicht mehr benötigt (Supabase Storage)
-  // Nur noch für eventuelle Rückwärtskompatibilität
   uploadDir: process.env.UPLOAD_DIR ?? './uploads',
+
+  // eBay Sell API (optional — wird nur benötigt wenn eBay-Verkauf aktiv)
+  ebay: {
+    appId: process.env.EBAY_APP_ID ?? '',
+    certId: process.env.EBAY_CERT_ID ?? '',
+    ruName: process.env.EBAY_RU_NAME ?? '',
+  },
+
+  // Anthropic Claude API (für KI-Plattformempfehlung)
+  anthropic: {
+    apiKey: process.env.ANTHROPIC_API_KEY ?? '',
+  },
+
+  // Expo Push Notifications
+  expo: {
+    accessToken: process.env.EXPO_ACCESS_TOKEN ?? '',
+  },
 } as const;

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { jwtAuthMiddleware, optionalJwtAuthMiddleware, AuthRequest } from '../middleware/jwtAuth';
 import { getPublicProfile, searchUsers } from '../services/userService';
+import { prisma } from '../services/prismaClient';
 import { ApiResponse } from '../types';
 
 const router = Router();
@@ -8,6 +9,35 @@ const router = Router();
 function buildErrorResponse(code: string, message: string): ApiResponse<never> {
   return { success: false, error: { code, message } };
 }
+
+/**
+ * PATCH /api/users/me/push-token
+ * Expo Push Token registrieren (nach App-Start aufrufen)
+ */
+router.patch('/me/push-token', jwtAuthMiddleware, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      res.status(401).json(buildErrorResponse('UNAUTHORIZED', 'Not authenticated'));
+      return;
+    }
+    const { pushToken } = req.body as { pushToken?: string };
+
+    if (typeof pushToken !== 'string' || !pushToken) {
+      res.status(400).json(buildErrorResponse('BAD_REQUEST', 'pushToken is required'));
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { pushToken },
+    });
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Push token update error:', e);
+    res.status(500).json(buildErrorResponse('INTERNAL_ERROR', 'Failed to update push token'));
+  }
+});
 
 /**
  * GET /api/users/search?q=...&limit=20&offset=0

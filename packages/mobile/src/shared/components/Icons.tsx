@@ -61,6 +61,8 @@ import {
   Flag,
   Circle,
   CheckCircle2,
+  Trash2,
+  ChevronLeft,
 } from 'lucide-react-native';
 import { View } from 'react-native';
 
@@ -156,6 +158,9 @@ export const Icons = {
   Flag: (props: IconProps) => <Flag {...defaultProps} {...props} />,
   Circle: (props: IconProps) => <Circle {...defaultProps} {...props} />,
   CheckCircle2: (props: IconProps) => <CheckCircle2 {...defaultProps} {...props} />,
+  Trash2: (props: IconProps) => <Trash2 {...defaultProps} {...props} />,
+  ChevronLeft: (props: IconProps) => <ChevronLeft {...defaultProps} {...props} />,
+  ShoppingCart: (props: IconProps) => <ShoppingCart {...defaultProps} {...props} />,
 };
 
 // Spinning loader animation wrapper
