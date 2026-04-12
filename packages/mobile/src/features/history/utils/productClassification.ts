@@ -5,7 +5,7 @@
  */
 
 import type { HistoryItem } from '../store/historyStore';
-import { getLibraryDisplayPrice } from './historyPricing';
+import { getLibraryDisplayPrice } from './historyPricing.ts';
 
 export type ProductType = 'fast_seller' | 'high_value' | 'normal';
 
