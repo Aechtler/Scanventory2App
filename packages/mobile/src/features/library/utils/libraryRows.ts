@@ -1,4 +1,4 @@
-import type { HistoryItem } from '../store/historyStore';
+import type { HistoryItem } from '@/features/history/store/historyStore';
 import type { ViewMode } from '../components/LibrarySearchBar';
 
 export const LIBRARY_PAGE_SIZE = 20;

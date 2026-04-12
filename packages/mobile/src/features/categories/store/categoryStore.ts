@@ -7,7 +7,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { categoryService } from '../services/categoryService';
-import type { CategoryNode, CategoryState, CreateCategoryPayload, UpdateCategoryPayload } from '../types';
+import type { CategoryNode, CategoryState, CreateCategoryPayload, UpdateCategoryPayload } from '../types/category.types';
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 

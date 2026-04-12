@@ -5,8 +5,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { LibraryItem } from '../utils/libraryRows';
-import { getLibraryDisplayPrice } from '../utils/historyPricing';
-import { classifyProduct, type ProductType } from '../utils/productClassification';
+import { getLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
+import { classifyProduct, type ProductType } from '@/features/history/utils/productClassification';
 
 export type SortBy = 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name';
 

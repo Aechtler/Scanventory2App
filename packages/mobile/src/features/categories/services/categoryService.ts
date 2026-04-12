@@ -1,5 +1,5 @@
 import { API_CONFIG } from '@/shared/constants';
-import type { CategoryNode, CreateCategoryPayload, UpdateCategoryPayload } from '../types';
+import type { CategoryNode, CreateCategoryPayload, UpdateCategoryPayload } from '../types/category.types';
 
 const BASE = API_CONFIG.BASE_URL;
 

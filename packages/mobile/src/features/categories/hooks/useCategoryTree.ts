@@ -1,5 +1,5 @@
 import { useCategoryStore } from '../store/categoryStore';
-import type { CategoryNode } from '../types';
+import type { CategoryNode } from '../types/category.types';
 
 /** Findet einen Node anhand seiner ID (rekursiv) */
 function findNode(tree: CategoryNode[], id: string): CategoryNode | null {

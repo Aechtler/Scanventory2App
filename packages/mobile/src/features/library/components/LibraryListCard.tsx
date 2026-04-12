@@ -11,7 +11,7 @@ import { formatPrice } from '@/features/market/services/ebay';
 import { getLibraryDisplayPrice, hasLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
 import { classifyProduct, type ProductType } from '@/features/history/utils/productClassification';
 import { Icons } from '@/shared/components/Icons';
-import type { LibraryItem } from '@/features/history/utils/libraryRows';
+import type { LibraryItem } from '@/features/library/utils/libraryRows';
 
 interface LibraryListCardProps {
   item: LibraryItem;

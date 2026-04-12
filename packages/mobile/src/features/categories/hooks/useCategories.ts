@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useCategoryStore } from '../store/categoryStore';
-import type { CategoryNode, CreateCategoryPayload } from '../types';
+import type { CategoryNode, CreateCategoryPayload } from '../types/category.types';
 
 interface UseCategoriesReturn {
   tree: CategoryNode[];

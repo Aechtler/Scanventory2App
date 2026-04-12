@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { Icons } from '@/shared/components/Icons';
 import { CategoryPickerModal } from './CategoryPickerModal';
-import type { CategoryNode } from '../types';
+import type { CategoryNode } from '../types/category.types';
 
 interface CategoryPickerFieldProps {
   value: string | null;       // Anzeige-Pfad: "Videospiele > Sony > PS5 > Games"

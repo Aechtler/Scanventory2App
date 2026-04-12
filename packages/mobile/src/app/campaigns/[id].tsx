@@ -6,11 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCampaignStore } from '../../features/campaigns/store/campaignStore';
 import { useHistoryStore } from '../../features/history/store/historyStore';
 import { useUIStore } from '../../shared/store/uiStore';
-import { useLibraryFilters } from '../../features/history/hooks/useLibraryFilters';
-import { LibrarySearchBar, ViewMode } from '../../features/history/components/LibrarySearchBar';
-import { LibraryListItem } from '../../features/history/components/LibraryListItem';
-import { LibraryGridItem } from '../../features/history/components/LibraryGridItem';
-import { LibraryFilteredEmptyState } from '../../features/history/components/LibraryEmptyStates';
+import { useLibraryFilters } from '../../features/library/hooks/useLibraryFilters';
+import { LibrarySearchBar, ViewMode } from '../../features/library/components/LibrarySearchBar';
+import { LibraryListItem } from '../../features/library/components/LibraryListItem';
+import { LibraryGridItem } from '../../features/library/components/LibraryGridItem';
+import { LibraryFilteredEmptyState } from '../../features/library/components/LibraryEmptyStates';
 import { StaggeredItem } from '../../shared/components/Animated';
 import { useThemeColors } from '../../shared/hooks/useThemeColors';
 import { useTabBarPadding } from '../../shared/hooks/useTabBarPadding';
@@ -18,7 +18,7 @@ import {
   buildLibraryRows,
   LIBRARY_PAGE_SIZE,
   type LibraryRow,
-} from '../../features/history/utils/libraryRows';
+} from '../../features/library/utils/libraryRows';
 import { Icons } from '../../shared/components/Icons';
 
 export default function CampaignDetailScreen() {

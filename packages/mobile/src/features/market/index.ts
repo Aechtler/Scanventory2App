@@ -4,7 +4,7 @@ export type {
   PriceStats,
   PlatformAnalysis,
   MarketAnalysis,
-} from './types';
+} from './types/market.types';
 
 // Components werden hier exportiert wenn erstellt
 // export { PriceCard } from './components/PriceCard';

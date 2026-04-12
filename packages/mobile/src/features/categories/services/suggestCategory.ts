@@ -3,7 +3,7 @@
  * Gibt den besten Pfad im Kategorie-Baum zurück.
  */
 
-import type { CategoryNode } from '../types';
+import type { CategoryNode } from '../types/category.types';
 
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';

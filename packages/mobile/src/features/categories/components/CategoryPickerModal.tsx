@@ -5,7 +5,7 @@ import { Icons } from '@/shared/components/Icons';
 import { useCategories } from '../hooks/useCategories';
 import { CategoryBreadcrumb } from './CategoryBreadcrumb';
 import { CategoryLevelList } from './CategoryLevelList';
-import type { CategoryNode } from '../types';
+import type { CategoryNode } from '../types/category.types';
 
 interface CategoryPickerModalProps {
   visible: boolean;

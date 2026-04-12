@@ -4,15 +4,15 @@ import { router, useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHistoryStore } from '../../features/history/store/historyStore';
-import { useLibraryFilters } from '../../features/history/hooks/useLibraryFilters';
-import { LibrarySearchBar, ViewMode } from '../../features/history/components/LibrarySearchBar';
-import { LibraryListItem } from '../../features/history/components/LibraryListItem';
-import { LibraryGridItem } from '../../features/history/components/LibraryGridItem';
+import { useLibraryFilters } from '../../features/library/hooks/useLibraryFilters';
+import { LibrarySearchBar, ViewMode } from '../../features/library/components/LibrarySearchBar';
+import { LibraryListItem } from '../../features/library/components/LibraryListItem';
+import { LibraryGridItem } from '../../features/library/components/LibraryGridItem';
 import {
   LibraryEmptyState,
   LibraryFilteredEmptyState,
-} from '../../features/history/components/LibraryEmptyStates';
-import { ShareSheet } from '../../features/library/components/ShareSheet';
+} from '../../features/library/components/LibraryEmptyStates';
+import { ShareSheet } from '../../features/sharing/components/ShareSheet';
 import { useFollowingItems } from '../../features/history/hooks/useFollowingItems';
 import { syncDeleteItem } from '../../features/history/services/syncService';
 import { StaggeredItem } from '../../shared/components/Animated';
@@ -24,7 +24,7 @@ import {
   LIBRARY_PAGE_SIZE,
   type LibraryRow,
   type LibraryItem,
-} from '../../features/history/utils/libraryRows';
+} from '../../features/library/utils/libraryRows';
 import { Icons } from '../../shared/components/Icons';
 import { CampaignSelectionBar } from '../../features/campaigns/components/CampaignSelectionBar';
 import { CampaignSaveDialog } from '../../features/campaigns/components/CampaignSaveDialog';

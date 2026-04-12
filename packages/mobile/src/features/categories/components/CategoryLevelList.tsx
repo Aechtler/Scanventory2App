@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable, TextInput, ActivityIndicator, ScrollView } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
-import type { CategoryNode, CreateCategoryPayload } from '../types';
+import type { CategoryNode, CreateCategoryPayload } from '../types/category.types';
 
 interface CategoryLevelListProps {
   items: CategoryNode[];

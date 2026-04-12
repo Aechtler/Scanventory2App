@@ -27,18 +27,18 @@ test('Animated helpers live in focused component files', () => {
   }
 });
 
-test('Animated.tsx stays a small compatibility barrel', () => {
-  const animatedBarrelPath = path.join(currentDir, 'Animated.tsx');
-  const animatedBarrel = readFileSync(animatedBarrelPath, 'utf8');
+test('Animated/index.ts is a small barrel without inline implementations', () => {
+  const indexPath = path.join(currentDir, 'Animated', 'index.ts');
+  const indexBarrel = readFileSync(indexPath, 'utf8');
 
   for (const fileName of animatedComponentFiles) {
     const exportName = fileName.replace(/\.tsx$/, '');
     assert.match(
-      animatedBarrel,
-      new RegExp(`export\\s*\\{\\s*${exportName}\\s*\\}\\s*from\\s*'\\./Animated/${exportName}'`),
-      `expected Animated.tsx to re-export ${exportName}`,
+      indexBarrel,
+      new RegExp(`export\\s*\\{\\s*${exportName}\\s*\\}\\s*from\\s*'\\./${exportName}'`),
+      `expected Animated/index.ts to re-export ${exportName}`,
     );
   }
 
-  assert.equal(animatedBarrel.includes('export function'), false);
+  assert.equal(indexBarrel.includes('export function'), false);
 });

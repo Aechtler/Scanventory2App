@@ -1,7 +1,7 @@
 import { ScrollView, Text, Pressable, View } from 'react-native';
 import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
-import type { CategoryNode } from '../types';
+import type { CategoryNode } from '../types/category.types';
 
 interface CategoryBreadcrumbProps {
   path: CategoryNode[];

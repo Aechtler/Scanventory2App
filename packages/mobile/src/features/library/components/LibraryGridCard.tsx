@@ -8,7 +8,7 @@ import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StaggeredItem } from '@/shared/components/Animated';
-import type { LibraryItem as HistoryItem } from '@/features/history/utils/libraryRows';
+import type { LibraryItem as HistoryItem } from '@/features/library/utils/libraryRows';
 import { formatPrice } from '@/features/market/services/ebay';
 import { getLibraryDisplayPrice, hasLibraryDisplayPrice } from '@/features/history/utils/historyPricing';
 import { classifyProduct } from '@/features/history/utils/productClassification';

@@ -7,7 +7,7 @@ import { Icons } from '@/shared/components/Icons';
 import { useThemeColors } from '@/shared/hooks/useThemeColors';
 import { CategoryDropdown } from './CategoryDropdown';
 import type { SortBy } from '../hooks/useLibraryFilters';
-import type { ProductType } from '../utils/productClassification';
+import type { ProductType } from '@/features/history/utils/productClassification';
 
 export type ViewMode = 'list' | 'grid';
 
