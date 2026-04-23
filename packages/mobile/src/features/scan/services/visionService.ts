@@ -139,7 +139,18 @@ Antworte NUR mit dem JSON, kein anderer Text.`,
 
     try {
       const error = await response.json();
-      message = error.error?.message || message;
+      const rawMessage: string = error.error?.message || '';
+      const status: string = error.error?.status || '';
+
+      if (status === 'RESOURCE_EXHAUSTED' || rawMessage.toLowerCase().includes('quota') || rawMessage.toLowerCase().includes('resource_exhausted')) {
+        message = 'API-Limit erreicht. Bitte versuche es in einigen Minuten erneut oder warte bis morgen (täglich 1.500 Analysen kostenlos).';
+      } else if (status === 'INVALID_ARGUMENT') {
+        message = 'Das Bild konnte nicht verarbeitet werden. Bitte versuche ein anderes Bild.';
+      } else if (status === 'PERMISSION_DENIED' || status === 'UNAUTHENTICATED') {
+        message = 'API-Schlüssel ungültig oder abgelaufen.';
+      } else {
+        message = rawMessage || message;
+      }
     } catch (error) {
       console.error('[Vision] Failed to parse analysis error response:', error);
     }
