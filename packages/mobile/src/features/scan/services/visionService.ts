@@ -6,8 +6,20 @@
 import * as FileSystem from 'expo-file-system/legacy';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 const IMAGE_READ_ERROR_MESSAGE = 'Bilddatei konnte nicht gelesen werden. Bitte wähle das Bild erneut aus oder nutze ein anderes Bild.';
+
+async function fetchWithBackoff(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, options);
+    if (response.status !== 429 || attempt === maxRetries) return response;
+
+    const delay = Math.min(1000 * 2 ** attempt + Math.random() * 1000, 60000);
+    console.log(`[Vision] Rate limited, retrying in ${Math.round(delay / 1000)}s (attempt ${attempt + 1}/${maxRetries})...`);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+  throw new Error('Max retries exceeded');
+}
 
 export interface VisionMatch {
   productName: string;
@@ -57,7 +69,7 @@ async function readImageAsBase64(imageUri: string, context: string): Promise<str
 export async function analyzeImage(imageUri: string): Promise<VisionResult> {
   const base64Image = await readImageAsBase64(imageUri, 'analysis');
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+  const response = await fetchWithBackoff(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -292,7 +304,7 @@ REGELN:
 
     if (!GEMINI_API_KEY) return null;
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetchWithBackoff(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

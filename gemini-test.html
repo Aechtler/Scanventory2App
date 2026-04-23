@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Gemini API Test</title>
+  <style>
+    body { font-family: monospace; max-width: 600px; margin: 40px auto; padding: 20px; background: #111; color: #eee; }
+    button { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #result { margin-top: 20px; padding: 16px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+    .ok { background: #14532d; border: 1px solid #22c55e; }
+    .err { background: #7f1d1d; border: 1px solid #ef4444; }
+    .loading { background: #1e3a5f; border: 1px solid #60a5fa; }
+    input { width: 100%; padding: 8px; background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; font-family: monospace; box-sizing: border-box; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <h2>Gemini API Test</h2>
+  <label>API Key:</label>
+  <input id="apiKey" value="AIzaSyCKNxSc9csBbleE2nJWkDG8C20Z44B0Bjg" />
+  <button id="btn" onclick="test()">Test starten</button>
+  <div id="result"></div>
+
+  <script>
+    async function test() {
+      const key = document.getElementById('apiKey').value.trim();
+      const btn = document.getElementById('btn');
+      const result = document.getElementById('result');
+
+      btn.disabled = true;
+      result.className = 'loading';
+      result.textContent = 'Sende Anfrage...';
+
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: 'Antworte nur mit dem Wort: OK' }] }],
+              generationConfig: { maxOutputTokens: 5 }
+            })
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          result.className = 'err';
+          result.textContent = `❌ Fehler ${res.status}\n\nStatus: ${data.error?.status}\nMessage: ${data.error?.message}`;
+        } else {
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          result.className = 'ok';
+          result.textContent = `✅ API funktioniert!\n\nAntwort: "${text}"`;
+        }
+      } catch (e) {
+        result.className = 'err';
+        result.textContent = `❌ Netzwerkfehler: ${e.message}`;
+      }
+
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>
